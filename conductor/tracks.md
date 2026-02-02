@@ -15,7 +15,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [~] **Track: There are multiple links on the settings page that don't work and need to be resolved by either building out the proper page or removing the link if not needed or redundant.**
+- [x] **Track: There are multiple links on the settings page that don't work and need to be resolved by either building out the proper page or removing the link if not needed or redundant.**
 *Link: [./tracks/settings_page_resolution_20260202/](./tracks/settings_page_resolution_20260202/)*
 
 ---
