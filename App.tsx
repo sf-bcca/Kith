@@ -25,6 +25,7 @@ enum Screen {
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>(Screen.TREE);
+  const [selectedMemberId, setSelectedMemberId] = useState<string>('7'); // Default to Merlin
 
   // Handle Dark Mode for Admin Dashboard
   useEffect(() => {
@@ -35,9 +36,10 @@ export default function App() {
     }
   }, [currentScreen]);
 
-  const handleNavigate = (screen: string) => {
-    // Map string input to Screen enum if possible, or fallback
-    // This allows components to pass strings easily
+  const handleNavigate = (screen: string, memberId?: string) => {
+    if (memberId) {
+      setSelectedMemberId(memberId);
+    }
     const target = Object.values(Screen).find(s => s === screen) as Screen;
     if (target) {
       setCurrentScreen(target);
@@ -48,8 +50,8 @@ export default function App() {
 
   const renderScreen = () => {
     switch (currentScreen) {
-      case Screen.TREE: return <FamilyTreeView onNavigate={handleNavigate} />;
-      case Screen.BIO: return <MemberBiography onNavigate={handleNavigate} />;
+      case Screen.TREE: return <FamilyTreeView onNavigate={handleNavigate} selectedId={selectedMemberId} onSelect={setSelectedMemberId} />;
+      case Screen.BIO: return <MemberBiography onNavigate={handleNavigate} memberId={selectedMemberId} />;
       case Screen.MEMORIES: return <ActivityFeed onNavigate={handleNavigate} />;
       case Screen.DISCOVER: return <DiscoverView onNavigate={handleNavigate} />;
       case Screen.SETTINGS: return <SettingsView onNavigate={handleNavigate} />;
@@ -58,7 +60,7 @@ export default function App() {
       case Screen.DIRECTORY: return <FamilyDirectory onNavigate={handleNavigate} />;
       case Screen.HORIZONTAL: return <HorizontalTree onNavigate={handleNavigate} />;
       case Screen.ADMIN: return <AdminDashboard onNavigate={handleNavigate} />;
-      default: return <FamilyTreeView onNavigate={handleNavigate} />;
+      default: return <FamilyTreeView onNavigate={handleNavigate} selectedId={selectedMemberId} onSelect={setSelectedMemberId} />;
     }
   };
 
@@ -74,7 +76,7 @@ export default function App() {
             {Object.values(Screen).map((screen) => (
               <button
                 key={screen}
-                onClick={() => setCurrentScreen(screen)}
+                onClick={() => handleNavigate(screen)}
                 className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                   currentScreen === screen 
                     ? 'bg-primary/10 text-primary' 

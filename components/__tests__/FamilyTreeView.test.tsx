@@ -6,7 +6,7 @@ import { mockFamilyData } from '../../mocks/familyData';
 describe('FamilyTreeView', () => {
   it('renders the focus member and their relations', () => {
     // We'll set the default focus to '7' (Merlin) in the implementation
-    render(<FamilyTreeView onNavigate={vi.fn()} />);
+    render(<FamilyTreeView onNavigate={vi.fn()} selectedId="7" onSelect={vi.fn()} />);
     
     // Merlin should be the focus
     expect(screen.getByText(/Merlin Pendragon/)).toBeInTheDocument();
@@ -20,22 +20,22 @@ describe('FamilyTreeView', () => {
   });
 
   it('changes focus when a relative is clicked', () => {
-    render(<FamilyTreeView onNavigate={vi.fn()} />);
+    const onSelect = vi.fn();
+    render(<FamilyTreeView onNavigate={vi.fn()} selectedId="7" onSelect={onSelect} />);
     
-    // Click on Mordred Pendragon (the node container, not the name)
-    // We'll find it by the text and then get the parent div that has the onClick focus handler
+    // Click on Mordred Pendragon (the node container, not the name button)
+    // We need to click the container div, because the name button has stopPropagation
     const mordredName = screen.getByText(/Mordred Pendragon/);
-    const mordredNode = mordredName.closest('.cursor-pointer');
+    const mordredNode = mordredName.closest('.group');
     fireEvent.click(mordredNode!);
     
-    // Now Mordred should be the focus
-    expect(screen.getByText(/Arthur Pendragon/)).toBeInTheDocument();
-    expect(screen.getByText(/Guinevere Pendragon/)).toBeInTheDocument();
+    // Check if onSelect was called with Mordred's ID
+    expect(onSelect).toHaveBeenCalledWith('5');
   });
 
   it('navigates to the biography when a name is clicked', () => {
     const onNavigate = vi.fn();
-    render(<FamilyTreeView onNavigate={onNavigate} />);
+    render(<FamilyTreeView onNavigate={onNavigate} selectedId="7" onSelect={vi.fn()} />);
     
     // Click on Merlin's name
     const merlinName = screen.getByText(/Merlin Pendragon/);

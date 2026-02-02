@@ -4,7 +4,9 @@ import { TreeService } from '../services/TreeService';
 import { FamilyMember } from '../types/family';
 
 interface Props {
-  onNavigate: (screen: string) => void;
+  onNavigate: (screen: string, memberId?: string) => void;
+  selectedId: string;
+  onSelect: (id: string) => void;
 }
 
 const MemberNode: React.FC<{
@@ -54,10 +56,8 @@ const MemberNode: React.FC<{
   </div>
 );
 
-const FamilyTreeView: React.FC<Props> = ({ onNavigate }) => {
-  const [focusId, setFocusId] = useState('7'); // Default to Merlin
-  
-  const treeData = useMemo(() => TreeService.getTreeFor(focusId), [focusId]);
+const FamilyTreeView: React.FC<Props> = ({ onNavigate, selectedId, onSelect }) => {
+  const treeData = useMemo(() => TreeService.getTreeFor(selectedId), [selectedId]);
 
   if (!treeData) {
     return (
@@ -83,7 +83,7 @@ const FamilyTreeView: React.FC<Props> = ({ onNavigate }) => {
         <h2 className="text-[#0d121b] text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center">Family Tree</h2>
         <div className="flex w-12 items-center justify-end">
           <button 
-            onClick={() => onNavigate('Settings')}
+            onClick={() => onNavigate('Biography', selectedId)}
             className="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-10 w-10 bg-gray-100 text-[#0d121b] hover:bg-gray-200 transition-colors"
           >
             <span className="material-symbols-outlined">account_circle</span>
@@ -119,7 +119,7 @@ const FamilyTreeView: React.FC<Props> = ({ onNavigate }) => {
               <MemberNode 
                 key={parent.id} 
                 member={parent} 
-                onClick={() => setFocusId(parent.id)} 
+                onClick={() => onSelect(parent.id)} 
                 onViewBio={handleViewBio}
               />
             ))}
@@ -130,7 +130,7 @@ const FamilyTreeView: React.FC<Props> = ({ onNavigate }) => {
             <MemberNode 
               member={focus} 
               isFocus 
-              label={focusId === '7' ? 'Me (User)' : undefined}
+              label={selectedId === '7' ? 'Me (User)' : undefined}
               onClick={() => {}} // Already focus
               onViewBio={handleViewBio}
             />
@@ -138,7 +138,7 @@ const FamilyTreeView: React.FC<Props> = ({ onNavigate }) => {
               <MemberNode 
                 key={spouse.id} 
                 member={spouse} 
-                onClick={() => setFocusId(spouse.id)} 
+                onClick={() => onSelect(spouse.id)} 
                 onViewBio={handleViewBio}
               />
             ))}
@@ -150,7 +150,7 @@ const FamilyTreeView: React.FC<Props> = ({ onNavigate }) => {
               <MemberNode 
                 key={child.id} 
                 member={child} 
-                onClick={() => setFocusId(child.id)} 
+                onClick={() => onSelect(child.id)} 
                 onViewBio={handleViewBio}
               />
             ))}
