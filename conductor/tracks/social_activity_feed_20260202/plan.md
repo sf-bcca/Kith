@@ -12,9 +12,9 @@ This plan follows the TDD process.
 - [x] Task: Conductor - User Manual Verification 'Data Model and Service Foundation'
 
 ## Phase 2: UI Integration and Interaction
-- [ ] Task: Refactor `ActivityFeed` to use `ActivityService`
-    - [ ] Write integration tests for `ActivityFeed`
-    - [ ] Update `ActivityFeed.tsx` to be dynamic
+- [x] Task: Refactor `ActivityFeed` to use `ActivityService` bc73f0f
+    - [x] Write integration tests for `ActivityFeed`
+    - [x] Update `ActivityFeed.tsx` to be dynamic
 - [ ] Task: Implement Interaction Logic
     - [ ] Implement `approveActivity` in `ActivityService`
     - [ ] Update UI to handle Approve/Comment actions
