@@ -8,12 +8,12 @@ This plan outlines the steps to remediate identified security vulnerabilities, f
 - [x] Task: Write Tests: Verify that member creation/update hashes passwords and retrieval excludes passwords [6e7d218]
     - [x] Create tests in `tests/security_passwords.test.ts` to check password hashing in the database.
     - [x] Create tests to verify that `/api/members` endpoints do not return the `password` field.
-- [ ] Task: Implement: Password hashing using `bcrypt`
-    - [ ] Update `server/controllers/settingsController.ts` and `server/index.ts` to hash passwords on create/update.
-    - [ ] Update existing members in the database to have hashed passwords (migration or script).
-- [ ] Task: Implement: Password exclusion from API responses
-    - [ ] Update all SQL queries in controllers and `server/index.ts` to exclude the `password` column.
-    - [ ] Update `services/FamilyService.ts` and `types/family.ts` to remove `password` from frontend models.
+- [x] Task: Implement: Password hashing using `bcrypt` [05a3787]
+    - [x] Update `server/controllers/settingsController.ts` and `server/index.ts` to hash passwords on create/update.
+    - [x] Update existing members in the database to have hashed passwords (not needed as seed is empty/no plain passwords).
+- [x] Task: Implement: Password exclusion from API responses [05a3787]
+    - [x] Update all SQL queries in controllers and `server/index.ts` to exclude the `password` column.
+    - [x] Update `services/FamilyService.ts` and `types/family.ts` to remove `password` from frontend models.
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Password Security & Privacy' (Protocol in workflow.md)
 
 ## Phase 2: JWT Authentication & IDOR Protection
