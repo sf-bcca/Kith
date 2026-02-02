@@ -19,4 +19,4 @@ This plan follows the TDD process.
     - [x] Implement `approveActivity` in `ActivityService`
     - [x] Implement `addComment` in `ActivityService`
     - [x] Update UI to handle Comment actions
-- [ ] Task: Conductor - User Manual Verification 'UI Integration and Interaction'
+- [x] Task: Conductor - User Manual Verification 'UI Integration and Interaction'
