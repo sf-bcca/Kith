@@ -5,7 +5,7 @@ This plan outlines the full-stack implementation of the Account, Privacy, Prefer
 ## Phase 1: Database Schema & Backend Infrastructure
 *Goal: Prepare the database and create the base API structure for settings.*
 
-- [ ] Task: Create database migration for user settings (dark_mode, language, visibility, etc.)
+- [x] Task: Create database migration for user settings (dark_mode, language, visibility, etc.) 8d86429
 - [ ] Task: Update User model/type in backend to include new settings fields
 - [ ] Task: Implement base Settings controller and route group in Express
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Database & Backend Base' (Protocol in workflow.md)
