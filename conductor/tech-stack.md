@@ -10,6 +10,8 @@
 - **Framework:** [Express.js](https://expressjs.com/)
 - **Runtime:** [Node.js](https://nodejs.org/)
 - **Language:** [TypeScript](https://www.typescriptlang.org/)
+- **Authentication:** JWT (JSON Web Tokens)
+- **Security:** Bcrypt for password hashing
 
 ## Database
 - **System:** [PostgreSQL](https://www.postgresql.org/)

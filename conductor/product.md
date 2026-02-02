@@ -5,13 +5,13 @@ Provide a platform for visualizing and managing extensive family trees and pedig
 
 ## Target Users
 - **Amateur genealogy enthusiasts:** Individuals exploring and documenting their family history.
-- **Connected families:** Families seeking a private, secure space to stay updated and share memories.
+- **Connected families:** Families seeking a private, highly secure space to stay updated and share memories.
 
 ## Core Goals
 - Deliver a comprehensive suite of interactive family visualizations (Family Tree, Pedigree, Fan Charts).
 - Foster family engagement through social activity feeds and shared member biographies.
 - Enable seamless collaboration for multiple family members to build a collective history.
-- Provide robust user-controlled settings for account management, privacy, and application preferences.
+- Provide robust, secure account management with industry-standard authentication and granular privacy controls.
 
 ## Key Features
 - **Interactive Visualizations:** High-performance, interactive charts for exploring ancestry.
