@@ -3,7 +3,7 @@
 This plan follows the TDD process.
 
 ## Phase 1: Data Model and Service Foundation
-- [x] Task: Define `Activity` types and mock data
+- [x] Task: Define `Activity` types and mock data c3f59f9
     - [x] Create `types/activity.ts`
     - [x] Create `mocks/activityData.ts`
 - [ ] Task: Implement `ActivityService`
