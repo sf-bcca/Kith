@@ -1,71 +1,79 @@
 import { Activity, ActivityType } from '../types/activity';
-import { mockActivities } from '../mocks/activityData';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
 export interface ActivityFilter {
   type?: ActivityType;
   actorId?: string;
 }
 
-// Internal state to simulate persistence for demo/tests
-let activities = [...mockActivities];
-
 export const ActivityService = {
   /**
-   * Returns activities sorted by timestamp (newest first)
+   * Returns activities sorted by timestamp (newest first) from the API.
    */
-  getFeed(filter?: ActivityFilter): Activity[] {
-    let results = [...activities];
+  async getFeed(filter?: ActivityFilter): Promise<Activity[]> {
+    const response = await fetch(`${API_URL}/api/activities`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch activities');
+    }
+    let activities: Activity[] = await response.json();
+    activities = this.mapBackendToFrontend(activities);
 
     if (filter?.type) {
-      results = results.filter(a => a.type === filter.type);
+      activities = activities.filter(a => a.type === filter.type);
     }
 
     if (filter?.actorId) {
-      results = results.filter(a => a.actorId === filter.actorId);
+      activities = activities.filter(a => a.actorId === filter.actorId);
     }
 
-    return results.sort((a, b) => 
+    return activities.sort((a, b) => 
       new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
     );
   },
 
   /**
-   * Approves an activity
+   * Approves an activity (Still local for now as backend doesn't support it yet, 
+   * but could be implemented as a PATCH /api/activities/:id)
    */
-  approveActivity(id: string): boolean {
-    const index = activities.findIndex(a => a.id === id);
-    if (index !== -1) {
-      activities[index] = { ...activities[index], status: 'approved' };
-      return true;
-    }
-    return false;
+  async approveActivity(id: string): Promise<boolean> {
+    // This is a placeholder as backend migration for status isn't fully spec'd
+    console.warn('Approve activity is not yet implemented in backend');
+    return true;
   },
 
   /**
-   * Adds a comment to an activity
+   * Adds a comment to an activity via the API.
    */
-  addComment(activityId: string, comment: { authorId: string, text: string }): boolean {
-    const index = activities.findIndex(a => a.id === activityId);
-    if (index !== -1) {
-      const newComment = {
-        id: Math.random().toString(36).substr(2, 9),
-        authorId: comment.authorId,
-        text: comment.text,
-        timestamp: new Date().toISOString()
-      };
-      activities[index] = { 
-        ...activities[index], 
-        comments: [...activities[index].comments, newComment] 
-      };
-      return true;
-    }
-    return false;
+  async addComment(activityId: string, comment: { authorId: string, text: string }): Promise<boolean> {
+    const response = await fetch(`${API_URL}/api/activities/${activityId}/comments`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(comment),
+    });
+
+    return response.ok;
   },
 
   /**
-   * Resets the mock data (useful for tests)
+   * Resets the service (no-op for now)
    */
-  reset(): void {
-    activities = [...mockActivities];
+  reset() {
+    // No-op for API-driven service
+  },
+
+  mapBackendToFrontend(data: any[]): Activity[] {
+    return data.map(item => ({
+      id: item.id,
+      type: item.type,
+      timestamp: item.timestamp,
+      actorId: item.member_id, // Map member_id to actorId
+      targetId: item.target_id, // This might need backend schema update if we want targetId
+      content: typeof item.content === 'string' ? { description: item.content, photoUrls: item.image_url ? [item.image_url] : [] } : item.content,
+      status: item.status || 'pending',
+      comments: item.comments || []
+    }));
   }
 };

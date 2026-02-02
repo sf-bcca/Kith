@@ -1,11 +1,35 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import BottomNav from './BottomNav';
+import { FamilyService } from '../services/FamilyService';
+import { FamilyMember } from '../types/family';
 
 interface Props {
-  onNavigate: (screen: string) => void;
+  onNavigate: (screen: string, memberId?: string) => void;
+  onLogout?: () => void;
+  loggedInId?: string | null;
 }
 
-const SettingsView: React.FC<Props> = ({ onNavigate }) => {
+const SettingsView: React.FC<Props> = ({ onNavigate, onLogout, loggedInId }) => {
+  const [member, setMember] = useState<FamilyMember | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchMember = async () => {
+      if (!loggedInId) return;
+      setLoading(true);
+      try {
+        const result = await FamilyService.getById(loggedInId);
+        setMember(result || null);
+      } catch (err) {
+        console.error('Failed to fetch logged in member:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMember();
+  }, [loggedInId]);
+
   return (
     <div className="bg-background-light font-display text-slate-900 min-h-screen flex flex-col">
       <header className="sticky top-0 z-10 bg-background-light/95 backdrop-blur-md px-4 py-3 border-b border-slate-200">
@@ -15,14 +39,28 @@ const SettingsView: React.FC<Props> = ({ onNavigate }) => {
       <main className="flex-1 overflow-y-auto pb-32">
          {/* Profile Card */}
          <div className="bg-gradient-to-br from-primary to-blue-600 m-4 p-6 rounded-3xl shadow-lg shadow-blue-200 text-white flex flex-col items-center">
-             <div className="size-20 rounded-full bg-white p-1 shadow-md mb-3">
-                 <div className="w-full h-full rounded-full bg-cover bg-center" style={{backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuDOpNN5yVahrXq0LD134v_xm3XCie_E86p1nR2HJtoiv0DNszDybE0gx8rcSSVPvdm7QRoaRAyHJgTwlYI8pdKYq1PZUd9XlFsIP94uNN7brqMtNz3aEDJF4Xzhk16gJ-25a29crKnThHXILdiM5yA4koZ9FJClmA57VgMGwpb2NarAvI-Y8qCHXW_sEKmYzymOuzESIteI5utDMG_LRvymLrkgMHZ50Al-WAnspgLx81ENETfklFISKc4kGNoWDM4Ezcwv62o86mk')"}}></div>
-             </div>
-             <h2 className="font-bold text-xl">James Miller</h2>
-             <p className="text-blue-100 text-sm mb-4">james.miller@example.com</p>
+             <button 
+                onClick={() => onNavigate('Biography', loggedInId || undefined)}
+                className="size-20 rounded-full bg-white p-1 shadow-md mb-3 overflow-hidden hover:scale-105 transition-transform active:scale-95"
+             >
+                 {member?.photoUrl ? (
+                    <img src={member.photoUrl} alt="Profile" className="w-full h-full rounded-full object-cover" />
+                 ) : (
+                    <div className="w-full h-full rounded-full bg-slate-200 flex items-center justify-center text-slate-400">
+                        <span className="material-symbols-outlined text-4xl">person</span>
+                    </div>
+                 )}
+             </button>
+             <h2 className="font-bold text-xl">{loading ? 'Loading...' : (member ? `${member.firstName} ${member.lastName}` : 'Guest User')}</h2>
+             <p className="text-blue-100 text-sm mb-4">{member?.biography ? (member.biography.slice(0, 30) + '...') : 'No biography set'}</p>
              <div className="flex gap-2">
-                 <span className="px-3 py-1 rounded-full bg-white/20 text-xs font-bold backdrop-blur-sm border border-white/20">Pro Member</span>
-                 <button className="px-3 py-1 rounded-full bg-white text-primary text-xs font-bold hover:bg-gray-50 transition-colors">Edit Profile</button>
+                 <span className="px-3 py-1 rounded-full bg-white/20 text-xs font-bold backdrop-blur-sm border border-white/20">Family Member</span>
+                 <button 
+                    onClick={() => onNavigate('Biography', loggedInId || undefined)}
+                    className="px-3 py-1 rounded-full bg-white text-primary text-xs font-bold hover:bg-gray-50 transition-colors"
+                 >
+                    Edit Profile
+                 </button>
              </div>
          </div>
 
@@ -87,8 +125,28 @@ const SettingsView: React.FC<Props> = ({ onNavigate }) => {
          </div>
 
          <div className="px-8 pb-8">
-            <button className="w-full py-3.5 rounded-xl bg-slate-200 text-slate-600 font-bold text-sm hover:bg-slate-300 hover:text-slate-800 transition-colors mb-4">
+            <button 
+              onClick={onLogout}
+              className="w-full py-3.5 rounded-xl bg-slate-200 text-slate-600 font-bold text-sm hover:bg-slate-300 hover:text-slate-800 transition-colors mb-4"
+            >
                Sign Out
+            </button>
+            <button 
+              onClick={async () => {
+                if (window.confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+                  if (loggedInId) {
+                    try {
+                      await FamilyService.delete(loggedInId);
+                      onLogout?.();
+                    } catch (err) {
+                      alert('Failed to delete account');
+                    }
+                  }
+                }
+              }}
+              className="w-full py-3.5 rounded-xl bg-red-50 text-red-600 font-bold text-sm hover:bg-red-100 transition-colors mb-4"
+            >
+               Delete Account
             </button>
             <p className="text-center text-[10px] text-slate-400">Kith Version 2.4.0 (Build 892)<br/>© 2024 Kith Inc.</p>
          </div>

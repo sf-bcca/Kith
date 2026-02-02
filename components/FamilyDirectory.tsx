@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import BottomNav from './BottomNav';
 import DirectorySearch from './DirectorySearch';
 import { FamilyService } from '../services/FamilyService';
@@ -10,9 +10,23 @@ interface Props {
 
 const FamilyDirectory: React.FC<Props> = ({ onNavigate }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  
-  const members = useMemo(() => {
-    return FamilyService.search(searchQuery);
+  const [members, setMembers] = useState<FamilyMember[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchMembers = async () => {
+      setLoading(true);
+      try {
+        const results = await FamilyService.search(searchQuery);
+        setMembers(results);
+      } catch (err) {
+        console.error('Failed to search members:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMembers();
   }, [searchQuery]);
 
   const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('');

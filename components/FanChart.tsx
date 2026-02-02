@@ -40,12 +40,15 @@ const FanChart: React.FC<Props> = ({ onNavigate, selectedId, onSelect }) => {
   const [treeData, setTreeData] = useState<AncestryData | null>(null);
 
   useEffect(() => {
-    try {
-      const data = TreeService.getAncestors(selectedId);
-      setTreeData(data);
-    } catch (e) {
-      console.error(e);
-    }
+    const fetchAncestors = async () => {
+      try {
+        const data = await TreeService.getAncestors(selectedId);
+        setTreeData(data);
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    fetchAncestors();
   }, [selectedId]);
 
   if (!treeData) {

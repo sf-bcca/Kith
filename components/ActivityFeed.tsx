@@ -6,37 +6,87 @@ import { Activity } from '../types/activity';
 
 interface Props {
   onNavigate: (screen: string) => void;
+  currentUserId?: string | null;
 }
 
-const ActivityFeed: React.FC<Props> = ({ onNavigate }) => {
+const ActivityFeed: React.FC<Props> = ({ onNavigate, currentUserId }) => {
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [membersMap, setMembersMap] = useState<Record<string, string>>({});
   const [commentingId, setCommentingId] = useState<string | null>(null);
   const [commentText, setCommentText] = useState('');
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    setActivities(ActivityService.getFeed());
-  }, []);
-
-  const handleApprove = (id: string) => {
-    if (ActivityService.approveActivity(id)) {
-      setActivities(ActivityService.getFeed());
+  const fetchFeed = async () => {
+    try {
+      const [feed, members] = await Promise.all([
+        ActivityService.getFeed(),
+        FamilyService.getAll()
+      ]);
+      
+      const mMap: Record<string, string> = {};
+      members.forEach(m => {
+        mMap[m.id] = `${m.firstName} ${m.lastName}`;
+      });
+      
+      setMembersMap(mMap);
+      setActivities(feed);
+    } catch (err) {
+      console.error('Failed to fetch activity feed:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleAddComment = (activityId: string) => {
-    if (!commentText.trim()) return;
+  useEffect(() => {
+    fetchFeed();
+  }, []);
+
+  const handleApprove = async (id: string) => {
+    try {
+      const success = await ActivityService.approveActivity(id);
+      if (success) {
+        setActivities(prev => prev.map(a => 
+          a.id === id ? { ...a, status: 'approved' } : a
+        ));
+      }
+    } catch (err) {
+      console.error('Failed to approve activity:', err);
+    }
+  };
+
+  const handleAddComment = async (activityId: string) => {
+    if (!commentText.trim() || !currentUserId) return;
     
-    // Using '1' (Arthur Pendragon) as the default author for demo
-    if (ActivityService.addComment(activityId, { authorId: '1', text: commentText })) {
-      setActivities(ActivityService.getFeed());
-      setCommentingId(null);
-      setCommentText('');
+    const authorId = currentUserId;
+    const text = commentText;
+
+    try {
+      if (await ActivityService.addComment(activityId, { authorId, text })) {
+        // Update local state for immediate feedback
+        setActivities(prev => prev.map(a => {
+          if (a.id === activityId) {
+            return {
+              ...a,
+              comments: [...a.comments, {
+                id: Date.now().toString(), // Simple local ID
+                authorId,
+                text,
+                timestamp: new Date().toISOString()
+              }]
+            };
+          }
+          return a;
+        }));
+        setCommentingId(null);
+        setCommentText('');
+      }
+    } catch (err) {
+      console.error('Failed to add comment:', err);
     }
   };
 
   const getMemberName = (id: string) => {
-    const member = FamilyService.getById(id);
-    return member ? `${member.firstName} ${member.lastName}` : 'Unknown Member';
+    return membersMap[id] || 'Unknown Member';
   };
 
   const renderActivityContent = (activity: Activity) => {
@@ -162,7 +212,18 @@ const ActivityFeed: React.FC<Props> = ({ onNavigate }) => {
 
         {/* Main Feed */}
         <main className="flex-1 overflow-y-auto space-y-4 py-4 px-4 pb-32">
-          {activities.map((activity) => (
+          {loading ? (
+            <div className="flex items-center justify-center p-8 text-slate-500">
+              Loading memories...
+            </div>
+          ) : activities.length === 0 ? (
+            <div className="flex flex-col items-center justify-center p-12 text-center">
+              <div className="size-16 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 mb-4">
+                <span className="material-symbols-outlined text-3xl">info</span>
+              </div>
+              <p className="text-slate-500 font-medium">No activities yet</p>
+            </div>
+          ) : activities.map((activity) => (
             <section key={activity.id} className="bg-white rounded-xl overflow-hidden border border-slate-200 shadow-sm">
               <div className="p-4 flex flex-col gap-3">
                 {renderActivityContent(activity)}

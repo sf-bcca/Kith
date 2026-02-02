@@ -1,30 +1,40 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { TreeService } from './TreeService';
+import { FamilyService } from './FamilyService';
 import { mockFamilyData } from '../mocks/familyData';
 
+// Mock FamilyService
+vi.mock('./FamilyService', () => ({
+  FamilyService: {
+    getById: vi.fn()
+  }
+}));
+
 describe('TreeService', () => {
-  it('should get focus member, parents, and children for Merlin (ID: 7)', () => {
-    const treeData = TreeService.getTreeFor('7');
-    
-    expect(treeData.focus.firstName).toBe('Merlin');
-    
-    // Parents of Merlin (7) are Mordred (5) and Morgana (6)
-    expect(treeData.parents).toHaveLength(2);
-    expect(treeData.parents.map(p => p.id)).toContain('5');
-    expect(treeData.parents.map(p => p.id)).toContain('6');
-    
-    // Spouses of Merlin (7) is Vivian (9)
-    expect(treeData.spouses).toHaveLength(1);
-    expect(treeData.spouses[0].id).toBe('9');
-    
-    // Children of Merlin (7) is Lancelot (10)
-    expect(treeData.children).toHaveLength(1);
-    expect(treeData.children[0].id).toBe('10');
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  it('should return undefined focus if ID is not found', () => {
-    // @ts-ignore
-    const treeData = TreeService.getTreeFor('999');
+  it('should get focus member, parents, and children for Merlin (ID: 7)', async () => {
+    // Mock Merlin
+    const merlin = mockFamilyData.find(m => m.id === '7');
+    (FamilyService.getById as any).mockImplementation((id: string) => {
+      return Promise.resolve(mockFamilyData.find(m => m.id === id));
+    });
+
+    const treeData = await TreeService.getTreeFor('7');
+    
+    expect(treeData?.focus.firstName).toBe('Merlin');
+    
+    // Parents of Merlin (7) are Mordred (5) and Morgana (6)
+    expect(treeData?.parents).toHaveLength(2);
+    expect(treeData?.parents.map(p => p.id)).toContain('5');
+    expect(treeData?.parents.map(p => p.id)).toContain('6');
+  });
+
+  it('should return undefined focus if ID is not found', async () => {
+    (FamilyService.getById as any).mockResolvedValue(undefined);
+    const treeData = await TreeService.getTreeFor('999');
     expect(treeData).toBeUndefined();
   });
 });

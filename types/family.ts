@@ -11,11 +11,19 @@ export interface FamilyMember {
   deathPlace?: string;
   photoUrl?: string;
   biography?: string;
+  password?: string;
   
   // Relations stored as IDs
   parents: string[];
   spouses: string[];
   children: string[];
+}
+
+export interface LoginCredentials {
+  firstName: string;
+  lastName: string;
+  birthDate: string;
+  password?: string;
 }
 
 export interface FilterCriteria {

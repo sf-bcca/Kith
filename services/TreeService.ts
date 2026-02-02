@@ -19,37 +19,35 @@ export class TreeService {
   /**
    * Retrieves the tree data centered around a specific focus member.
    * @param focusId The ID of the member to center the tree on.
-   * @returns The TreeData object containing the focus member and their direct relations.
+   * @returns A promise that resolves to the TreeData object containing the focus member and their direct relations.
    */
-  static getTreeFor(focusId: string): TreeData | undefined {
-    const focus = FamilyService.getById(focusId);
+  static async getTreeFor(focusId: string): Promise<TreeData | undefined> {
+    const focus = await FamilyService.getById(focusId);
     if (!focus) return undefined;
 
-    const parents = focus.parents
-      .map(id => FamilyService.getById(id))
-      .filter((m): m is FamilyMember => !!m);
-
-    const spouses = focus.spouses
-      .map(id => FamilyService.getById(id))
-      .filter((m): m is FamilyMember => !!m);
-
-    const children = focus.children
-      .map(id => FamilyService.getById(id))
-      .filter((m): m is FamilyMember => !!m);
+    const parents = await Promise.all(
+      focus.parents.map(id => FamilyService.getById(id))
+    );
+    const spouses = await Promise.all(
+      focus.spouses.map(id => FamilyService.getById(id))
+    );
+    const children = await Promise.all(
+      focus.children.map(id => FamilyService.getById(id))
+    );
 
     return {
       focus,
-      parents,
-      spouses,
-      children
+      parents: parents.filter((m): m is FamilyMember => !!m),
+      spouses: spouses.filter((m): m is FamilyMember => !!m),
+      children: children.filter((m): m is FamilyMember => !!m)
     };
   }
 
   /**
    * Retrieves ancestors for pedigree chart (parents, grandparents, great-grandparents).
    */
-  static getAncestors(focusPersonId: string): AncestryData {
-    const focusPerson = FamilyService.getById(focusPersonId);
+  static async getAncestors(focusPersonId: string): Promise<AncestryData> {
+    const focusPerson = await FamilyService.getById(focusPersonId);
 
     if (!focusPerson) {
       throw new Error('Focus person not found');
@@ -59,24 +57,24 @@ export class TreeService {
     const grandparents: FamilyMember[] = [];
     const greatGrandparents: FamilyMember[] = [];
 
-    focusPerson.parents.forEach(parentId => {
-      const parent = FamilyService.getById(parentId);
+    for (const parentId of focusPerson.parents) {
+      const parent = await FamilyService.getById(parentId);
       if (parent) {
         parents.push(parent);
-        parent.parents.forEach(gpId => {
-          const gp = FamilyService.getById(gpId);
+        for (const gpId of parent.parents) {
+          const gp = await FamilyService.getById(gpId);
           if (gp) {
             grandparents.push(gp);
-            gp.parents.forEach(ggpId => {
-              const ggp = FamilyService.getById(ggpId);
+            for (const ggpId of gp.parents) {
+              const ggp = await FamilyService.getById(ggpId);
               if (ggp) {
                 greatGrandparents.push(ggp);
               }
-            });
+            }
           }
-        });
+        }
       }
-    });
+    }
 
     return {
       focusPerson,
@@ -89,13 +87,13 @@ export class TreeService {
   /**
    * Helper for FanChart, returning a flattened list by generation.
    */
-  static getFanChartData(focusPersonId: string, generations: number = 3): { person: FamilyMember, generation: number }[] {
+  static async getFanChartData(focusPersonId: string, generations: number = 3): Promise<{ person: FamilyMember, generation: number }[]> {
       const result: { person: FamilyMember, generation: number }[] = [];
       const queue: { id: string, gen: number }[] = [{ id: focusPersonId, gen: 0 }];
 
       while (queue.length > 0) {
           const { id, gen } = queue.shift()!;
-          const person = FamilyService.getById(id);
+          const person = await FamilyService.getById(id);
           if (person) {
               result.push({ person, generation: gen });
               if (gen < generations) {

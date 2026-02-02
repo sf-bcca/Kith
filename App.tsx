@@ -9,8 +9,11 @@ import HorizontalTree from './components/HorizontalTree';
 import AdminDashboard from './components/AdminDashboard';
 import DiscoverView from './components/DiscoverView';
 import SettingsView from './components/SettingsView';
+import WelcomeView from './components/WelcomeView';
+import { FamilyService } from './services/FamilyService';
 
 enum Screen {
+  WELCOME = 'Welcome',
   TREE = 'Tree',
   BIO = 'Biography',
   MEMORIES = 'Memories',
@@ -25,7 +28,47 @@ enum Screen {
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>(Screen.TREE);
-  const [selectedMemberId, setSelectedMemberId] = useState<string>('7'); // Default to Merlin
+  const [selectedMemberId, setSelectedMemberId] = useState<string>('');
+  const [loggedInMemberId, setLoggedInMemberId] = useState<string | null>(localStorage.getItem('kith_member_id'));
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Check for initial state (empty database or session)
+  useEffect(() => {
+    const checkState = async () => {
+      try {
+        setError(null);
+        
+        if (!loggedInMemberId) {
+          const members = await FamilyService.getAll();
+          if (members.length === 0) {
+            setCurrentScreen(Screen.WELCOME);
+          } else {
+            // Force welcome if no one is logged in
+            setCurrentScreen(Screen.WELCOME);
+          }
+        } else {
+          // Verify logged in member exists
+          const member = await FamilyService.getById(loggedInMemberId);
+          if (!member) {
+            localStorage.removeItem('kith_member_id');
+            setLoggedInMemberId(null);
+            setCurrentScreen(Screen.WELCOME);
+          } else {
+            if (!selectedMemberId) {
+              setSelectedMemberId(loggedInMemberId);
+            }
+          }
+        }
+      } catch (err: any) {
+        console.error('Failed to check app state:', err);
+        setError('Unable to connect to the server. Please make sure the backend is running.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    checkState();
+  }, [loggedInMemberId]);
 
   // Handle Dark Mode for Admin Dashboard
   useEffect(() => {
@@ -48,13 +91,56 @@ export default function App() {
     }
   };
 
+  const handleWelcomeComplete = (rootMemberId: string) => {
+    setLoggedInMemberId(rootMemberId);
+    localStorage.setItem('kith_member_id', rootMemberId);
+    setSelectedMemberId(rootMemberId);
+    setCurrentScreen(Screen.TREE);
+  };
+
+  const handleLogout = () => {
+    setLoggedInMemberId(null);
+    localStorage.removeItem('kith_member_id');
+    setCurrentScreen(Screen.WELCOME);
+  };
+
   const renderScreen = () => {
+    if (loading) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="animate-pulse flex flex-col items-center">
+            <div className="w-12 h-12 bg-primary/20 rounded-full mb-4"></div>
+            <p className="text-slate-400 font-medium">Loading Kith...</p>
+          </div>
+        </div>
+      );
+    }
+
+    if (error) {
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-6 text-center">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4 text-red-600">
+            <span className="material-symbols-outlined text-3xl">cloud_off</span>
+          </div>
+          <h3 className="text-lg font-bold text-slate-900 mb-1">Server Connection Error</h3>
+          <p className="text-slate-500 max-w-xs mb-6">{error}</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="bg-primary text-white px-6 py-2.5 rounded-xl font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-all"
+          >
+            Retry Connection
+          </button>
+        </div>
+      );
+    }
+
     switch (currentScreen) {
+      case Screen.WELCOME: return <WelcomeView onComplete={handleWelcomeComplete} />;
       case Screen.TREE: return <FamilyTreeView onNavigate={handleNavigate} selectedId={selectedMemberId} onSelect={setSelectedMemberId} />;
-      case Screen.BIO: return <MemberBiography onNavigate={handleNavigate} memberId={selectedMemberId} />;
-      case Screen.MEMORIES: return <ActivityFeed onNavigate={handleNavigate} />;
+      case Screen.BIO: return <MemberBiography onNavigate={handleNavigate} memberId={selectedMemberId} loggedInId={loggedInMemberId} />;
+      case Screen.MEMORIES: return <ActivityFeed onNavigate={handleNavigate} currentUserId={loggedInMemberId} />;
       case Screen.DISCOVER: return <DiscoverView onNavigate={handleNavigate} />;
-      case Screen.SETTINGS: return <SettingsView onNavigate={handleNavigate} />;
+      case Screen.SETTINGS: return <SettingsView onNavigate={handleNavigate} onLogout={handleLogout} loggedInId={loggedInMemberId} />;
       case Screen.PEDIGREE: return <PedigreeChart onNavigate={handleNavigate} selectedId={selectedMemberId} onSelect={setSelectedMemberId} />;
       case Screen.FAN: return <FanChart onNavigate={handleNavigate} selectedId={selectedMemberId} onSelect={setSelectedMemberId} />;
       case Screen.DIRECTORY: return <FamilyDirectory onNavigate={handleNavigate} />;
@@ -66,28 +152,32 @@ export default function App() {
 
   return (
     <div className="relative min-h-screen bg-gray-50 text-slate-900 font-display">
-      {/* View Switcher for Demo Purposes */}
-      <div className="fixed top-20 right-4 z-[100] group">
-         <button className="bg-slate-900 text-white p-3 rounded-full shadow-xl hover:scale-110 transition-transform flex items-center justify-center">
-            <span className="material-symbols-outlined">grid_view</span>
-         </button>
-         <div className="absolute top-12 right-0 w-48 bg-white rounded-xl shadow-2xl border border-gray-100 p-2 hidden group-hover:block animate-in fade-in slide-in-from-top-2">
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider px-2 py-1 mb-1">Select Screen</p>
-            {Object.values(Screen).map((screen) => (
-              <button
-                key={screen}
-                onClick={() => handleNavigate(screen)}
-                className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  currentScreen === screen 
-                    ? 'bg-primary/10 text-primary' 
-                    : 'text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                {screen}
-              </button>
-            ))}
-         </div>
-      </div>
+      {/* View Switcher for Demo Purposes - Only show if not on Welcome screen */}
+      {currentScreen !== Screen.WELCOME && (
+        <div className="fixed top-20 right-4 z-[100] group">
+           <button className="bg-slate-900 text-white p-3 rounded-full shadow-xl hover:scale-110 transition-transform flex items-center justify-center">
+              <span className="material-symbols-outlined">grid_view</span>
+           </button>
+           <div className="absolute top-12 right-0 w-48 bg-white rounded-xl shadow-2xl border border-gray-100 p-2 hidden group-hover:block animate-in fade-in slide-in-from-top-2">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider px-2 py-1 mb-1">Select Screen</p>
+              {Object.values(Screen)
+                .filter(s => s !== Screen.WELCOME)
+                .map((screen) => (
+                <button
+                  key={screen}
+                  onClick={() => handleNavigate(screen)}
+                  className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    currentScreen === screen 
+                      ? 'bg-primary/10 text-primary' 
+                      : 'text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  {screen}
+                </button>
+              ))}
+           </div>
+        </div>
+      )}
 
       {renderScreen()}
     </div>
