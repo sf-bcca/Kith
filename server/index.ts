@@ -2,13 +2,16 @@ import express, { Request, Response } from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 import { pool } from './db';
 import settingsRoutes from './routes/settings';
+import { authenticate, authorizeOwner } from './middleware/auth';
 
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 8080;
+const JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 
 const SALT_ROUNDS = 10;
 const MEMBER_COLUMNS = `
@@ -40,7 +43,7 @@ app.get('/api/health', async (req: Request, res: Response) => {
   }
 });
 
-app.get('/api/members', async (req: Request, res: Response) => {
+app.get('/api/members', authenticate, async (req: Request, res: Response) => {
   try {
     const result = await pool.query(`SELECT ${MEMBER_COLUMNS} FROM family_members ORDER BY last_name, first_name`);
     // Explicitly sanitize results as defense in depth
@@ -51,7 +54,7 @@ app.get('/api/members', async (req: Request, res: Response) => {
   }
 });
 
-app.get('/api/members/:id', async (req: Request, res: Response) => {
+app.get('/api/members/:id', authenticate, authorizeOwner, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const result = await pool.query(`SELECT ${MEMBER_COLUMNS} FROM family_members WHERE id = $1`, [id]);
@@ -97,7 +100,7 @@ app.post('/api/members', async (req: Request, res: Response) => {
   }
 });
 
-app.post('/api/login', async (req: Request, res: Response) => {
+app.post('/api/auth/login', async (req: Request, res: Response) => {
   try {
     const { first_name, last_name, birth_date, password } = req.body;
     
@@ -120,11 +123,41 @@ app.post('/api/login', async (req: Request, res: Response) => {
         return res.status(401).json({ error: 'Invalid password' });
       }
     } else if (password) {
-      // If user has no password set but one was provided
       return res.status(401).json({ error: 'Invalid password' });
     }
 
+    // Generate JWT
+    const token = jwt.sign({ sub: member.id }, JWT_SECRET, { expiresIn: '24h' });
+
     // Exclude password from response
+    const { password: _, ...memberWithoutPassword } = member;
+    res.json({ member: memberWithoutPassword, token });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/login', async (req: Request, res: Response) => {
+  // Legacy login endpoint - redirect or proxy to auth/login
+  try {
+    const { first_name, last_name, birth_date, password } = req.body;
+    const result = await pool.query(
+      'SELECT * FROM family_members WHERE first_name = $1 AND last_name = $2 AND birth_date = $3',
+      [first_name, last_name, birth_date]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    const member = result.rows[0];
+    if (member.password) {
+      const isMatch = await bcrypt.compare(password, member.password);
+      if (!isMatch) {
+        return res.status(401).json({ error: 'Invalid password' });
+      }
+    }
+
     const { password: _, ...memberWithoutPassword } = member;
     res.json(memberWithoutPassword);
   } catch (err: any) {
@@ -132,7 +165,7 @@ app.post('/api/login', async (req: Request, res: Response) => {
   }
 });
 
-app.put('/api/members/:id', async (req: Request, res: Response) => {
+app.put('/api/members/:id', authenticate, authorizeOwner, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { 
@@ -185,7 +218,7 @@ app.put('/api/members/:id', async (req: Request, res: Response) => {
   }
 });
 
-app.delete('/api/members/:id', async (req: Request, res: Response) => {
+app.delete('/api/members/:id', authenticate, authorizeOwner, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const result = await pool.query('DELETE FROM family_members WHERE id = $1 RETURNING *', [id]);

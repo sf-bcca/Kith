@@ -19,15 +19,15 @@ This plan outlines the steps to remediate identified security vulnerabilities, f
 ## Phase 2: JWT Authentication & IDOR Protection
 *Goal: Secure API endpoints with JWT and prevent unauthorized data access.*
 
-- [ ] Task: Write Tests: Authentication middleware and protected routes
-    - [ ] Create tests in `tests/auth_middleware.test.ts` to verify 401/403 responses for unauthenticated/unauthorized requests.
-- [ ] Task: Implement: JWT Authentication logic
-    - [ ] Add `jsonwebtoken` and `@types/jsonwebtoken` to `server/package.json`.
-    - [ ] Create an auth middleware in `server/middleware/auth.ts`.
-    - [ ] Implement `/api/auth/login` endpoint to issue JWTs.
-- [ ] Task: Implement: Protected routes and IDOR checks
-    - [ ] Apply auth middleware to all sensitive member and settings routes.
-    - [ ] Implement checks to ensure users can only modify their own data based on JWT `sub`.
+- [x] Task: Write Tests: Authentication middleware and protected routes [6e7d218]
+    - [x] Create tests in `tests/auth_middleware.test.ts` to verify 401/403 responses for unauthenticated/unauthorized requests.
+- [x] Task: Implement: JWT Authentication logic [07a81f1]
+    - [x] Add `jsonwebtoken` and `@types/jsonwebtoken` to `server/package.json`.
+    - [x] Create an auth middleware in `server/middleware/auth.ts`.
+    - [x] Implement `/api/auth/login` endpoint to issue JWTs.
+- [x] Task: Implement: Protected routes and IDOR checks [07a81f1]
+    - [x] Apply auth middleware to all sensitive member and settings routes.
+    - [x] Implement checks to ensure users can only modify their own data based on JWT `sub`.
 - [ ] Task: Implement: Frontend JWT handling
     - [ ] Update `FamilyService.ts` to store the token and include it in `Authorization` headers.
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: JWT Authentication & IDOR Protection' (Protocol in workflow.md)
