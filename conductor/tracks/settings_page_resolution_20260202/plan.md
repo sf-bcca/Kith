@@ -10,7 +10,7 @@ This plan outlines the full-stack implementation of the Account, Privacy, Prefer
 - [x] Task: Implement base Settings controller and route group in Express d21cbd8
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Database & Backend Base' (Protocol in workflow.md)
 
-## Phase 2: Account Settings API & UI
+## Phase 2: Account Settings API & UI [checkpoint: ff64990]
 *Goal: Implement functional Account settings (username, email, password).*
 
 - [x] Task: Write Tests: Backend API endpoints for updating account info f9326c0
