@@ -1,8 +1,8 @@
-# Implementation Plan: Family Member Data Model and Directory Search
+# Implementation Plan: Family Member Data Model and Directory Search [checkpoint: e05a6d8]
 
 This plan follows the Test-Driven Development (TDD) process as defined in the project workflow.
 
-## Phase 1: Data Modeling and Service Foundation
+## Phase 1: Data Modeling and Service Foundation [checkpoint: e05a6d8]
 - [x] Task: Define `FamilyMember` type and mock data
     - [x] Create `types/family.ts` with the `FamilyMember` interface
     - [x] Create `mocks/familyData.ts` with representative test data
