@@ -21,10 +21,10 @@ This plan follows the Test-Driven Development (TDD) process as defined in the pr
 - [ ] Task: Conductor - User Manual Verification 'Directory Search Logic' (Protocol in workflow.md)
 
 ## Phase 3: UI Implementation
-- [ ] Task: Create `DirectorySearch` UI Component
-    - [ ] Write tests for `DirectorySearch` component (rendering, input handling)
-    - [ ] Implement `DirectorySearch.tsx` using Tailwind CSS
-- [ ] Task: Refactor `FamilyDirectory` to use `FamilyService`
-    - [ ] Write integration tests for `FamilyDirectory`
-    - [ ] Update `FamilyDirectory.tsx` to integrate search and service logic
+- [x] Task: Create `DirectorySearch` UI Component
+    - [x] Write tests for `DirectorySearch` component (rendering, input handling)
+    - [x] Implement `DirectorySearch.tsx` using Tailwind CSS
+- [x] Task: Refactor `FamilyDirectory` to use `FamilyService`
+    - [x] Write integration tests for `FamilyDirectory`
+    - [x] Update `FamilyDirectory.tsx` to integrate search and service logic
 - [ ] Task: Conductor - User Manual Verification 'UI Implementation' (Protocol in workflow.md)
