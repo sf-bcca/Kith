@@ -9,26 +9,38 @@ describe('FamilyTreeView', () => {
     render(<FamilyTreeView onNavigate={vi.fn()} />);
     
     // Merlin should be the focus
-    expect(screen.getByText('Merlin Pendragon')).toBeInTheDocument();
+    expect(screen.getByText(/Merlin Pendragon/)).toBeInTheDocument();
     
     // Merlin's parents (Mordred and Morgana) should be visible
-    expect(screen.getByText('Mordred Pendragon')).toBeInTheDocument();
-    expect(screen.getByText('Morgana Pendragon')).toBeInTheDocument();
+    expect(screen.getByText(/Mordred Pendragon/)).toBeInTheDocument();
+    expect(screen.getByText(/Morgana Pendragon/)).toBeInTheDocument();
     
     // Merlin's child (Lancelot) should be visible
-    expect(screen.getByText('Lancelot Pendragon')).toBeInTheDocument();
+    expect(screen.getByText(/Lancelot Pendragon/)).toBeInTheDocument();
   });
 
   it('changes focus when a relative is clicked', () => {
     render(<FamilyTreeView onNavigate={vi.fn()} />);
     
-    // Click on Mordred Pendragon
-    const mordredNode = screen.getByText('Mordred Pendragon');
-    fireEvent.click(mordredNode);
+    // Click on Mordred Pendragon (the node container, not the name)
+    // We'll find it by the text and then get the parent div that has the onClick focus handler
+    const mordredName = screen.getByText(/Mordred Pendragon/);
+    const mordredNode = mordredName.closest('.cursor-pointer');
+    fireEvent.click(mordredNode!);
     
-    // Now Mordred should be the focus (larger size, or just confirmed via presence of his relations)
-    // When Mordred is focus, his parents (Arthur and Guinevere) should appear
-    expect(screen.getByText('Arthur Pendragon')).toBeInTheDocument();
-    expect(screen.getByText('Guinevere Pendragon')).toBeInTheDocument();
+    // Now Mordred should be the focus
+    expect(screen.getByText(/Arthur Pendragon/)).toBeInTheDocument();
+    expect(screen.getByText(/Guinevere Pendragon/)).toBeInTheDocument();
+  });
+
+  it('navigates to the biography when a name is clicked', () => {
+    const onNavigate = vi.fn();
+    render(<FamilyTreeView onNavigate={onNavigate} />);
+    
+    // Click on Merlin's name
+    const merlinName = screen.getByText(/Merlin Pendragon/);
+    fireEvent.click(merlinName);
+    
+    expect(onNavigate).toHaveBeenCalledWith('Biography', '7');
   });
 });

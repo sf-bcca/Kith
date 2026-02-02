@@ -12,7 +12,8 @@ const MemberNode: React.FC<{
   label?: string;
   isFocus?: boolean;
   onClick: () => void;
-}> = ({ member, label, isFocus, onClick }) => (
+  onViewBio: (id: string) => void;
+}> = ({ member, label, isFocus, onClick, onViewBio }) => (
   <div 
     className="flex flex-col items-center gap-2 group cursor-pointer"
     onClick={onClick}
@@ -32,7 +33,15 @@ const MemberNode: React.FC<{
       )}
     </div>
     <div className="text-center">
-      <p className={`${isFocus ? 'text-sm' : 'text-xs'} font-bold`}>{member.firstName} {member.lastName}</p>
+      <p 
+        className={`${isFocus ? 'text-sm' : 'text-xs'} font-bold hover:text-primary transition-colors`}
+        onClick={(e) => {
+          e.stopPropagation();
+          onViewBio(member.id);
+        }}
+      >
+        {member.firstName} {member.lastName}
+      </p>
       {label ? (
         <p className="text-[10px] uppercase tracking-wider font-semibold text-primary">{label}</p>
       ) : (
@@ -60,6 +69,10 @@ const FamilyTreeView: React.FC<Props> = ({ onNavigate }) => {
 
   const { focus, parents, spouses, children } = treeData;
 
+  const handleViewBio = (id: string) => {
+    onNavigate('Biography', id);
+  };
+
   return (
     <div className="bg-background-light font-display text-slate-900 min-h-screen flex flex-col overflow-hidden relative">
       {/* Top App Bar */}
@@ -80,9 +93,23 @@ const FamilyTreeView: React.FC<Props> = ({ onNavigate }) => {
 
       {/* Main Canvas */}
       <main className="flex-1 relative overflow-auto bg-[#f8f9fc] flex items-center justify-center p-8 pb-32">
-        {/* Connecting Lines SVG (Static for now, will refine in Phase 3) */}
+        {/* Connecting Lines SVG */}
         <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-30" preserveAspectRatio="none">
-          <path d="M 50% 120 L 50% 200 M 20% 200 L 80% 200 M 20% 200 L 20% 280 M 80% 200 L 80% 280 M 50% 450 L 50% 530" fill="none" stroke="#cbd5e1" strokeWidth="2"></path>
+          {/* Line from Parents to Focus */}
+          {parents.length > 0 && (
+            <path d="M 50% 120 L 50% 220" fill="none" stroke="#cbd5e1" strokeWidth="2" />
+          )}
+          
+          {/* Line from Focus to Children */}
+          {children.length > 0 && (
+            <>
+              <path d="M 50% 380 L 50% 460" fill="none" stroke="#cbd5e1" strokeWidth="2" />
+              {/* Horizontal bar for multiple children */}
+              {children.length > 1 && (
+                <path d="M 25% 460 L 75% 460" fill="none" stroke="#cbd5e1" strokeWidth="2" />
+              )}
+            </>
+          )}
         </svg>
 
         <div className="relative flex flex-col items-center gap-16 w-full max-w-4xl pt-10">
@@ -93,6 +120,7 @@ const FamilyTreeView: React.FC<Props> = ({ onNavigate }) => {
                 key={parent.id} 
                 member={parent} 
                 onClick={() => setFocusId(parent.id)} 
+                onViewBio={handleViewBio}
               />
             ))}
           </div>
@@ -104,12 +132,14 @@ const FamilyTreeView: React.FC<Props> = ({ onNavigate }) => {
               isFocus 
               label={focusId === '7' ? 'Me (User)' : undefined}
               onClick={() => {}} // Already focus
+              onViewBio={handleViewBio}
             />
             {spouses.map(spouse => (
               <MemberNode 
                 key={spouse.id} 
                 member={spouse} 
                 onClick={() => setFocusId(spouse.id)} 
+                onViewBio={handleViewBio}
               />
             ))}
           </div>
@@ -121,6 +151,7 @@ const FamilyTreeView: React.FC<Props> = ({ onNavigate }) => {
                 key={child.id} 
                 member={child} 
                 onClick={() => setFocusId(child.id)} 
+                onViewBio={handleViewBio}
               />
             ))}
             {/* Add Child */}
