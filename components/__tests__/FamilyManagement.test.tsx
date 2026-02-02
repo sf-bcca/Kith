@@ -22,10 +22,7 @@ describe('FamilyManagement', () => {
   ];
 
   it('should render family memberships', async () => {
-    (FamilyService.getById as any).mockImplementation((id: string) => {
-      const detail = mockFamilyDetails.find(d => d.id === id);
-      return Promise.resolve(detail);
-    });
+    (FamilyService.getByIds as any).mockResolvedValue(mockFamilyDetails);
 
     render(<FamilyManagement member={mockMember as any} />);
     

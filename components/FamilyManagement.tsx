@@ -25,10 +25,8 @@ const FamilyManagement: React.FC<Props> = ({ member }) => {
 
       setLoading(true);
       try {
-        const details = await Promise.all(
-          allIds.map(id => FamilyService.getById(id))
-        );
-        setFamilyDetails(details.filter((d): d is FamilyMember => !!d));
+        const details = await FamilyService.getByIds(allIds);
+        setFamilyDetails(details);
       } catch (err) {
         console.error('Failed to fetch family details:', err);
       } finally {

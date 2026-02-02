@@ -37,7 +37,6 @@ describe('Health Check API', () => {
     expect(response.body).toEqual({
       status: 'error',
       database: 'disconnected',
-      message: 'DB Connection Error',
     });
   });
 });

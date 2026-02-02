@@ -25,7 +25,7 @@ describe('AccountSettings', () => {
 
   it('should call onUpdate when the form is submitted', async () => {
     const onUpdate = vi.fn();
-    (FamilyService.update as any).mockResolvedValue({ ...mockMember, email: 'new@camelot.com' });
+    (FamilyService.updateSettings as any).mockResolvedValue({ ...mockMember, email: 'new@camelot.com' });
 
     render(<AccountSettings member={mockMember as any} onUpdate={onUpdate} />);
     
@@ -36,7 +36,7 @@ describe('AccountSettings', () => {
     fireEvent.click(saveButton);
 
     await waitFor(() => {
-      expect(FamilyService.update).toHaveBeenCalledWith('1', expect.objectContaining({
+      expect(FamilyService.updateSettings).toHaveBeenCalledWith('1', expect.objectContaining({
         email: 'new@camelot.com'
       }));
       expect(onUpdate).toHaveBeenCalled();
@@ -44,7 +44,7 @@ describe('AccountSettings', () => {
   });
 
   it('should show error when password update fails', async () => {
-    (FamilyService.update as any).mockRejectedValue(new Error('Invalid current password'));
+    (FamilyService.updateSettings as any).mockRejectedValue(new Error('Invalid current password'));
 
     render(<AccountSettings member={mockMember as any} onUpdate={vi.fn()} />);
     

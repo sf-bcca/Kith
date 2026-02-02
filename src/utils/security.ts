@@ -17,7 +17,7 @@ export const validateImageUrl = (url: string | undefined): string => {
 
   // Prevent CSS injection by escaping or blocking characters that can break out of url()
   // Malicious example: https://example.com/photo.jpg"); background: url("http://evil.com/log
-  if (url.includes('"') || url.includes("'") || url.includes(')') || url.includes('(')) {
+  if (url.includes('"') || url.includes("'") || url.includes(')')) {
     console.warn('Blocked potentially malicious characters in URL:', url);
     return '';
   }

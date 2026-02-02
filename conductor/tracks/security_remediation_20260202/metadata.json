@@ -1,8 +1,0 @@
-{
-  "track_id": "security_remediation_20260202",
-  "type": "security",
-  "status": "new",
-  "created_at": "2026-02-02T15:00:00Z",
-  "updated_at": "2026-02-02T15:00:00Z",
-  "description": "Fix all security issues identified in the audit."
-}

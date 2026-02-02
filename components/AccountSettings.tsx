@@ -36,11 +36,11 @@ const AccountSettings: React.FC<Props> = ({ member, onUpdate }) => {
 
     setLoading(true);
     try {
-      const updated = await FamilyService.update(member.id, {
+      const updated = await FamilyService.updateSettings(member.id, {
         email,
         username,
         ...(showPasswordChange ? { current_password: currentPassword, new_password: newPassword } : {})
-      } as any);
+      });
       
       onUpdate(updated);
       setSuccess(true);

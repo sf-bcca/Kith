@@ -12,7 +12,7 @@ vi.mock('../server/db', () => ({
   },
 }));
 
-const JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
+const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
 const token = jwt.sign({ sub: '1' }, JWT_SECRET);
 
 describe('Security: Hardening & Sanitization', () => {

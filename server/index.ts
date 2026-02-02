@@ -12,7 +12,12 @@ dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 8080;
-const JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET && process.env.NODE_ENV === 'production') {
+  console.error('FATAL: JWT_SECRET environment variable is not set.');
+  process.exit(1);
+}
 
 const SALT_ROUNDS = 10;
 const MEMBER_COLUMNS = `
@@ -38,15 +43,25 @@ app.get('/api/health', async (req: Request, res: Response) => {
   } catch (err: any) {
     res.status(500).json({ 
       status: 'error', 
-      database: 'disconnected',
-      message: err.message 
+      database: 'disconnected'
     });
   }
 });
 
 app.get('/api/members', authenticate, async (req: Request, res: Response, next) => {
   try {
-    const result = await pool.query(`SELECT ${MEMBER_COLUMNS} FROM family_members ORDER BY last_name, first_name`);
+    const { ids } = req.query;
+    let query = `SELECT ${MEMBER_COLUMNS} FROM family_members WHERE (visibility = 'public' OR visibility = 'family-only' OR id = $1)`;
+    let params: any[] = [(req as any).user.id];
+
+    if (ids) {
+      const idArray = (ids as string).split(',');
+      query += ` AND id = ANY($2)`;
+      params.push(idArray);
+    }
+
+    query += ` ORDER BY last_name, first_name`;
+    const result = await pool.query(query, params);
     // Explicitly sanitize results as defense in depth
     const sanitizedRows = result.rows.map(({ password, ...rest }: any) => rest);
     res.json(sanitizedRows);
@@ -55,12 +70,15 @@ app.get('/api/members', authenticate, async (req: Request, res: Response, next) 
   }
 });
 
-app.get('/api/members/:id', authenticate, authorizeOwner, async (req: Request, res: Response, next) => {
+app.get('/api/members/:id', authenticate, async (req: Request, res: Response, next) => {
   try {
     const { id } = req.params;
-    const result = await pool.query(`SELECT ${MEMBER_COLUMNS} FROM family_members WHERE id = $1`, [id]);
+    const result = await pool.query(
+      `SELECT ${MEMBER_COLUMNS} FROM family_members WHERE id = $1 AND (visibility = 'public' OR visibility = 'family-only' OR id = $2)`, 
+      [id, (req as any).user.id]
+    );
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Member not found' });
+      return res.status(404).json({ error: 'Member not found or unauthorized' });
     }
     // Explicitly sanitize as defense in depth
     const { password, ...sanitizedMember } = result.rows[0];
@@ -128,39 +146,11 @@ app.post('/api/auth/login', async (req: Request, res: Response, next) => {
     }
 
     // Generate JWT
-    const token = jwt.sign({ sub: member.id }, JWT_SECRET, { expiresIn: '24h' });
+    const token = jwt.sign({ sub: member.id }, JWT_SECRET || 'dev-secret', { expiresIn: '24h' });
 
     // Exclude password from response
     const { password: _, ...memberWithoutPassword } = member;
     res.json({ member: memberWithoutPassword, token });
-  } catch (err: any) {
-    next(err);
-  }
-});
-
-app.post('/api/login', async (req: Request, res: Response, next) => {
-  // Legacy login endpoint - redirect or proxy to auth/login
-  try {
-    const { first_name, last_name, birth_date, password } = req.body;
-    const result = await pool.query(
-      'SELECT * FROM family_members WHERE first_name = $1 AND last_name = $2 AND birth_date = $3',
-      [first_name, last_name, birth_date]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
-    const member = result.rows[0];
-    if (member.password) {
-      const isMatch = await bcrypt.compare(password, member.password);
-      if (!isMatch) {
-        return res.status(401).json({ error: 'Invalid password' });
-      }
-    }
-
-    const { password: _, ...memberWithoutPassword } = member;
-    res.json(memberWithoutPassword);
   } catch (err: any) {
     next(err);
   }
@@ -190,7 +180,7 @@ app.put('/api/members/:id', authenticate, authorizeOwner, async (req: Request, r
       bio = COALESCE($7, bio), 
       profile_image = COALESCE($8, profile_image), 
       relationships = COALESCE($9, relationships),
-      password = COALESCE($10, password),
+      password = CASE WHEN $10 IS NOT NULL AND $10 <> '' THEN $10 ELSE password END,
       email = COALESCE($11, email),
       username = COALESCE($12, username),
       dark_mode = COALESCE($13, dark_mode),
@@ -222,7 +212,7 @@ app.put('/api/members/:id', authenticate, authorizeOwner, async (req: Request, r
 app.delete('/api/members/:id', authenticate, authorizeOwner, async (req: Request, res: Response, next) => {
   try {
     const { id } = req.params;
-    const result = await pool.query('DELETE FROM family_members WHERE id = $1 RETURNING *', [id]);
+    const result = await pool.query(`DELETE FROM family_members WHERE id = $1 RETURNING ${MEMBER_COLUMNS}`, [id]);
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Member not found' });
     }

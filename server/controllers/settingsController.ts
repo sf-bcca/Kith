@@ -4,7 +4,7 @@ import { pool } from '../db';
 
 const SALT_ROUNDS = 10;
 
-export const getSettings = async (req: Request, res: Response) => {
+export const getSettings = async (req: Request, res: Response, next: any) => {
   try {
     const { id } = req.params;
     const result = await pool.query(
@@ -19,11 +19,11 @@ export const getSettings = async (req: Request, res: Response) => {
     const { password: _, ...sanitizedSettings } = result.rows[0];
     res.json(sanitizedSettings);
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
-export const updateSettings = async (req: Request, res: Response) => {
+export const updateSettings = async (req: Request, res: Response, next: any) => {
   try {
     const { id } = req.params;
     const { 
@@ -82,6 +82,6 @@ export const updateSettings = async (req: Request, res: Response) => {
     const { password: _, ...sanitizedResult } = result.rows[0];
     res.json(sanitizedResult);
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };

@@ -89,6 +89,24 @@ export class FamilyService {
   }
 
   /**
+   * Retrieves multiple family members by their IDs in a single request.
+   * @param ids Array of member IDs to retrieve.
+   * @returns A promise that resolves to an array of FamilyMember objects.
+   */
+  static async getByIds(ids: string[]): Promise<FamilyMember[]> {
+    if (ids.length === 0) return [];
+    
+    const response = await fetch(`${API_URL}/api/members?ids=${ids.join(',')}`, {
+      headers: this.getHeaders(),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to fetch family members');
+    }
+    const data = await response.json();
+    return this.mapBackendToFrontend(data);
+  }
+
+  /**
    * Searches for family members by name (first name, last name, or full name).
    * @param query The search query string.
    * @returns A promise that resolves to an array of FamilyMember objects that match the search query.
@@ -216,7 +234,8 @@ export class FamilyService {
       throw new Error(errorData.error || 'Failed to update settings');
     }
 
-    return await response.json();
+    const data = await response.json();
+    return this.mapSingleToFrontend(data);
   }
 
   /**

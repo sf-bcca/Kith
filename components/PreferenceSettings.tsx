@@ -23,7 +23,7 @@ const PreferenceSettings: React.FC<Props> = ({ member, onUpdate }) => {
     setLoading(true);
 
     try {
-      const updated = await FamilyService.update(member.id, {
+      const updated = await FamilyService.updateSettings(member.id, {
         darkMode,
         language,
         notificationsEmail: emailNotif,

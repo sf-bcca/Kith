@@ -22,7 +22,7 @@ describe('PrivacySettings', () => {
 
   it('should call onUpdate when settings change', async () => {
     const onUpdate = vi.fn();
-    (FamilyService.update as any).mockResolvedValue({ ...mockMember, visibility: 'public' });
+    (FamilyService.updateSettings as any).mockResolvedValue({ ...mockMember, visibility: 'public' });
 
     render(<PrivacySettings member={mockMember as any} onUpdate={onUpdate} />);
     
@@ -33,7 +33,7 @@ describe('PrivacySettings', () => {
     fireEvent.click(saveButton);
 
     await waitFor(() => {
-      expect(FamilyService.update).toHaveBeenCalledWith('1', expect.objectContaining({
+      expect(FamilyService.updateSettings).toHaveBeenCalledWith('1', expect.objectContaining({
         visibility: 'public'
       }));
       expect(onUpdate).toHaveBeenCalled();

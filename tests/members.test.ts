@@ -11,7 +11,7 @@ vi.mock('../server/db', () => ({
   },
 }));
 
-const JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
+const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
 const token = jwt.sign({ sub: '1' }, JWT_SECRET);
 
 describe('Members API', () => {
@@ -33,8 +33,7 @@ describe('Members API', () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(mockMembers);
-      expect(pool.query).toHaveBeenCalledWith(expect.stringContaining('id, first_name, last_name'));
-      expect(pool.query).toHaveBeenCalledWith(expect.stringContaining('FROM family_members ORDER BY last_name, first_name'));
+      expect(pool.query).toHaveBeenCalledWith(expect.stringContaining('id, first_name, last_name'), ['1']);
     });
 
     it('should return 500 if database query fails', async () => {
@@ -60,8 +59,7 @@ describe('Members API', () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(mockMember);
-      expect(pool.query).toHaveBeenCalledWith(expect.stringContaining('id, first_name, last_name'), ['1']);
-      expect(pool.query).toHaveBeenCalledWith(expect.stringContaining('WHERE id = $1'), ['1']);
+      expect(pool.query).toHaveBeenCalledWith(expect.stringContaining('id, first_name, last_name'), ['1', '1']);
     });
 
     it('should return 404 if member not found', async () => {
@@ -73,7 +71,7 @@ describe('Members API', () => {
         .set('Authorization', `Bearer ${notFoundToken}`);
 
       expect(response.status).toBe(404);
-      expect(response.body).toEqual({ error: 'Member not found' });
+      expect(response.body).toEqual({ error: 'Member not found or unauthorized' });
     });
   });
 });

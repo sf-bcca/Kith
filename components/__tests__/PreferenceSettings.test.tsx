@@ -24,7 +24,7 @@ describe('PreferenceSettings', () => {
 
   it('should call onUpdate when preferences change', async () => {
     const onUpdate = vi.fn();
-    (FamilyService.update as any).mockResolvedValue({ ...mockMember, darkMode: true });
+    (FamilyService.updateSettings as any).mockResolvedValue({ ...mockMember, darkMode: true });
 
     render(<PreferenceSettings member={mockMember as any} onUpdate={onUpdate} />);
     
@@ -35,7 +35,7 @@ describe('PreferenceSettings', () => {
     fireEvent.click(saveButton);
 
     await waitFor(() => {
-      expect(FamilyService.update).toHaveBeenCalledWith('1', expect.objectContaining({
+      expect(FamilyService.updateSettings).toHaveBeenCalledWith('1', expect.objectContaining({
         darkMode: true
       }));
       expect(onUpdate).toHaveBeenCalled();
