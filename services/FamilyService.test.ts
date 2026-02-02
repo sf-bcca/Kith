@@ -54,6 +54,43 @@ describe('FamilyService', () => {
     expect(member?.firstName).toBe('Merlin');
   });
 
+  it('should map settings fields correctly from backend', async () => {
+    const targetId = '1';
+    (fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({
+        id: targetId,
+        first_name: 'Arthur',
+        last_name: 'Pendragon',
+        email: 'arthur@camelot.com',
+        dark_mode: true,
+        language: 'en-GB'
+      })
+    });
+
+    const member = await FamilyService.getById(targetId);
+    expect(member?.email).toBe('arthur@camelot.com');
+    expect(member?.darkMode).toBe(true);
+    expect(member?.language).toBe('en-GB');
+  });
+
+  it('should map settings fields correctly to backend', async () => {
+    (fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ id: '1' })
+    });
+
+    await FamilyService.update('1', {
+      email: 'new@example.com',
+      darkMode: false
+    });
+
+    const lastCall = (fetch as any).mock.calls[(fetch as any).mock.calls.length - 1];
+    const body = JSON.parse(lastCall[1].body);
+    expect(body.email).toBe('new@example.com');
+    expect(body.dark_mode).toBe(false);
+  });
+
   it('should return undefined for a non-existent ID', async () => {
     (fetch as any).mockResolvedValueOnce({
       status: 404,
