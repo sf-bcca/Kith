@@ -22,8 +22,8 @@ This plan outlines the full-stack implementation of the Account, Privacy, Prefer
 ## Phase 3: Privacy & Preferences
 *Goal: Implement Privacy and application Preferences.*
 
-- [ ] Task: Write Tests: API endpoints for privacy and preference updates
-- [ ] Task: Implement: Backend logic for privacy/preference persistence
+- [x] Task: Write Tests: API endpoints for privacy and preference updates 9ad0d98
+- [x] Task: Implement: Backend logic for privacy/preference persistence 9ad0d98
 - [ ] Task: Write Tests: PrivacySettings and PreferenceSettings React components
 - [ ] Task: Implement: UI for Privacy and Preferences (Dark Mode toggle, Language selector)
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Privacy & Preferences' (Protocol in workflow.md)
