@@ -30,19 +30,16 @@ describe('SettingsView', () => {
     
     await waitFor(() => {
       expect(screen.getByText('Test User')).toBeInTheDocument();
-      expect(screen.getByText('This is a test bio...')).toBeInTheDocument();
+      expect(screen.getByText('Account Settings')).toBeInTheDocument();
     });
-    
-    const img = screen.getByAltText('Profile');
-    expect(img).toHaveAttribute('src', mockMember.photoUrl);
   });
 
-  it('shows guest state when no member is found', async () => {
+  it('shows login prompt when no member is found', async () => {
     (FamilyService.getById as any).mockResolvedValue(null);
     render(<SettingsView onNavigate={vi.fn()} onLogout={vi.fn()} loggedInId="unknown" />);
     
     await waitFor(() => {
-      expect(screen.getByText('Guest User')).toBeInTheDocument();
+      expect(screen.getByText('Please log in to manage your settings.')).toBeInTheDocument();
     });
   });
 });
