@@ -2,7 +2,7 @@
 
 This plan follows the TDD process.
 
-## Phase 1: Data Model and Service Foundation
+## Phase 1: Data Model and Service Foundation [checkpoint: b393593]
 - [x] Task: Define `Activity` types and mock data c3f59f9
     - [x] Create `types/activity.ts`
     - [x] Create `mocks/activityData.ts`
