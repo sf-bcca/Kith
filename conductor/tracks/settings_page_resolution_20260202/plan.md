@@ -13,8 +13,8 @@ This plan outlines the full-stack implementation of the Account, Privacy, Prefer
 ## Phase 2: Account Settings API & UI
 *Goal: Implement functional Account settings (username, email, password).*
 
-- [ ] Task: Write Tests: Backend API endpoints for updating account info
-- [ ] Task: Implement: Backend logic for account updates with password verification
+- [x] Task: Write Tests: Backend API endpoints for updating account info f9326c0
+- [x] Task: Implement: Backend logic for account updates with password verification f9326c0
 - [ ] Task: Write Tests: AccountSettings React component
 - [ ] Task: Implement: AccountSettings UI and integration with backend
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Account Settings' (Protocol in workflow.md)
