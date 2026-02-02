@@ -71,4 +71,34 @@ describe('User Settings API', () => {
     expect(res.body.dark_mode).toBe(true);
     expect(res.body.language).toBe('de');
   });
+
+  it('should update password with valid current password', async () => {
+    // First, set a password for the test member
+    await pool.query('UPDATE family_members SET password = $1 WHERE id = $2', ['old-password', testMemberId]);
+
+    const res = await request
+      .put(`/api/settings/${testMemberId}`)
+      .send({
+        current_password: 'old-password',
+        new_password: 'new-password'
+      });
+
+    expect(res.status).toBe(200);
+    
+    // Verify password changed in DB
+    const dbRes = await pool.query('SELECT password FROM family_members WHERE id = $1', [testMemberId]);
+    expect(dbRes.rows[0].password).toBe('new-password');
+  });
+
+  it('should fail to update password with invalid current password', async () => {
+    const res = await request
+      .put(`/api/settings/${testMemberId}`)
+      .send({
+        current_password: 'wrong-password',
+        new_password: 'even-newer-password'
+      });
+
+    expect(res.status).toBe(401);
+    expect(res.body.error).toContain('Invalid current password');
+  });
 });
