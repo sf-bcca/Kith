@@ -21,4 +21,44 @@ describe('FamilyService', () => {
     const member = FamilyService.getById('999');
     expect(member).toBeUndefined();
   });
+
+  describe('search', () => {
+    it('should find members by first name (case-insensitive)', () => {
+      const results = FamilyService.search('merlin');
+      expect(results).toHaveLength(1);
+      expect(results[0].firstName).toBe('Merlin');
+    });
+
+    it('should find members by last name (case-insensitive)', () => {
+      const results = FamilyService.search('lake');
+      expect(results).toHaveLength(1);
+      expect(results[0].lastName).toBe('Lake');
+    });
+
+    it('should find members by partial name', () => {
+      const results = FamilyService.search('Pen');
+      // Pendragon family has Arthur, Guinevere, Mordred, Morgana, Merlin, Nimue, Lancelot
+      // 7 members have lastName 'Pendragon'
+      expect(results.length).toBeGreaterThanOrEqual(7);
+      results.forEach(m => {
+        expect(m.lastName.toLowerCase()).toContain('pen');
+      });
+    });
+
+    it('should find members by full name', () => {
+      const results = FamilyService.search('Arthur Pendragon');
+      expect(results).toHaveLength(1);
+      expect(results[0].firstName).toBe('Arthur');
+    });
+
+    it('should return empty array when no matches found', () => {
+      const results = FamilyService.search('NonExistentName');
+      expect(results).toHaveLength(0);
+    });
+
+    it('should return all members for an empty query', () => {
+      const results = FamilyService.search('');
+      expect(results).toHaveLength(mockFamilyData.length);
+    });
+  });
 });

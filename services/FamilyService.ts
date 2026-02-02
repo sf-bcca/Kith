@@ -18,4 +18,28 @@ export class FamilyService {
   static getById(id: string): FamilyMember | undefined {
     return mockFamilyData.find((member) => member.id === id);
   }
+
+  /**
+   * Searches for family members by name (first name, last name, or full name).
+   * @param query The search query string.
+   * @returns An array of FamilyMember objects that match the search query.
+   */
+  static search(query: string): FamilyMember[] {
+    const normalizedQuery = query.trim().toLowerCase();
+    if (!normalizedQuery) {
+      return mockFamilyData;
+    }
+
+    return mockFamilyData.filter((member) => {
+      const firstName = member.firstName.toLowerCase();
+      const lastName = member.lastName.toLowerCase();
+      const fullName = `${firstName} ${lastName}`;
+
+      return (
+        firstName.includes(normalizedQuery) ||
+        lastName.includes(normalizedQuery) ||
+        fullName.includes(normalizedQuery)
+      );
+    });
+  }
 }
