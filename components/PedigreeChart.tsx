@@ -1,25 +1,25 @@
 import React, { useEffect, useState } from 'react';
-import { useFamily } from '../context/FamilyContext';
-import { TreeService } from '../services/TreeService';
-import { TreeData, Member } from '../types';
+import { TreeService, AncestryData } from '../services/TreeService';
+import { FamilyMember } from '../types/family';
 
 interface Props {
   onNavigate: (screen: string) => void;
+  selectedId: string;
+  onSelect: (id: string) => void;
 }
 
-const PedigreeChart: React.FC<Props> = ({ onNavigate }) => {
-  const { selectedMemberId, setSelectedMemberId } = useFamily();
-  const [treeData, setTreeData] = useState<TreeData | null>(null);
+const PedigreeChart: React.FC<Props> = ({ onNavigate, selectedId, onSelect }) => {
+  const [treeData, setTreeData] = useState<AncestryData | null>(null);
 
   useEffect(() => {
     try {
-      const data = TreeService.getAncestors(selectedMemberId);
+      const data = TreeService.getAncestors(selectedId);
       setTreeData(data);
     } catch (e) {
       console.error(e);
       // Fallback if not found, usually wouldn't happen in real app with proper error handling
     }
-  }, [selectedMemberId]);
+  }, [selectedId]);
 
   if (!treeData) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
@@ -37,7 +37,7 @@ const PedigreeChart: React.FC<Props> = ({ onNavigate }) => {
   const maternalGM = grandparents.find(gp => mother?.parents.includes(gp.id) && gp.gender === 'female');
 
   // Helper for Great Grandparents
-  const getParentsOf = (person: Member | undefined) => {
+  const getParentsOf = (person: FamilyMember | undefined) => {
       if (!person) return [undefined, undefined];
       const f = greatGrandparents.find(p => person.parents.includes(p.id) && p.gender === 'male');
       const m = greatGrandparents.find(p => person.parents.includes(p.id) && p.gender === 'female');
@@ -61,7 +61,7 @@ const PedigreeChart: React.FC<Props> = ({ onNavigate }) => {
                             {ggp ? (
                                 <div
                                     className="size-12 rounded bg-white shadow-sm flex items-center justify-center hover:bg-gray-50 cursor-pointer"
-                                    onClick={() => setSelectedMemberId(ggp.id)}
+                                    onClick={() => onSelect(ggp.id)}
                                     title={`${ggp.firstName} ${ggp.lastName}`}
                                 >
                                     <span className="material-symbols-outlined text-slate-600">person</span>
@@ -79,7 +79,7 @@ const PedigreeChart: React.FC<Props> = ({ onNavigate }) => {
     );
   };
 
-  const renderPersonCard = (person: Member | undefined, role: string, showPhoto: boolean = true) => {
+  const renderPersonCard = (person: FamilyMember | undefined, role: string, showPhoto: boolean = true) => {
     if (!person) return (
        <div className="flex items-center gap-3 p-3 bg-white/50 rounded-xl shadow-sm border border-slate-100 border-dashed w-56 h-16 justify-center">
             <span className="text-xs text-slate-400">Unknown {role}</span>
@@ -89,7 +89,7 @@ const PedigreeChart: React.FC<Props> = ({ onNavigate }) => {
     return (
         <div
             className="flex items-center gap-3 p-3 bg-white rounded-xl shadow-md border border-slate-100 w-56 cursor-pointer hover:scale-105 transition-transform"
-            onClick={() => setSelectedMemberId(person.id)}
+            onClick={() => onSelect(person.id)}
         >
             <div className={`size-${showPhoto ? '10' : '8'} rounded-full overflow-hidden bg-slate-200 flex-shrink-0 flex items-center justify-center`}>
               {person.photoUrl ? (
@@ -189,7 +189,7 @@ const PedigreeChart: React.FC<Props> = ({ onNavigate }) => {
                     <div className="relative">
                       <div className="absolute -top-8 left-1/2 -translate-x-1/2 w-0.5 h-8 bg-slate-200"></div>
                       {/* Using slightly smaller card logic for GPs inside renderPersonCard if needed, but keeping same for now or adjusting styles inline */}
-                      <div className="flex items-center gap-2 p-2 bg-white rounded-lg shadow-sm border border-slate-100 w-44 cursor-pointer hover:scale-105 transition-transform" onClick={() => paternalGF && setSelectedMemberId(paternalGF.id)}>
+                      <div className="flex items-center gap-2 p-2 bg-white rounded-lg shadow-sm border border-slate-100 w-44 cursor-pointer hover:scale-105 transition-transform" onClick={() => paternalGF && onSelect(paternalGF.id)}>
                         <div className="size-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
                            <span className="material-symbols-outlined text-xs text-primary">person</span>
                         </div>
@@ -202,7 +202,7 @@ const PedigreeChart: React.FC<Props> = ({ onNavigate }) => {
                     {/* GP 2 */}
                     <div className="relative">
                       <div className="absolute -top-8 left-1/2 -translate-x-1/2 w-0.5 h-8 bg-slate-200"></div>
-                      <div className="flex items-center gap-2 p-2 bg-white rounded-lg shadow-sm border border-slate-100 w-44 cursor-pointer hover:scale-105 transition-transform" onClick={() => paternalGM && setSelectedMemberId(paternalGM.id)}>
+                      <div className="flex items-center gap-2 p-2 bg-white rounded-lg shadow-sm border border-slate-100 w-44 cursor-pointer hover:scale-105 transition-transform" onClick={() => paternalGM && onSelect(paternalGM.id)}>
                         <div className="size-8 rounded-full bg-pink-100 flex items-center justify-center flex-shrink-0">
                            <span className="material-symbols-outlined text-xs text-pink-500">person</span>
                         </div>
@@ -222,7 +222,7 @@ const PedigreeChart: React.FC<Props> = ({ onNavigate }) => {
                      {/* GP 3 */}
                      <div className="relative">
                        <div className="absolute -top-8 left-1/2 -translate-x-1/2 w-0.5 h-8 bg-slate-200"></div>
-                       <div className="flex items-center gap-2 p-2 bg-white rounded-lg shadow-sm border border-slate-100 w-44 cursor-pointer hover:scale-105 transition-transform" onClick={() => maternalGF && setSelectedMemberId(maternalGF.id)}>
+                       <div className="flex items-center gap-2 p-2 bg-white rounded-lg shadow-sm border border-slate-100 w-44 cursor-pointer hover:scale-105 transition-transform" onClick={() => maternalGF && onSelect(maternalGF.id)}>
                          <div className="size-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
                             <span className="material-symbols-outlined text-xs text-primary">person</span>
                          </div>
@@ -235,7 +235,7 @@ const PedigreeChart: React.FC<Props> = ({ onNavigate }) => {
                      {/* GP 4 */}
                      <div className="relative">
                        <div className="absolute -top-8 left-1/2 -translate-x-1/2 w-0.5 h-8 bg-slate-200"></div>
-                       <div className="flex items-center gap-2 p-2 bg-white rounded-lg shadow-sm border border-slate-100 w-44 cursor-pointer hover:scale-105 transition-transform" onClick={() => maternalGM && setSelectedMemberId(maternalGM.id)}>
+                       <div className="flex items-center gap-2 p-2 bg-white rounded-lg shadow-sm border border-slate-100 w-44 cursor-pointer hover:scale-105 transition-transform" onClick={() => maternalGM && onSelect(maternalGM.id)}>
                          <div className="size-8 rounded-full bg-pink-100 flex items-center justify-center flex-shrink-0">
                             <span className="material-symbols-outlined text-xs text-pink-500">person</span>
                          </div>
@@ -275,7 +275,7 @@ const PedigreeChart: React.FC<Props> = ({ onNavigate }) => {
           </button>
           <button
              className="flex-1 flex items-center justify-center gap-2 bg-primary text-white py-3 rounded-xl font-semibold shadow-lg shadow-primary/25 transition-transform active:scale-95 hover:bg-blue-600"
-             onClick={() => setSelectedMemberId('1')}
+             onClick={() => onSelect('1')}
           >
             <span className="material-symbols-outlined">my_location</span>
             Focus

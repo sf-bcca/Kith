@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { useFamily } from '../context/FamilyContext';
-import { TreeService } from '../services/TreeService';
-import { TreeData, Member } from '../types';
+import { TreeService, AncestryData } from '../services/TreeService';
+import { FamilyMember } from '../types/family';
 
 interface Props {
   onNavigate: (screen: string) => void;
+  selectedId: string;
+  onSelect: (id: string) => void;
 }
 
 // SVG Helpers
@@ -35,18 +36,17 @@ const describeArc = (x: number, y: number, innerRadius: number, outerRadius: num
     return d;
 };
 
-const FanChart: React.FC<Props> = ({ onNavigate }) => {
-  const { selectedMemberId, setSelectedMemberId } = useFamily();
-  const [treeData, setTreeData] = useState<TreeData | null>(null);
+const FanChart: React.FC<Props> = ({ onNavigate, selectedId, onSelect }) => {
+  const [treeData, setTreeData] = useState<AncestryData | null>(null);
 
   useEffect(() => {
     try {
-      const data = TreeService.getAncestors(selectedMemberId);
+      const data = TreeService.getAncestors(selectedId);
       setTreeData(data);
     } catch (e) {
       console.error(e);
     }
-  }, [selectedMemberId]);
+  }, [selectedId]);
 
   if (!treeData) {
       return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
@@ -57,23 +57,12 @@ const FanChart: React.FC<Props> = ({ onNavigate }) => {
   // Configuration
   const cx = 200;
   const cy = 200; // Center is at bottom-middle roughly for a 180 degree fan
-  // Wait, standard fan chart usually full circle or semi circle.
-  // The original design seemed to be a top-half semi-circle.
   // Angles: 180 (Left) to 360 (Right). 270 is Top.
-
-  // Actually, to match "Father Left, Mother Right" usually:
-  // Father: 180-270. Mother: 270-360.
 
   const centerRadius = 45;
   const widths = [45, 45, 45]; // Thickness of each generation ring
 
-  // Root
-  // Gen 1: Parents (2 sectors)
-  // Gen 2: GP (4 sectors)
-  // Gen 3: GGP (8 sectors)
-
   // Map data to sectors
-  // We need to traverse specifically to ensure correct order
   const father = parents.find(p => p.gender === 'male');
   const mother = parents.find(p => p.gender === 'female');
 
@@ -82,8 +71,8 @@ const FanChart: React.FC<Props> = ({ onNavigate }) => {
   const maternalGF = grandparents.find(gp => mother?.parents.includes(gp.id) && gp.gender === 'male');
   const maternalGM = grandparents.find(gp => mother?.parents.includes(gp.id) && gp.gender === 'female');
 
-  // Great Grandparents need similar ordering
-  const getParentsOf = (person: Member | undefined) => {
+  // Great Grandparents
+  const getParentsOf = (person: FamilyMember | undefined) => {
       if (!person) return [undefined, undefined];
       const f = greatGrandparents.find(ggp => person.parents.includes(ggp.id) && ggp.gender === 'male');
       const m = greatGrandparents.find(ggp => person.parents.includes(ggp.id) && ggp.gender === 'female');
@@ -100,7 +89,7 @@ const FanChart: React.FC<Props> = ({ onNavigate }) => {
   const gen3 = [patGF_F, patGF_M, patGM_F, patGM_M, matGF_F, matGF_M, matGM_F, matGM_M];
 
   const renderSector = (
-      person: Member | undefined,
+      person: FamilyMember | undefined,
       genIndex: number,
       sectorIndex: number,
       totalSectors: number,
@@ -111,10 +100,8 @@ const FanChart: React.FC<Props> = ({ onNavigate }) => {
       const startAngle = 180 + (sectorIndex * (180 / totalSectors));
       const endAngle = 180 + ((sectorIndex + 1) * (180 / totalSectors));
 
-      const isHovered = false; // State for hover could be added
-
       return (
-          <g key={`${genIndex}-${sectorIndex}`} onClick={() => person && setSelectedMemberId(person.id)}>
+          <g key={`${genIndex}-${sectorIndex}`} onClick={() => person && onSelect(person.id)}>
             <path
                 d={describeArc(cx, cy, innerR, outerR, startAngle, endAngle)}
                 fill={person ? color : '#e2e8f0'}
@@ -132,7 +119,7 @@ const FanChart: React.FC<Props> = ({ onNavigate }) => {
                     fill="white"
                     fontWeight="bold"
                     pointerEvents="none"
-                    transform={`rotate(0, 0, 0)`} // Could implement rotation for readability
+                    transform={`rotate(0, 0, 0)`}
                 >
                     {person.firstName}
                 </text>
@@ -196,7 +183,7 @@ const FanChart: React.FC<Props> = ({ onNavigate }) => {
                 cx={cx} cy={cy} r={centerRadius}
                 fill="#135bec"
                 className="hover:brightness-110 cursor-pointer transition-all"
-                onClick={() => setSelectedMemberId(focusPerson.id)}
+                onClick={() => onSelect(focusPerson.id)}
             ></circle>
             <text x={cx} y={cy} dy=".3em" textAnchor="middle" className="fill-white text-[12px] font-bold pointer-events-none">YOU</text>
 
@@ -214,7 +201,7 @@ const FanChart: React.FC<Props> = ({ onNavigate }) => {
           <div className="absolute bottom-4 left-0">
              <button
                 className="bg-white shadow-xl rounded-lg px-3 h-12 flex items-center gap-2 text-primary text-sm font-bold active:scale-95 transition-transform hover:bg-gray-50"
-                onClick={() => setSelectedMemberId('1')}
+                onClick={() => onSelect('1')}
              >
                 <span className="material-symbols-outlined text-[20px]">filter_center_focus</span>
                 Recenter

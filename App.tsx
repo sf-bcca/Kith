@@ -55,8 +55,8 @@ export default function App() {
       case Screen.MEMORIES: return <ActivityFeed onNavigate={handleNavigate} />;
       case Screen.DISCOVER: return <DiscoverView onNavigate={handleNavigate} />;
       case Screen.SETTINGS: return <SettingsView onNavigate={handleNavigate} />;
-      case Screen.PEDIGREE: return <PedigreeChart onNavigate={handleNavigate} />;
-      case Screen.FAN: return <FanChart onNavigate={handleNavigate} />;
+      case Screen.PEDIGREE: return <PedigreeChart onNavigate={handleNavigate} selectedId={selectedMemberId} onSelect={setSelectedMemberId} />;
+      case Screen.FAN: return <FanChart onNavigate={handleNavigate} selectedId={selectedMemberId} onSelect={setSelectedMemberId} />;
       case Screen.DIRECTORY: return <FamilyDirectory onNavigate={handleNavigate} />;
       case Screen.HORIZONTAL: return <HorizontalTree onNavigate={handleNavigate} />;
       case Screen.ADMIN: return <AdminDashboard onNavigate={handleNavigate} />;
