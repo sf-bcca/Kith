@@ -7,7 +7,7 @@
 - [x] Task: Create a basic "Hello World" Express server in `server/index.ts` b1bb9a3
 - [ ] Task: Conductor - User Manual Verification 'Phase 1' (Protocol in workflow.md)
 
-## Phase 2: Docker & Database Configuration
+## Phase 2: Docker & Database Configuration [checkpoint: 1dae6ed]
 - [x] Task: Create a `.env` file in the project root for database credentials and ports 00250fd
 - [x] Task: Create a `Dockerfile` for the backend service c14d2ad
 - [x] Task: Create a `docker-compose.yml` defining `postgres` and `backend` services f53fe9d
