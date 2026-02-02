@@ -101,4 +101,38 @@ describe('User Settings API', () => {
     expect(res.status).toBe(401);
     expect(res.body.error).toContain('Invalid current password');
   });
+
+  it('should update privacy settings', async () => {
+    const privacyData = {
+      visibility: 'public',
+      data_sharing: false
+    };
+
+    const res = await request
+      .put(`/api/settings/${testMemberId}`)
+      .send(privacyData);
+
+    expect(res.status).toBe(200);
+    expect(res.body.visibility).toBe('public');
+    expect(res.body.data_sharing).toBe(false);
+  });
+
+  it('should update app preferences', async () => {
+    const prefData = {
+      dark_mode: true,
+      language: 'es',
+      notifications_email: true,
+      notifications_push: false
+    };
+
+    const res = await request
+      .put(`/api/settings/${testMemberId}`)
+      .send(prefData);
+
+    expect(res.status).toBe(200);
+    expect(res.body.dark_mode).toBe(true);
+    expect(res.body.language).toBe('es');
+    expect(res.body.notifications_email).toBe(true);
+    expect(res.body.notifications_push).toBe(false);
+  });
 });

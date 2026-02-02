@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="public/logo.png" alt="Kith Logo" width="200">
+</p>
+
 # Kith
 
 Kith is a modern family history and genealogy application built to help you visualize, explore, and preserve your family's legacy.
@@ -5,35 +9,38 @@ Kith is a modern family history and genealogy application built to help you visu
 ## Features
 
 - **Interactive Family Trees:**
-  - **Vertical Tree:** Traditional hierarchical view of ancestry and descendants.
-  - **Horizontal Tree:** Space-efficient layout for wide family structures.
-  - **Pedigree Chart:** Direct lineage visualization for ancestors.
-  - **Fan Chart:** Compact circular visualization of multiple generations.
+  - **Vertical & Horizontal Trees:** Hierarchical visualizations of family lineages.
+  - **Pedigree & Fan Charts:** Specialized ancestry visualizations for research and exploration.
 
-- **Member Discovery:**
-  - **Biography View:** Detailed profiles with personal history and data.
-  - **Family Directory:** Searchable list of all family members.
-  - **Discover:** Tools to find new connections or explore data.
+- **Member Management:**
+  - **Onboarding:** Smooth welcome experience for first-time users.
+  - **Family Directory:** Searchable and filterable list of all members.
+  - **Family Management:** Tools to add members and define complex relationships.
+  - **Detailed Biographies:** Rich profiles for every family member.
 
-- **Engagement:**
-  - **Activity Feed (Memories):** Social-style feed of recent updates, photos, and stories.
-  - **Admin Dashboard:** Tools for managing application settings and toggling dark mode.
+- **Engagement & Personalization:**
+  - **Activity Feed (Memories):** A social timeline of family events and stories.
+  - **Advanced Settings:** Granular control over Account, Preferences (including reactive Dark Mode), and Privacy.
+  - **Discover:** Intelligent tools for finding connections.
+
+- **Robust Backend:**
+  - **RESTful API:** Node.js/Express service for data persistence.
+  - **Database Migrations:** SQL-based schema management with PostgreSQL.
 
 ## Tech Stack
 
-- **Frontend:** [React 19](https://react.dev/), [Vite](https://vitejs.dev/), TypeScript, Tailwind CSS (via CDN)
-- **Backend:** Node.js, Express.js, TypeScript
-- **Database:** PostgreSQL
+- **Frontend:** React 19, Vite, TypeScript, Tailwind CSS
+- **Backend:** Node.js, Express.js, TypeScript, PostgreSQL (via `pg`)
 - **Infrastructure:** Docker, Docker Compose
-- **Testing:** Vitest, React Testing Library
+- **Testing:** Vitest, React Testing Library, Supertest
 - **Icons:** Material Symbols
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js (v18+ recommended)
-- npm or yarn
+- Node.js (v18+)
+- Docker & Docker Compose (for database and full-stack environment)
 
 ### Installation
 
@@ -49,58 +56,66 @@ Kith is a modern family history and genealogy application built to help you visu
     ```
 
 3.  **Environment Setup:**
-    Create a `.env.local` file in the root directory and add your Gemini API key (used for AI-powered features):
-    ```env
-    GEMINI_API_KEY=your_api_key_here
-    ```
+    Create a `.env.local` file for the frontend and a `server/.env` for the backend based on the provided examples.
 
 ### Running the Application
 
-- **Development Server:**
+- **Full Stack (with Docker):**
+  ```bash
+  docker-compose up
+  ```
+
+- **Frontend Development:**
   ```bash
   npm run dev
   ```
-  Open [http://localhost:5173](http://localhost:5173) to view it in the browser.
 
-- **Production Build:**
+- **Backend Development:**
   ```bash
-  npm run build
-  ```
-
-- **Preview Production Build:**
-  ```bash
-  npm run preview
+  cd server && npm run dev
   ```
 
 - **Run Tests:**
   ```bash
-  npm run test
+  npm run test        # Frontend tests
+  cd server && npm run test # Backend tests
   ```
 
 ## Project Structure
 
 ```
 Kith/
-├── components/          # UI Components (Views & Widgets)
+├── components/          # React Components (Views, Widgets, Modals)
 │   ├── FamilyTreeView.tsx
-│   ├── MemberBiography.tsx
-│   ├── ActivityFeed.tsx
+│   ├── FamilyManagement.tsx
+│   ├── SettingsView.tsx
+│   └── ...
+├── server/              # Node.js/Express Backend
+│   ├── controllers/     # Request Handlers
+│   ├── routes/          # API Route Definitions
+│   ├── migrations/      # SQL Schema Migrations
+│   └── db.ts            # Database Connection
+├── services/            # Frontend API Clients
+│   ├── FamilyService.ts
 │   └── ...
 ├── context/             # React Context Providers
-│   └── FamilyContext.tsx
-├── server/              # Backend API
-│   ├── index.ts         # Server Entry Point
-│   ├── db.ts            # Database Connection
-│   └── Dockerfile       # Backend Container Config
-├── services/            # Business Logic & Data Fetching
-│   ├── FamilyService.ts
-│   ├── TreeService.ts
-│   └── ActivityService.ts
-├── types/               # TypeScript Definitions
-├── mocks/               # Mock Data for Development
-├── App.tsx              # Main Entry & Navigation Controller
+├── types/               # Shared TypeScript Definitions
+├── mocks/               # Static Mock Data for Dev/Testing
+├── tests/               # Backend & Integration Tests
+├── conductor/           # Project Tracks & Planning
 └── docker-compose.yml   # Infrastructure Orchestration
+
+## Specialized Skills
+
+Kith leverages specialized Gemini skills for automated maintenance:
+- **Tree Architect:** Genealogy data & visualization logic.
+- **Test Factory:** Mock data & unit test generation.
+- **Doc Maintainer:** Documentation synchronization.
+- **Schema Maintainer:** Database schema consolidation.
+- **API Bridge:** Full-stack data model synchronization.
+- **Conductor:** Development track orchestration.
 ```
+
 
 ## Navigation
 

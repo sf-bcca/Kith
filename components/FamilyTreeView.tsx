@@ -135,7 +135,10 @@ const FamilyTreeView: React.FC<Props> = ({ onNavigate, selectedId, onSelect }) =
         <div className="text-[#0d121b] flex size-12 shrink-0 items-center justify-start cursor-pointer hover:bg-gray-100 rounded-full pl-2 transition-colors">
           <span className="material-symbols-outlined">search</span>
         </div>
-        <h2 className="text-[#0d121b] text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center">Family Tree</h2>
+        <div className="flex items-center gap-2 flex-1 justify-center">
+          <img src="/logo.png" alt="Kith" className="w-8 h-8 object-contain" />
+          <h2 className="text-[#0d121b] text-lg font-bold leading-tight tracking-[-0.015em]">Kith</h2>
+        </div>
         <div className="flex w-12 items-center justify-end">
           <button 
             onClick={() => onNavigate('Biography', selectedId)}

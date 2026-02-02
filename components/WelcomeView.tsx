@@ -55,8 +55,8 @@ export default function WelcomeView({ onComplete }: Props) {
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 font-display">
       <div className="max-w-md w-full bg-white rounded-3xl shadow-xl p-8 md:p-10 border border-slate-100">
         <div className="text-center mb-8">
-          <div className="w-20 h-20 bg-primary/10 text-primary rounded-2xl flex items-center justify-center mx-auto mb-6">
-            <span className="material-symbols-outlined text-4xl">family_history</span>
+          <div className="mb-6">
+            <img src="/logo.png" alt="Kith Logo" className="w-24 h-24 mx-auto object-contain" />
           </div>
           <h1 className="text-3xl font-bold text-slate-900 mb-3">Welcome to Kith</h1>
           <p className="text-slate-500 text-lg leading-relaxed">

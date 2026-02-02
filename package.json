@@ -13,12 +13,14 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
+    "@types/bcrypt": "^6.0.0",
     "@types/node": "^22.14.0",
     "@types/pg": "^8.16.0",
     "@types/react": "^19.2.10",

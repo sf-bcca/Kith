@@ -111,7 +111,7 @@ export default function App() {
       return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
           <div className="animate-pulse flex flex-col items-center">
-            <div className="w-12 h-12 bg-primary/20 rounded-full mb-4"></div>
+            <img src="/logo.png" alt="Kith" className="w-32 h-32 mb-4 object-contain" />
             <p className="text-slate-400 font-medium">Loading Kith...</p>
           </div>
         </div>

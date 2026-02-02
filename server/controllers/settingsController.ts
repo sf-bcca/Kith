@@ -1,5 +1,8 @@
 import { Request, Response } from 'express';
+import bcrypt from 'bcrypt';
 import { pool } from '../db';
+
+const SALT_ROUNDS = 10;
 
 export const getSettings = async (req: Request, res: Response) => {
   try {
@@ -12,7 +15,9 @@ export const getSettings = async (req: Request, res: Response) => {
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Member not found' });
     }
-    res.json(result.rows[0]);
+    // Explicitly sanitize as defense in depth
+    const { password: _, ...sanitizedSettings } = result.rows[0];
+    res.json(sanitizedSettings);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -38,12 +43,18 @@ export const updateSettings = async (req: Request, res: Response) => {
       }
 
       const currentDbPassword = userRes.rows[0].password;
-      // Simple equality check for now (should use bcrypt in production)
-      if (currentDbPassword && currentDbPassword !== current_password) {
-        return res.status(401).json({ error: 'Invalid current password' });
+      
+      // Verify current password using bcrypt
+      if (currentDbPassword) {
+        const isMatch = await bcrypt.compare(current_password, currentDbPassword);
+        if (!isMatch) {
+          return res.status(401).json({ error: 'Invalid current password' });
+        }
       }
 
-      await pool.query('UPDATE family_members SET password = $1 WHERE id = $2', [new_password, id]);
+      // Hash new password
+      const hashedNewPassword = await bcrypt.hash(new_password, SALT_ROUNDS);
+      await pool.query('UPDATE family_members SET password = $1 WHERE id = $2', [hashedNewPassword, id]);
     }
     
     const result = await pool.query(
@@ -57,7 +68,7 @@ export const updateSettings = async (req: Request, res: Response) => {
       notifications_email = COALESCE($7, notifications_email),
       notifications_push = COALESCE($8, notifications_push)
       WHERE id = $9 
-      RETURNING *`,
+      RETURNING email, username, dark_mode, language, visibility, data_sharing, notifications_email, notifications_push`,
       [
         email, username, dark_mode, language, visibility, data_sharing, notifications_email, notifications_push,
         id
@@ -67,7 +78,9 @@ export const updateSettings = async (req: Request, res: Response) => {
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Member not found' });
     }
-    res.json(result.rows[0]);
+    // Explicitly sanitize
+    const { password: _, ...sanitizedResult } = result.rows[0];
+    res.json(sanitizedResult);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

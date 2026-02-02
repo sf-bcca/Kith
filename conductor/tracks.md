@@ -15,4 +15,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
----
+- [~] **Track: Fix all security issues identified in the audit.**
+*Link: [./tracks/security_remediation_20260202/](./tracks/security_remediation_20260202/)*

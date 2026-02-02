@@ -30,8 +30,9 @@
 
 ### Entry & Navigation
 - **Entry Point:** `index.tsx` renders `App.tsx`.
-- **Navigation:** Custom state-based routing managed in `App.tsx` using the `Screen` enum.
-- **Global UI:** A floating "View Switcher" (top-right) allows quick switching between screens.
+- **Navigation:** Custom state-based routing managed in `App.tsx` using the `Screen` enum (WELCOME, TREE, BIO, MEMORIES, DISCOVER, SETTINGS, PEDIGREE, FAN, DIRECTORY, HORIZONTAL, ADMIN).
+- **Onboarding:** `WelcomeView.tsx` handles initial setup and first-member creation.
+- **Global UI:** A floating "View Switcher" (top-right) allows quick switching between screens for development.
 
 ### Directory Structure
 
@@ -45,18 +46,34 @@ Contains all UI views and widgets.
     - `ActivityFeed.tsx`: Social stream of updates ("Memories").
     - `FamilyDirectory.tsx`: List/Grid view of members.
     - `DiscoverView.tsx`: Exploration tools.
-    - `SettingsView.tsx`: User preferences.
+    - `FamilyManagement.tsx`: Tools for managing family relationships and members.
+    - `SettingsView.tsx`: Main settings hub with sub-sections.
+    - `AccountSettings.tsx` / `PreferenceSettings.tsx` / `PrivacySettings.tsx`: Granular user settings.
+    - `WelcomeView.tsx`: Initial onboarding and login screen.
+- **Widgets & Modals:**
+    - `AddMemberModal.tsx`: Interface for adding new family members.
+    - `DirectorySearch.tsx`: Search bar for the directory.
+    - `BottomNav.tsx`: Navigation bar for mobile-friendly views.
 - **Admin:**
     - `AdminDashboard.tsx`: Administration and Dark Mode toggle.
 
+#### `server/`
+Node.js/Express backend with PostgreSQL.
+- `index.ts`: API entry point.
+- `db.ts`: Database connection and query utilities.
+- `controllers/`: Request handlers (e.g., `settingsController.ts`).
+- `routes/`: API route definitions (e.g., `settings.ts`).
+- `migrations/`: SQL migration files for schema evolution.
+- `scripts/`: Database management scripts (migrate, reset, seed).
+
 #### `services/`
-Encapsulates business logic and data manipulation.
+Frontend logic for communicating with the backend API.
 - `FamilyService.ts`: Core CRUD for family members.
 - `TreeService.ts`: Logic for tree traversal and structure.
 - `ActivityService.ts`: Manages social activity data.
 
 #### `context/`
-- `FamilyContext.tsx`: React Context for global state management (if applicable/used).
+- `FamilyContext.tsx`: React Context for global state management.
 
 #### `types/`
 TypeScript definitions for core domain entities.
@@ -64,15 +81,23 @@ TypeScript definitions for core domain entities.
 - `activity.ts`: `ActivityItem`, `Feed`, etc.
 
 #### `mocks/`
-Static data for development without a backend.
-- `familyData.ts`
-- `activityData.ts`
+Static data for development and testing.
 
 ### Styling
-- **Tailwind:** Utility-first styling (e.g., `bg-gray-50`, `text-slate-900`).
-- **Dark Mode:** Toggled via `AdminDashboard`, implemented by adding the `.dark` class to the HTML root.
+- **Tailwind:** Utility-first styling (via class names).
+- **Dark Mode:** Reactive to user preferences, toggled via `PreferenceSettings` or `AdminDashboard`, implemented via the `.dark` class on the root element.
 
 ### Testing
-- **Framework:** Vitest
-- **Setup:** `vitest.config.ts` and `vitest.setup.ts`
-- **Location:** `__tests__` folders within `components/` and co-located `.test.ts` files in `services/`.
+- **Frontend:** Vitest and React Testing Library in `components/__tests__` and `services/`.
+- **Backend:** API tests in `tests/` using Supertest.
+- **Setup:** `vitest.config.ts` and `vitest.setup.ts`.
+
+## Specialized Skills
+
+The project includes custom Gemini skills to automate maintenance tasks:
+- **kith-doc-maintainer:** Synchronizes `AGENTS.md` and `README.md` with the codebase structure. Use this after adding new views, services, or significantly changing the project architecture.
+- **kith-schema-maintainer:** Maintains `server/SCHEMA.md` by consolidating PostgreSQL migration files. Use this whenever a new database migration is added.
+- **kith-tree-architect:** Expert guidance for genealogy-specific data structures, recursive tree traversal, and complex family visualization layouts (Fan Charts, Pedigrees).
+- **kith-test-factory:** Specialized in generating complex, realistic mock family datasets and unit tests.
+- **kith-conductor-manager:** Orchestrates and maintains project development tracks in the `conductor/` directory.
+- **kith-api-bridge:** Synchronizes data model changes across the full stack (SQL migrations, SCHEMA.md, TypeScript types, and Services).
