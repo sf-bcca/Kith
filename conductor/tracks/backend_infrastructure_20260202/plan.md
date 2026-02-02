@@ -9,7 +9,7 @@
 
 ## Phase 2: Docker & Database Configuration
 - [x] Task: Create a `.env` file in the project root for database credentials and ports 00250fd
-- [ ] Task: Create a `Dockerfile` for the backend service
+- [x] Task: Create a `Dockerfile` for the backend service c14d2ad
 - [ ] Task: Create a `docker-compose.yml` defining `postgres` and `backend` services
 - [ ] Task: Update the existing frontend to be served or orchestrated via Docker (optional, but recommended for full orchestration)
 - [ ] Task: Verify that `docker-compose up` starts the PostgreSQL container and the Backend container
