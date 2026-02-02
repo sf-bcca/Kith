@@ -2,14 +2,14 @@
 
 This plan follows the Test-Driven Development (TDD) process.
 
-## Phase 1: Dynamic Tree Logic
+## Phase 1: Dynamic Tree Logic [checkpoint: ffc7458]
 - [x] Task: Implement `TreeData` helper functions
     - [x] Create `services/TreeService.ts` for tree-specific data fetching (e.g., `getTreeFor(memberId)`)
     - [x] Write tests for `TreeService` to ensure correct generation retrieval
-- [ ] Task: Conductor - User Manual Verification 'Dynamic Tree Logic'
+- [x] Task: Conductor - User Manual Verification 'Dynamic Tree Logic'
 
 ## Phase 2: FamilyTreeView Component Refactor
-- [ ] Task: Refactor `FamilyTreeView` to use `TreeService`
+- [~] Task: Refactor `FamilyTreeView` to use `TreeService`
     - [ ] Update `FamilyTreeView.tsx` to accept a `focusId` state
     - [ ] Dynamically render Generations 1 (Parents), 2 (Focus/Spouses), and 3 (Children)
 - [ ] Task: Implement Navigation Logic
