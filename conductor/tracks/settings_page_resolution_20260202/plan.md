@@ -2,7 +2,7 @@
 
 This plan outlines the full-stack implementation of the Account, Privacy, Preferences, and Family Management settings.
 
-## Phase 1: Database Schema & Backend Infrastructure
+## Phase 1: Database Schema & Backend Infrastructure [checkpoint: 9d9aec7]
 *Goal: Prepare the database and create the base API structure for settings.*
 
 - [x] Task: Create database migration for user settings (dark_mode, language, visibility, etc.) 8d86429
