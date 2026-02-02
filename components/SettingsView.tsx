@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import BottomNav from './BottomNav';
 import AccountSettings from './AccountSettings';
+import PrivacySettings from './PrivacySettings';
+import PreferenceSettings from './PreferenceSettings';
 import { FamilyService } from '../services/FamilyService';
 import { FamilyMember } from '../types/family';
 
@@ -57,6 +59,10 @@ const SettingsView: React.FC<Props> = ({ onNavigate, onLogout, loggedInId }) => 
     switch (activeTab) {
       case 'account':
         return <AccountSettings member={member} onUpdate={handleMemberUpdate} />;
+      case 'privacy':
+        return <PrivacySettings member={member} onUpdate={handleMemberUpdate} />;
+      case 'preferences':
+        return <PreferenceSettings member={member} onUpdate={handleMemberUpdate} />;
       default:
         return (
           <>
@@ -111,7 +117,10 @@ const SettingsView: React.FC<Props> = ({ onNavigate, onLogout, loggedInId }) => 
                   <span className="material-symbols-outlined text-slate-300 text-[18px]">chevron_right</span>
                </button>
 
-               <button className="w-full flex items-center gap-4 p-4 hover:bg-slate-50 transition-colors border-b border-slate-50 text-left group">
+               <button 
+                  onClick={() => setActiveTab('privacy')}
+                  className="w-full flex items-center gap-4 p-4 hover:bg-slate-50 transition-colors border-b border-slate-50 text-left group"
+               >
                   <div className="size-8 rounded-lg bg-slate-50 flex items-center justify-center group-hover:bg-white group-hover:shadow-sm transition-all">
                       <span className="material-symbols-outlined text-emerald-500 text-[20px]">lock</span>
                   </div>
@@ -134,20 +143,26 @@ const SettingsView: React.FC<Props> = ({ onNavigate, onLogout, loggedInId }) => 
                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider pl-2">App Preferences</h3>
             </div>
             <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mb-6">
-                <button className="w-full flex items-center gap-4 p-4 hover:bg-slate-50 transition-colors border-b border-slate-50 text-left group">
+                <button 
+                  onClick={() => setActiveTab('preferences')}
+                  className="w-full flex items-center gap-4 p-4 hover:bg-slate-50 transition-colors border-b border-slate-50 text-left group"
+                >
                   <div className="size-8 rounded-lg bg-slate-50 flex items-center justify-center">
                        <span className="material-symbols-outlined text-slate-500 text-[20px]">palette</span>
                   </div>
                   <span className="flex-1 font-semibold text-slate-700 text-sm">Appearance</span>
-                  <span className="text-xs text-slate-400 font-medium mr-2">Light</span>
+                  <span className="text-xs text-slate-400 font-medium mr-2">{member.darkMode ? 'Dark' : 'Light'}</span>
                   <span className="material-symbols-outlined text-slate-300 text-[18px]">chevron_right</span>
                </button>
-               <button className="w-full flex items-center gap-4 p-4 hover:bg-slate-50 transition-colors text-left group">
+               <button 
+                  onClick={() => setActiveTab('preferences')}
+                  className="w-full flex items-center gap-4 p-4 hover:bg-slate-50 transition-colors text-left group"
+               >
                   <div className="size-8 rounded-lg bg-slate-50 flex items-center justify-center">
                        <span className="material-symbols-outlined text-slate-500 text-[20px]">language</span>
                   </div>
                   <span className="flex-1 font-semibold text-slate-700 text-sm">Language</span>
-                  <span className="text-xs text-slate-400 font-medium mr-2">English</span>
+                  <span className="text-xs text-slate-400 font-medium mr-2">{member.language === 'es' ? 'Español' : member.language === 'fr' ? 'Français' : member.language === 'de' ? 'Deutsch' : 'English'}</span>
                   <span className="material-symbols-outlined text-slate-300 text-[18px]">chevron_right</span>
                </button>
             </div>
