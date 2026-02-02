@@ -6,9 +6,9 @@ This plan follows the TDD process.
 - [x] Task: Define `Activity` types and mock data c3f59f9
     - [x] Create `types/activity.ts`
     - [x] Create `mocks/activityData.ts`
-- [ ] Task: Implement `ActivityService`
-    - [ ] Write tests for `ActivityService.getFeed()`
-    - [ ] Implement `ActivityService.ts`
+- [x] Task: Implement `ActivityService` 1969530
+    - [x] Write tests for `ActivityService.getFeed()`
+    - [x] Implement `ActivityService.ts`
 - [ ] Task: Conductor - User Manual Verification 'Data Model and Service Foundation'
 
 ## Phase 2: UI Integration and Interaction
