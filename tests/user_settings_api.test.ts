@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import supertest from 'supertest';
 import { Pool } from 'pg';
+import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
 import path from 'path';
 
@@ -73,8 +74,9 @@ describe('User Settings API', () => {
   });
 
   it('should update password with valid current password', async () => {
-    // First, set a password for the test member
-    await pool.query('UPDATE family_members SET password = $1 WHERE id = $2', ['old-password', testMemberId]);
+    // First, set a hashed password for the test member
+    const hashedPassword = await bcrypt.hash('old-password', 10);
+    await pool.query('UPDATE family_members SET password = $1 WHERE id = $2', [hashedPassword, testMemberId]);
 
     const res = await request
       .put(`/api/settings/${testMemberId}`)
@@ -85,9 +87,11 @@ describe('User Settings API', () => {
 
     expect(res.status).toBe(200);
     
-    // Verify password changed in DB
+    // Verify password changed in DB and is hashed
     const dbRes = await pool.query('SELECT password FROM family_members WHERE id = $1', [testMemberId]);
-    expect(dbRes.rows[0].password).toBe('new-password');
+    const newHashedPassword = dbRes.rows[0].password;
+    expect(newHashedPassword).not.toBe('new-password');
+    expect(await bcrypt.compare('new-password', newHashedPassword)).toBe(true);
   });
 
   it('should fail to update password with invalid current password', async () => {

@@ -74,6 +74,22 @@ describe('FamilyService', () => {
     expect(member?.language).toBe('en-GB');
   });
 
+  it('should not map password field from backend', async () => {
+    const targetId = '1';
+    (fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({
+        id: targetId,
+        first_name: 'Arthur',
+        last_name: 'Pendragon',
+        password: 'should-not-be-mapped'
+      })
+    });
+
+    const member = await FamilyService.getById(targetId);
+    expect(member).not.toHaveProperty('password');
+  });
+
   it('should map settings fields correctly to backend', async () => {
     (fetch as any).mockResolvedValueOnce({
       ok: true,
