@@ -7,7 +7,7 @@ This plan outlines the full-stack implementation of the Account, Privacy, Prefer
 
 - [x] Task: Create database migration for user settings (dark_mode, language, visibility, etc.) 8d86429
 - [x] Task: Update User model/type in backend to include new settings fields 9ad0d98
-- [ ] Task: Implement base Settings controller and route group in Express
+- [x] Task: Implement base Settings controller and route group in Express d21cbd8
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Database & Backend Base' (Protocol in workflow.md)
 
 ## Phase 2: Account Settings API & UI
