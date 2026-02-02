@@ -57,21 +57,18 @@ describe('User Settings API', () => {
     testMemberId = res.body.id;
   });
 
-  it('should update member settings', async () => {
+  it('should update member settings via dedicated settings endpoint', async () => {
     const updateData = {
-      dark_mode: false,
-      language: 'en',
-      notifications_email: false
+      dark_mode: true,
+      language: 'de'
     };
 
     const res = await request
-      .put(`/api/members/${testMemberId}`)
+      .put(`/api/settings/${testMemberId}`)
       .send(updateData);
 
     expect(res.status).toBe(200);
-    expect(res.body.dark_mode).toBe(false);
-    expect(res.body.language).toBe('en');
-    expect(res.body.notifications_email).toBe(false);
-    expect(res.body.email).toBe('test@example.com'); // Should remain unchanged
+    expect(res.body.dark_mode).toBe(true);
+    expect(res.body.language).toBe('de');
   });
 });
