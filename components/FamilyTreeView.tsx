@@ -33,15 +33,15 @@ const MemberNode: React.FC<{
       )}
     </div>
     <div className="text-center">
-      <p 
-        className={`${isFocus ? 'text-sm' : 'text-xs'} font-bold hover:text-primary transition-colors`}
+      <button 
+        className={`${isFocus ? 'text-sm' : 'text-xs'} font-bold hover:text-primary transition-colors bg-transparent border-none cursor-pointer p-0`}
         onClick={(e) => {
           e.stopPropagation();
           onViewBio(member.id);
         }}
       >
         {member.firstName} {member.lastName}
-      </p>
+      </button>
       {label ? (
         <p className="text-[10px] uppercase tracking-wider font-semibold text-primary">{label}</p>
       ) : (
