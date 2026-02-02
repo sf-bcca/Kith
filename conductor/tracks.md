@@ -12,6 +12,3 @@ This file tracks all major tracks for the project. Each track has its own detail
   *Link: [./conductor/tracks/social_activity_feed_20260202/](./conductor/tracks/social_activity_feed_20260202/)*
 
 ---
-
-- [x] **Track: Backend Infrastructure Setup**
-*Link: [./tracks/backend_infrastructure_20260202/](./tracks/backend_infrastructure_20260202/)*
