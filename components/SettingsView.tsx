@@ -10,9 +10,10 @@ interface Props {
   onNavigate: (screen: string, memberId?: string) => void;
   onLogout?: () => void;
   loggedInId?: string | null;
+  onPreferenceChange?: (prefs: { darkMode?: boolean; language?: string }) => void;
 }
 
-const SettingsView: React.FC<Props> = ({ onNavigate, onLogout, loggedInId }) => {
+const SettingsView: React.FC<Props> = ({ onNavigate, onLogout, loggedInId, onPreferenceChange }) => {
   const [member, setMember] = useState<FamilyMember | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'account' | 'privacy' | 'preferences' | 'family'>('overview');
@@ -62,7 +63,15 @@ const SettingsView: React.FC<Props> = ({ onNavigate, onLogout, loggedInId }) => 
       case 'privacy':
         return <PrivacySettings member={member} onUpdate={handleMemberUpdate} />;
       case 'preferences':
-        return <PreferenceSettings member={member} onUpdate={handleMemberUpdate} />;
+        return (
+          <PreferenceSettings 
+            member={member} 
+            onUpdate={(updated) => {
+              handleMemberUpdate(updated);
+              onPreferenceChange?.({ darkMode: updated.darkMode, language: updated.language });
+            }} 
+          />
+        );
       default:
         return (
           <>

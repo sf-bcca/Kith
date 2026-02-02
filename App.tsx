@@ -32,6 +32,7 @@ export default function App() {
   const [loggedInMemberId, setLoggedInMemberId] = useState<string | null>(localStorage.getItem('kith_member_id'));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [globalDarkMode, setGlobalDarkMode] = useState(false);
 
   // Check for initial state (empty database or session)
   useEffect(() => {
@@ -55,6 +56,7 @@ export default function App() {
             setLoggedInMemberId(null);
             setCurrentScreen(Screen.WELCOME);
           } else {
+            setGlobalDarkMode(member.darkMode || false);
             if (!selectedMemberId) {
               setSelectedMemberId(loggedInMemberId);
             }
@@ -70,14 +72,14 @@ export default function App() {
     checkState();
   }, [loggedInMemberId]);
 
-  // Handle Dark Mode for Admin Dashboard
+  // Handle Dark Mode
   useEffect(() => {
-    if (currentScreen === Screen.ADMIN) {
+    if (currentScreen === Screen.ADMIN || globalDarkMode) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
-  }, [currentScreen]);
+  }, [currentScreen, globalDarkMode]);
 
   const handleNavigate = (screen: string, memberId?: string) => {
     if (memberId) {
@@ -140,7 +142,16 @@ export default function App() {
       case Screen.BIO: return <MemberBiography onNavigate={handleNavigate} memberId={selectedMemberId} loggedInId={loggedInMemberId} />;
       case Screen.MEMORIES: return <ActivityFeed onNavigate={handleNavigate} currentUserId={loggedInMemberId} />;
       case Screen.DISCOVER: return <DiscoverView onNavigate={handleNavigate} />;
-      case Screen.SETTINGS: return <SettingsView onNavigate={handleNavigate} onLogout={handleLogout} loggedInId={loggedInMemberId} />;
+      case Screen.SETTINGS: return (
+        <SettingsView 
+          onNavigate={handleNavigate} 
+          onLogout={handleLogout} 
+          loggedInId={loggedInMemberId} 
+          onPreferenceChange={(prefs) => {
+            if (prefs.darkMode !== undefined) setGlobalDarkMode(prefs.darkMode);
+          }}
+        />
+      );
       case Screen.PEDIGREE: return <PedigreeChart onNavigate={handleNavigate} selectedId={selectedMemberId} onSelect={setSelectedMemberId} />;
       case Screen.FAN: return <FanChart onNavigate={handleNavigate} selectedId={selectedMemberId} onSelect={setSelectedMemberId} />;
       case Screen.DIRECTORY: return <FamilyDirectory onNavigate={handleNavigate} />;
