@@ -11,7 +11,7 @@ This plan follows the TDD process.
     - [x] Implement `ActivityService.ts`
 - [x] Task: Conductor - User Manual Verification 'Data Model and Service Foundation'
 
-## Phase 2: UI Integration and Interaction
+## Phase 2: UI Integration and Interaction [checkpoint: 3663a06]
 - [x] Task: Refactor `ActivityFeed` to use `ActivityService` bc73f0f
     - [x] Write integration tests for `ActivityFeed`
     - [x] Update `ActivityFeed.tsx` to be dynamic
