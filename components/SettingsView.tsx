@@ -3,6 +3,7 @@ import BottomNav from './BottomNav';
 import AccountSettings from './AccountSettings';
 import PrivacySettings from './PrivacySettings';
 import PreferenceSettings from './PreferenceSettings';
+import FamilyManagement from './FamilyManagement';
 import { FamilyService } from '../services/FamilyService';
 import { FamilyMember } from '../types/family';
 
@@ -72,6 +73,8 @@ const SettingsView: React.FC<Props> = ({ onNavigate, onLogout, loggedInId, onPre
             }} 
           />
         );
+      case 'family':
+        return <FamilyManagement member={member} />;
       default:
         return (
           <>
@@ -117,14 +120,6 @@ const SettingsView: React.FC<Props> = ({ onNavigate, onLogout, loggedInId, onPre
                   <span className="flex-1 font-semibold text-slate-700 text-sm">Account Settings</span>
                   <span className="material-symbols-outlined text-slate-300 text-[18px]">chevron_right</span>
                </button>
-               
-               <button className="w-full flex items-center gap-4 p-4 hover:bg-slate-50 transition-colors border-b border-slate-50 text-left group">
-                  <div className="size-8 rounded-lg bg-slate-50 flex items-center justify-center group-hover:bg-white group-hover:shadow-sm transition-all">
-                      <span className="material-symbols-outlined text-amber-500 text-[20px]">notifications</span>
-                  </div>
-                  <span className="flex-1 font-semibold text-slate-700 text-sm">Notifications</span>
-                  <span className="material-symbols-outlined text-slate-300 text-[18px]">chevron_right</span>
-               </button>
 
                <button 
                   onClick={() => setActiveTab('privacy')}
@@ -137,12 +132,14 @@ const SettingsView: React.FC<Props> = ({ onNavigate, onLogout, loggedInId, onPre
                   <span className="material-symbols-outlined text-slate-300 text-[18px]">chevron_right</span>
                </button>
 
-               <button className="w-full flex items-center gap-4 p-4 hover:bg-slate-50 transition-colors text-left group">
+               <button 
+                  onClick={() => setActiveTab('family')}
+                  className="w-full flex items-center gap-4 p-4 hover:bg-slate-50 transition-colors text-left group"
+               >
                   <div className="size-8 rounded-lg bg-slate-50 flex items-center justify-center group-hover:bg-white group-hover:shadow-sm transition-all">
-                      <span className="material-symbols-outlined text-purple-500 text-[20px]">credit_card</span>
+                      <span className="material-symbols-outlined text-amber-600 text-[20px]">groups</span>
                   </div>
-                  <span className="flex-1 font-semibold text-slate-700 text-sm">Subscription</span>
-                  <span className="text-[10px] font-bold bg-green-100 text-green-700 px-2 py-0.5 rounded-full mr-2">Active</span>
+                  <span className="flex-1 font-semibold text-slate-700 text-sm">Family Management</span>
                   <span className="material-symbols-outlined text-slate-300 text-[18px]">chevron_right</span>
                </button>
             </div>
