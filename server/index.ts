@@ -52,13 +52,20 @@ app.get('/api/members/:id', async (req: Request, res: Response) => {
 
 app.post('/api/members', async (req: Request, res: Response) => {
   try {
-    const { first_name, last_name, maiden_name, birth_date, death_date, gender, bio, profile_image, relationships, password } = req.body;
+    const { 
+      first_name, last_name, maiden_name, birth_date, death_date, gender, bio, profile_image, relationships, password,
+      email, username, dark_mode, language, visibility, data_sharing, notifications_email, notifications_push
+    } = req.body;
     const result = await pool.query(
       `INSERT INTO family_members 
-      (first_name, last_name, maiden_name, birth_date, death_date, gender, bio, profile_image, relationships, password) 
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
+      (first_name, last_name, maiden_name, birth_date, death_date, gender, bio, profile_image, relationships, password,
+       email, username, dark_mode, language, visibility, data_sharing, notifications_email, notifications_push) 
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18) 
       RETURNING *`,
-      [first_name, last_name, maiden_name, birth_date, death_date, gender, bio, profile_image, relationships || {}, password]
+      [
+        first_name, last_name, maiden_name, birth_date, death_date, gender, bio, profile_image, relationships || {}, password,
+        email, username, dark_mode, language, visibility, data_sharing, notifications_email, notifications_push
+      ]
     );
     res.status(201).json(result.rows[0]);
   } catch (err: any) {
@@ -96,7 +103,10 @@ app.post('/api/login', async (req: Request, res: Response) => {
 app.put('/api/members/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { first_name, last_name, maiden_name, birth_date, death_date, gender, bio, profile_image, relationships, password } = req.body;
+    const { 
+      first_name, last_name, maiden_name, birth_date, death_date, gender, bio, profile_image, relationships, password,
+      email, username, dark_mode, language, visibility, data_sharing, notifications_email, notifications_push
+    } = req.body;
     
     const result = await pool.query(
       `UPDATE family_members SET 
@@ -109,10 +119,22 @@ app.put('/api/members/:id', async (req: Request, res: Response) => {
       bio = COALESCE($7, bio), 
       profile_image = COALESCE($8, profile_image), 
       relationships = COALESCE($9, relationships),
-      password = COALESCE($10, password)
-      WHERE id = $11 
+      password = COALESCE($10, password),
+      email = COALESCE($11, email),
+      username = COALESCE($12, username),
+      dark_mode = COALESCE($13, dark_mode),
+      language = COALESCE($14, language),
+      visibility = COALESCE($15, visibility),
+      data_sharing = COALESCE($16, data_sharing),
+      notifications_email = COALESCE($17, notifications_email),
+      notifications_push = COALESCE($18, notifications_push)
+      WHERE id = $19 
       RETURNING *`,
-      [first_name, last_name, maiden_name, birth_date, death_date, gender, bio, profile_image, relationships, password, id]
+      [
+        first_name, last_name, maiden_name, birth_date, death_date, gender, bio, profile_image, relationships, password,
+        email, username, dark_mode, language, visibility, data_sharing, notifications_email, notifications_push,
+        id
+      ]
     );
 
     if (result.rows.length === 0) {

@@ -12,6 +12,14 @@ export interface FamilyMember {
   photoUrl?: string;
   biography?: string;
   password?: string;
+  email?: string;
+  username?: string;
+  darkMode?: boolean;
+  language?: string;
+  visibility?: 'public' | 'family-only';
+  dataSharing?: boolean;
+  notificationsEmail?: boolean;
+  notificationsPush?: boolean;
   
   // Relations stored as IDs
   parents: string[];
