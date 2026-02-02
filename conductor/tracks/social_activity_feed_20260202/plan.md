@@ -15,7 +15,8 @@ This plan follows the TDD process.
 - [x] Task: Refactor `ActivityFeed` to use `ActivityService` bc73f0f
     - [x] Write integration tests for `ActivityFeed`
     - [x] Update `ActivityFeed.tsx` to be dynamic
-- [ ] Task: Implement Interaction Logic
-    - [ ] Implement `approveActivity` in `ActivityService`
-    - [ ] Update UI to handle Approve/Comment actions
+- [x] Task: Implement Interaction Logic 9783b10
+    - [x] Implement `approveActivity` in `ActivityService`
+    - [x] Implement `addComment` in `ActivityService`
+    - [x] Update UI to handle Comment actions
 - [ ] Task: Conductor - User Manual Verification 'UI Integration and Interaction'
