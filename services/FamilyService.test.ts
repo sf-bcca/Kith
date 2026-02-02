@@ -116,6 +116,40 @@ describe('FamilyService', () => {
     expect(member).toBeUndefined();
   });
 
+  describe('JWT Handling', () => {
+    it('should include Authorization header if token is set', async () => {
+      FamilyService.setToken('test-token');
+      (fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve([])
+      });
+
+      await FamilyService.getAll();
+
+      const lastCall = (fetch as any).mock.calls[0];
+      expect(lastCall[1].headers).toHaveProperty('Authorization', 'Bearer test-token');
+    });
+
+    it('should login and set token', async () => {
+      const mockToken = 'new-token';
+      const mockMember = { id: '1', first_name: 'Arthur' };
+      (fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ token: mockToken, member: mockMember })
+      });
+
+      await FamilyService.login({
+        firstName: 'Arthur',
+        lastName: 'Pendragon',
+        birthDate: '1940-05-12',
+        password: 'password'
+      });
+
+      // Check localStorage (mocked or real)
+      expect(localStorage.getItem('kith_token')).toBe(mockToken);
+    });
+  });
+
   describe('search', () => {
     it('should find members by first name (case-insensitive)', async () => {
       const results = await FamilyService.search('merlin');

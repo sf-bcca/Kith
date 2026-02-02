@@ -16,7 +16,7 @@ This plan outlines the steps to remediate identified security vulnerabilities, f
     - [x] Update `services/FamilyService.ts` and `types/family.ts` to remove `password` from frontend models.
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Password Security & Privacy' (Protocol in workflow.md) [160dbdc]
 
-## Phase 2: JWT Authentication & IDOR Protection
+## Phase 2: JWT Authentication & IDOR Protection [checkpoint: 188ea2f]
 *Goal: Secure API endpoints with JWT and prevent unauthorized data access.*
 
 - [x] Task: Write Tests: Authentication middleware and protected routes [6e7d218]
@@ -28,9 +28,9 @@ This plan outlines the steps to remediate identified security vulnerabilities, f
 - [x] Task: Implement: Protected routes and IDOR checks [07a81f1]
     - [x] Apply auth middleware to all sensitive member and settings routes.
     - [x] Implement checks to ensure users can only modify their own data based on JWT `sub`.
-- [ ] Task: Implement: Frontend JWT handling
-    - [ ] Update `FamilyService.ts` to store the token and include it in `Authorization` headers.
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: JWT Authentication & IDOR Protection' (Protocol in workflow.md)
+- [x] Task: Implement: Frontend JWT handling [188ea2f]
+    - [x] Update `FamilyService.ts` to store the token and include it in `Authorization` headers.
+- [x] Task: Conductor - User Manual Verification 'Phase 2: JWT Authentication & IDOR Protection' (Protocol in workflow.md) [188ea2f]
 
 ## Phase 3: Hardening & Sanitization
 *Goal: Implement generic error handling and prevent CSS injection.*

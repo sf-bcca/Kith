@@ -3,13 +3,35 @@ import { FamilyMember, FilterCriteria, LoginCredentials } from '../types/family'
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
 export class FamilyService {
+  private static token: string | null = localStorage.getItem('kith_token');
+
+  private static getHeaders(extraHeaders: Record<string, string> = {}): Record<string, string> {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...extraHeaders,
+    };
+    if (this.token) {
+      headers['Authorization'] = `Bearer ${this.token}`;
+    }
+    return headers;
+  }
+
+  static setToken(token: string | null) {
+    this.token = token;
+    if (token) {
+      localStorage.setItem('kith_token', token);
+    } else {
+      localStorage.removeItem('kith_token');
+    }
+  }
+
   /**
    * Logs in a family member.
    * @param credentials The login credentials.
    * @returns A promise that resolves to the logged-in FamilyMember.
    */
   static async login(credentials: LoginCredentials): Promise<FamilyMember> {
-    const response = await fetch(`${API_URL}/api/login`, {
+    const response = await fetch(`${API_URL}/api/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -28,7 +50,8 @@ export class FamilyService {
     }
 
     const data = await response.json();
-    return this.mapSingleToFrontend(data);
+    this.setToken(data.token);
+    return this.mapSingleToFrontend(data.member);
   }
 
   /**
@@ -36,7 +59,9 @@ export class FamilyService {
    * @returns A promise that resolves to an array of FamilyMember objects.
    */
   static async getAll(): Promise<FamilyMember[]> {
-    const response = await fetch(`${API_URL}/api/members`);
+    const response = await fetch(`${API_URL}/api/members`, {
+      headers: this.getHeaders(),
+    });
     if (!response.ok) {
       throw new Error('Failed to fetch family members');
     }
@@ -50,7 +75,9 @@ export class FamilyService {
    * @returns A promise that resolves to the FamilyMember object if found, otherwise undefined.
    */
   static async getById(id: string): Promise<FamilyMember | undefined> {
-    const response = await fetch(`${API_URL}/api/members/${id}`);
+    const response = await fetch(`${API_URL}/api/members/${id}`, {
+      headers: this.getHeaders(),
+    });
     if (response.status === 404) {
       return undefined;
     }
@@ -124,9 +151,7 @@ export class FamilyService {
     const backendData = this.mapFrontendToBackend(member);
     const response = await fetch(`${API_URL}/api/members`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: this.getHeaders(),
       body: JSON.stringify(backendData),
     });
 
@@ -148,9 +173,7 @@ export class FamilyService {
     const backendData = this.mapFrontendToBackend(member);
     const response = await fetch(`${API_URL}/api/members/${id}`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: this.getHeaders(),
       body: JSON.stringify(backendData),
     });
 
@@ -170,11 +193,30 @@ export class FamilyService {
   static async delete(id: string): Promise<void> {
     const response = await fetch(`${API_URL}/api/members/${id}`, {
       method: 'DELETE',
+      headers: this.getHeaders(),
     });
 
     if (!response.ok) {
       throw new Error('Failed to delete family member');
     }
+  }
+
+  /**
+   * Updates settings for a family member.
+   */
+  static async updateSettings(id: string, settings: any): Promise<any> {
+    const response = await fetch(`${API_URL}/api/settings/${id}`, {
+      method: 'PUT',
+      headers: this.getHeaders(),
+      body: JSON.stringify(settings),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to update settings');
+    }
+
+    return await response.json();
   }
 
   /**

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
 import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 import app from '../server/index';
 import { pool } from '../server/db';
 
@@ -10,6 +11,9 @@ vi.mock('../server/db', () => ({
     query: vi.fn(),
   },
 }));
+
+const JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
+const token = jwt.sign({ sub: '1' }, JWT_SECRET);
 
 describe('Security: Password Privacy & Hashing', () => {
   beforeEach(() => {
@@ -23,7 +27,9 @@ describe('Security: Password Privacy & Hashing', () => {
       ];
       (pool.query as any).mockResolvedValueOnce({ rows: mockMembers });
 
-      const response = await request(app).get('/api/members');
+      const response = await request(app)
+        .get('/api/members')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
       expect(response.body[0]).not.toHaveProperty('password');
@@ -37,7 +43,9 @@ describe('Security: Password Privacy & Hashing', () => {
       const mockMember = { id: '1', first_name: 'Arthur', last_name: 'Pendragon', password: 'secretpassword' };
       (pool.query as any).mockResolvedValueOnce({ rows: [mockMember] });
 
-      const response = await request(app).get('/api/members/1');
+      const response = await request(app)
+        .get('/api/members/1')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
       expect(response.body).not.toHaveProperty('password');
@@ -65,11 +73,14 @@ describe('Security: Password Privacy & Hashing', () => {
       const mockMember = { id: '1', first_name: 'Arthur', last_name: 'Pendragon', password: 'hashedpassword' };
       (pool.query as any).mockResolvedValueOnce({ rows: [mockMember] });
 
-      const response = await request(app).put('/api/members/1').send({
-        first_name: 'Arthur',
-        last_name: 'Pendragon',
-        password: 'newpassword'
-      });
+      const response = await request(app)
+        .put('/api/members/1')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          first_name: 'Arthur',
+          last_name: 'Pendragon',
+          password: 'newpassword'
+        });
 
       expect(response.status).toBe(200);
       expect(response.body).not.toHaveProperty('password');
@@ -105,10 +116,13 @@ describe('Security: Password Privacy & Hashing', () => {
       (pool.query as any).mockResolvedValueOnce({ rows: [] }); // For password update
       (pool.query as any).mockResolvedValueOnce({ rows: [{ id: '1' }] }); // For general settings update
 
-      const response = await request(app).put('/api/settings/1').send({
-        current_password: currentPassword,
-        new_password: newPassword
-      });
+      const response = await request(app)
+        .put('/api/settings/1')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          current_password: currentPassword,
+          new_password: newPassword
+        });
 
       expect(response.status).toBe(200);
 

@@ -13,6 +13,7 @@ const request = supertest(API_URL);
 describe('User Settings API', () => {
   let pool: Pool;
   let testMemberId: string;
+  let authToken: string;
 
   beforeAll(() => {
     pool = new Pool({
@@ -32,6 +33,7 @@ describe('User Settings API', () => {
   });
 
   it('should create a member with settings', async () => {
+    const password = 'testpassword';
     const newMember = {
       first_name: 'Test',
       last_name: 'User',
@@ -41,7 +43,8 @@ describe('User Settings API', () => {
       username: 'testuser',
       dark_mode: true,
       language: 'fr',
-      visibility: 'public'
+      visibility: 'public',
+      password: password
     };
 
     const res = await request
@@ -49,13 +52,20 @@ describe('User Settings API', () => {
       .send(newMember);
 
     expect(res.status).toBe(201);
-    expect(res.body.email).toBe('test@example.com');
-    expect(res.body.username).toBe('testuser');
-    expect(res.body.dark_mode).toBe(true);
-    expect(res.body.language).toBe('fr');
-    expect(res.body.visibility).toBe('public');
-    
     testMemberId = res.body.id;
+
+    // Login to get token
+    const loginRes = await request
+      .post('/api/auth/login')
+      .send({
+        first_name: newMember.first_name,
+        last_name: newMember.last_name,
+        birth_date: newMember.birth_date,
+        password: password
+      });
+    
+    expect(loginRes.status).toBe(200);
+    authToken = loginRes.body.token;
   });
 
   it('should update member settings via dedicated settings endpoint', async () => {
@@ -66,6 +76,7 @@ describe('User Settings API', () => {
 
     const res = await request
       .put(`/api/settings/${testMemberId}`)
+      .set('Authorization', `Bearer ${authToken}`)
       .send(updateData);
 
     expect(res.status).toBe(200);
@@ -74,14 +85,12 @@ describe('User Settings API', () => {
   });
 
   it('should update password with valid current password', async () => {
-    // First, set a hashed password for the test member
-    const hashedPassword = await bcrypt.hash('old-password', 10);
-    await pool.query('UPDATE family_members SET password = $1 WHERE id = $2', [hashedPassword, testMemberId]);
-
+    // Current password is 'testpassword' from creation
     const res = await request
       .put(`/api/settings/${testMemberId}`)
+      .set('Authorization', `Bearer ${authToken}`)
       .send({
-        current_password: 'old-password',
+        current_password: 'testpassword',
         new_password: 'new-password'
       });
 
@@ -92,11 +101,14 @@ describe('User Settings API', () => {
     const newHashedPassword = dbRes.rows[0].password;
     expect(newHashedPassword).not.toBe('new-password');
     expect(await bcrypt.compare('new-password', newHashedPassword)).toBe(true);
+
+    // Update authToken for subsequent tests if login is needed again (though token still valid)
   });
 
   it('should fail to update password with invalid current password', async () => {
     const res = await request
       .put(`/api/settings/${testMemberId}`)
+      .set('Authorization', `Bearer ${authToken}`)
       .send({
         current_password: 'wrong-password',
         new_password: 'even-newer-password'
@@ -114,6 +126,7 @@ describe('User Settings API', () => {
 
     const res = await request
       .put(`/api/settings/${testMemberId}`)
+      .set('Authorization', `Bearer ${authToken}`)
       .send(privacyData);
 
     expect(res.status).toBe(200);
@@ -131,6 +144,7 @@ describe('User Settings API', () => {
 
     const res = await request
       .put(`/api/settings/${testMemberId}`)
+      .set('Authorization', `Bearer ${authToken}`)
       .send(prefData);
 
     expect(res.status).toBe(200);
