@@ -28,7 +28,7 @@ This plan outlines the full-stack implementation of the Account, Privacy, Prefer
 - [x] Task: Implement: UI for Privacy and Preferences (Dark Mode toggle, Language selector) 068b42d
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Privacy & Preferences' (Protocol in workflow.md)
 
-## Phase 4: Family Management & Cleanup
+## Phase 4: Family Management & Cleanup [checkpoint: b6ec57a]
 *Goal: Implement Family Management view and remove broken links.*
 
 - [x] Task: Write Tests: FamilyManagement React component 456f899
