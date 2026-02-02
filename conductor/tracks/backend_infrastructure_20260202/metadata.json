@@ -1,0 +1,8 @@
+{
+  "track_id": "backend_infrastructure_20260202",
+  "type": "chore",
+  "status": "new",
+  "created_at": "2026-02-02T10:00:00Z",
+  "updated_at": "2026-02-02T10:00:00Z",
+  "description": "Establish the foundational backend infrastructure using Node.js, Express, and PostgreSQL orchestrated via Docker Compose."
+}

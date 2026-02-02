@@ -10,3 +10,8 @@ This file tracks all major tracks for the project. Each track has its own detail
   *Link: [./conductor/tracks/family_tree_visualization_20260202/](./conductor/tracks/family_tree_visualization_20260202/)*
 - [x] **Track: Social Activity Feed Data Model and Interaction**
   *Link: [./conductor/tracks/social_activity_feed_20260202/](./conductor/tracks/social_activity_feed_20260202/)*
+
+---
+
+- [~] **Track: Backend Infrastructure Setup**
+*Link: [./tracks/backend_infrastructure_20260202/](./tracks/backend_infrastructure_20260202/)*
