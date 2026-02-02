@@ -61,4 +61,44 @@ describe('FamilyService', () => {
       expect(results).toHaveLength(mockFamilyData.length);
     });
   });
+
+  describe('filter', () => {
+    it('should filter by gender', () => {
+      const results = FamilyService.filter({ gender: 'male' });
+      expect(results.length).toBeGreaterThan(0);
+      results.forEach(m => expect(m.gender).toBe('male'));
+    });
+
+    it('should filter by last name', () => {
+      const results = FamilyService.filter({ lastName: 'Lake' });
+      expect(results).toHaveLength(1);
+      expect(results[0].lastName).toBe('Lake');
+    });
+
+    it('should filter by birth year range', () => {
+      const results = FamilyService.filter({ birthYearStart: 1960, birthYearEnd: 1970 });
+      // Mordred (1965), Morgana (1968)
+      expect(results).toHaveLength(2);
+      results.forEach(m => {
+        const year = new Date(m.birthDate!).getFullYear();
+        expect(year).toBeGreaterThanOrEqual(1960);
+        expect(year).toBeLessThanOrEqual(1970);
+      });
+    });
+
+    it('should combine multiple filters', () => {
+      const results = FamilyService.filter({ gender: 'female', lastName: 'Pendragon' });
+      // Guinevere, Morgana, Nimue
+      expect(results).toHaveLength(3);
+      results.forEach(m => {
+        expect(m.gender).toBe('female');
+        expect(m.lastName).toBe('Pendragon');
+      });
+    });
+
+    it('should return empty array when no members match criteria', () => {
+      const results = FamilyService.filter({ gender: 'other' });
+      expect(results).toHaveLength(0);
+    });
+  });
 });

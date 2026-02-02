@@ -15,9 +15,9 @@ This plan follows the Test-Driven Development (TDD) process as defined in the pr
 - [x] Task: Implement Fuzzy Search in `FamilyService`
     - [x] Write tests for `FamilyService.search(query: string)`
     - [x] Implement fuzzy search logic in `FamilyService.ts`
-- [ ] Task: Implement Filtering (by gender, branch, etc.)
-    - [ ] Write tests for `FamilyService.filter(criteria: FilterCriteria)`
-    - [ ] Implement filtering logic
+- [x] Task: Implement Filtering (by gender, branch, etc.)
+    - [x] Write tests for `FamilyService.filter(criteria: FilterCriteria)`
+    - [x] Implement filtering logic
 - [ ] Task: Conductor - User Manual Verification 'Directory Search Logic' (Protocol in workflow.md)
 
 ## Phase 3: UI Implementation

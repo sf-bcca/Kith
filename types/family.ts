@@ -17,3 +17,10 @@ export interface FamilyMember {
   spouses: string[];
   children: string[];
 }
+
+export interface FilterCriteria {
+  gender?: Gender;
+  lastName?: string;
+  birthYearStart?: number;
+  birthYearEnd?: number;
+}

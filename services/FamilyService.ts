@@ -1,4 +1,4 @@
-import { FamilyMember } from '../types/family';
+import { FamilyMember, FilterCriteria } from '../types/family';
 import { mockFamilyData } from '../mocks/familyData';
 
 export class FamilyService {
@@ -40,6 +40,35 @@ export class FamilyService {
         lastName.includes(normalizedQuery) ||
         fullName.includes(normalizedQuery)
       );
+    });
+  }
+
+  /**
+   * Filters family members based on provided criteria.
+   * @param criteria The filtering criteria.
+   * @returns An array of FamilyMember objects that match all criteria.
+   */
+  static filter(criteria: FilterCriteria): FamilyMember[] {
+    return mockFamilyData.filter((member) => {
+      if (criteria.gender && member.gender !== criteria.gender) {
+        return false;
+      }
+      if (criteria.lastName && member.lastName !== criteria.lastName) {
+        return false;
+      }
+      if (member.birthDate) {
+        const birthYear = new Date(member.birthDate).getFullYear();
+        if (criteria.birthYearStart && birthYear < criteria.birthYearStart) {
+          return false;
+        }
+        if (criteria.birthYearEnd && birthYear > criteria.birthYearEnd) {
+          return false;
+        }
+      } else if (criteria.birthYearStart || criteria.birthYearEnd) {
+        // If searching by year but member has no birthDate, exclude them
+        return false;
+      }
+      return true;
     });
   }
 }
