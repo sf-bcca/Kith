@@ -1,10 +1,146 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { useFamily } from '../context/FamilyContext';
+import { TreeService } from '../services/TreeService';
+import { TreeData, Member } from '../types';
 
 interface Props {
   onNavigate: (screen: string) => void;
 }
 
+// SVG Helpers
+const polarToCartesian = (centerX: number, centerY: number, radius: number, angleInDegrees: number) => {
+  const angleInRadians = (angleInDegrees) * Math.PI / 180.0;
+  return {
+    x: centerX + (radius * Math.cos(angleInRadians)),
+    y: centerY + (radius * Math.sin(angleInRadians))
+  };
+};
+
+const describeArc = (x: number, y: number, innerRadius: number, outerRadius: number, startAngle: number, endAngle: number) => {
+    const startOuter = polarToCartesian(x, y, outerRadius, endAngle);
+    const endOuter = polarToCartesian(x, y, outerRadius, startAngle);
+    const startInner = polarToCartesian(x, y, innerRadius, endAngle);
+    const endInner = polarToCartesian(x, y, innerRadius, startAngle);
+
+    const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+
+    const d = [
+        "M", startOuter.x, startOuter.y,
+        "A", outerRadius, outerRadius, 0, largeArcFlag, 0, endOuter.x, endOuter.y,
+        "L", endInner.x, endInner.y,
+        "A", innerRadius, innerRadius, 0, largeArcFlag, 1, startInner.x, startInner.y,
+        "Z"
+    ].join(" ");
+
+    return d;
+};
+
 const FanChart: React.FC<Props> = ({ onNavigate }) => {
+  const { selectedMemberId, setSelectedMemberId } = useFamily();
+  const [treeData, setTreeData] = useState<TreeData | null>(null);
+
+  useEffect(() => {
+    try {
+      const data = TreeService.getAncestors(selectedMemberId);
+      setTreeData(data);
+    } catch (e) {
+      console.error(e);
+    }
+  }, [selectedMemberId]);
+
+  if (!treeData) {
+      return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
+
+  const { focusPerson, parents, grandparents, greatGrandparents } = treeData;
+
+  // Configuration
+  const cx = 200;
+  const cy = 200; // Center is at bottom-middle roughly for a 180 degree fan
+  // Wait, standard fan chart usually full circle or semi circle.
+  // The original design seemed to be a top-half semi-circle.
+  // Angles: 180 (Left) to 360 (Right). 270 is Top.
+
+  // Actually, to match "Father Left, Mother Right" usually:
+  // Father: 180-270. Mother: 270-360.
+
+  const centerRadius = 45;
+  const widths = [45, 45, 45]; // Thickness of each generation ring
+
+  // Root
+  // Gen 1: Parents (2 sectors)
+  // Gen 2: GP (4 sectors)
+  // Gen 3: GGP (8 sectors)
+
+  // Map data to sectors
+  // We need to traverse specifically to ensure correct order
+  const father = parents.find(p => p.gender === 'male');
+  const mother = parents.find(p => p.gender === 'female');
+
+  const paternalGF = grandparents.find(gp => father?.parents.includes(gp.id) && gp.gender === 'male');
+  const paternalGM = grandparents.find(gp => father?.parents.includes(gp.id) && gp.gender === 'female');
+  const maternalGF = grandparents.find(gp => mother?.parents.includes(gp.id) && gp.gender === 'male');
+  const maternalGM = grandparents.find(gp => mother?.parents.includes(gp.id) && gp.gender === 'female');
+
+  // Great Grandparents need similar ordering
+  const getParentsOf = (person: Member | undefined) => {
+      if (!person) return [undefined, undefined];
+      const f = greatGrandparents.find(ggp => person.parents.includes(ggp.id) && ggp.gender === 'male');
+      const m = greatGrandparents.find(ggp => person.parents.includes(ggp.id) && ggp.gender === 'female');
+      return [f, m];
+  };
+
+  const [patGF_F, patGF_M] = getParentsOf(paternalGF);
+  const [patGM_F, patGM_M] = getParentsOf(paternalGM);
+  const [matGF_F, matGF_M] = getParentsOf(maternalGF);
+  const [matGM_F, matGM_M] = getParentsOf(maternalGM);
+
+  const gen1 = [father, mother];
+  const gen2 = [paternalGF, paternalGM, maternalGF, maternalGM];
+  const gen3 = [patGF_F, patGF_M, patGM_F, patGM_M, matGF_F, matGF_M, matGM_F, matGM_M];
+
+  const renderSector = (
+      person: Member | undefined,
+      genIndex: number,
+      sectorIndex: number,
+      totalSectors: number,
+      color: string
+    ) => {
+      const innerR = centerRadius + (widths.slice(0, genIndex).reduce((a, b) => a + b, 0));
+      const outerR = innerR + widths[genIndex];
+      const startAngle = 180 + (sectorIndex * (180 / totalSectors));
+      const endAngle = 180 + ((sectorIndex + 1) * (180 / totalSectors));
+
+      const isHovered = false; // State for hover could be added
+
+      return (
+          <g key={`${genIndex}-${sectorIndex}`} onClick={() => person && setSelectedMemberId(person.id)}>
+            <path
+                d={describeArc(cx, cy, innerR, outerR, startAngle, endAngle)}
+                fill={person ? color : '#e2e8f0'}
+                stroke="white"
+                strokeWidth="1"
+                className="cursor-pointer hover:opacity-80 transition-opacity"
+            />
+            {person && (
+                <text
+                    x={polarToCartesian(cx, cy, innerR + (widths[genIndex]/2), startAngle + ((endAngle-startAngle)/2)).x}
+                    y={polarToCartesian(cx, cy, innerR + (widths[genIndex]/2), startAngle + ((endAngle-startAngle)/2)).y}
+                    textAnchor="middle"
+                    dy=".3em"
+                    fontSize={genIndex === 0 ? "10" : "8"}
+                    fill="white"
+                    fontWeight="bold"
+                    pointerEvents="none"
+                    transform={`rotate(0, 0, 0)`} // Could implement rotation for readability
+                >
+                    {person.firstName}
+                </text>
+            )}
+          </g>
+      );
+  };
+
   return (
     <div className="bg-background-light font-display text-[#0d121b] transition-colors duration-300 min-h-screen">
       {/* Top Nav */}
@@ -46,25 +182,24 @@ const FanChart: React.FC<Props> = ({ onNavigate }) => {
         {/* Fan Chart SVG */}
         <div className="relative w-full max-w-[380px] aspect-square flex items-center justify-center" style={{ perspective: '1000px' }}>
           <svg className="w-full h-full transform transition-transform duration-500 hover:scale-105" viewBox="0 0 400 400">
-            {/* Gen 3 Outer */}
-            <path d="M 200,65 A 135,135 0 0 1 335,200 L 370,200 A 170,170 0 0 0 200,30 Z" fill="#93c5fd" opacity="0.4" className="hover:opacity-60 cursor-pointer transition-opacity"></path>
-            <path d="M 200,65 A 135,135 0 0 0 65,200 L 30,200 A 170,170 0 0 1 200,30 Z" fill="#f9a8d4" opacity="0.4" className="hover:opacity-60 cursor-pointer transition-opacity"></path>
+            {/* Gen 3 (GGP) */}
+            {gen3.map((p, i) => renderSector(p, 2, i, 8, i < 4 ? "#93c5fd" : "#f9a8d4"))}
+
+            {/* Gen 2 (GP) */}
+            {gen2.map((p, i) => renderSector(p, 1, i, 4, i < 2 ? "#60a5fa" : "#f472b6"))}
             
-            {/* Gen 2 GP */}
-            <path d="M 200,110 A 90,90 0 0 1 290,200 L 335,200 A 135,135 0 0 0 200,65 Z" fill="#60a5fa" opacity="0.6" className="hover:opacity-80 cursor-pointer transition-opacity"></path>
-            <path d="M 200,110 A 90,90 0 0 0 110,200 L 65,200 A 135,135 0 0 1 200,65 Z" fill="#f472b6" opacity="0.6" className="hover:opacity-80 cursor-pointer transition-opacity"></path>
-            
-            {/* Gen 1 Parents */}
-            <path d="M 200,155 A 45,45 0 0 1 245,200 L 290,200 A 90,90 0 0 0 200,110 Z" fill="#3b82f6" opacity="0.8" className="hover:opacity-100 cursor-pointer transition-opacity"></path>
-            <path d="M 200,155 A 45,45 0 0 0 155,200 L 110,200 A 90,90 0 0 1 200,110 Z" fill="#ec4899" opacity="0.8" className="hover:opacity-100 cursor-pointer transition-opacity"></path>
+            {/* Gen 1 (Parents) */}
+            {gen1.map((p, i) => renderSector(p, 0, i, 2, i === 0 ? "#3b82f6" : "#ec4899"))}
 
             {/* Root */}
-            <circle cx="200" cy="200" r="45" fill="#135bec" className="hover:brightness-110 cursor-pointer transition-all"></circle>
-            <text x="200" y="200" dy=".3em" textAnchor="middle" className="fill-white text-[12px] font-bold pointer-events-none">YOU</text>
+            <circle
+                cx={cx} cy={cy} r={centerRadius}
+                fill="#135bec"
+                className="hover:brightness-110 cursor-pointer transition-all"
+                onClick={() => setSelectedMemberId(focusPerson.id)}
+            ></circle>
+            <text x={cx} y={cy} dy=".3em" textAnchor="middle" className="fill-white text-[12px] font-bold pointer-events-none">YOU</text>
 
-            {/* Labels */}
-            <text x="200" y="140" textAnchor="middle" className="fill-white text-[9px] font-semibold pointer-events-none">David</text>
-            <text x="200" y="90" textAnchor="middle" className="fill-white text-[9px] font-semibold pointer-events-none">Arthur</text>
           </svg>
 
           {/* Controls */}
@@ -77,7 +212,10 @@ const FanChart: React.FC<Props> = ({ onNavigate }) => {
             </button>
           </div>
           <div className="absolute bottom-4 left-0">
-             <button className="bg-white shadow-xl rounded-lg px-3 h-12 flex items-center gap-2 text-primary text-sm font-bold active:scale-95 transition-transform hover:bg-gray-50">
+             <button
+                className="bg-white shadow-xl rounded-lg px-3 h-12 flex items-center gap-2 text-primary text-sm font-bold active:scale-95 transition-transform hover:bg-gray-50"
+                onClick={() => setSelectedMemberId('1')}
+             >
                 <span className="material-symbols-outlined text-[20px]">filter_center_focus</span>
                 Recenter
              </button>
@@ -101,18 +239,23 @@ const FanChart: React.FC<Props> = ({ onNavigate }) => {
         </div>
       </main>
 
-      {/* Bottom Card */}
+      {/* Bottom Card for Selected Person */}
       <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] border-t border-gray-100 z-50">
          <div className="flex flex-col items-center py-2">
             <div className="w-10 h-1.5 bg-gray-300 rounded-full mb-4"></div>
          </div>
          <div className="px-6 pb-10 flex items-center gap-4">
-            <div className="w-20 h-20 rounded-full bg-center bg-cover border-4 border-primary/20" style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuD0RQ7-rCXS0oWdk8aysRlYDdiUB9DHdYuT8dULDsdrzhi8rO9OyXKQSjXUtkulu69QQmJOCr1wWR8_Lof248eip_2hEWS-cTzLVFWU8mEUv-wtKt9eJjRhSmBINXqHrbVKb1dLxMJUlbXMGTBrGKrhlR3IJ_hoC317UuYkS5KR5RmNGno8DdLKetKgsoWyN9XHIPJuYo91gyh4oJ9WFp24JO6iI6LvPnA-zoVtrtlnkw5w5LrEWZyTsOm-rhbTZALVB5RIHWJt-fk')" }}></div>
+            <div
+                className="w-20 h-20 rounded-full bg-center bg-cover border-4 border-primary/20 flex items-center justify-center bg-gray-100"
+                style={{ backgroundImage: focusPerson.photoUrl ? `url('${focusPerson.photoUrl}')` : undefined }}
+            >
+                {!focusPerson.photoUrl && <span className="material-symbols-outlined text-4xl text-gray-400">person</span>}
+            </div>
             <div className="flex-1">
-               <h4 className="text-xl font-bold leading-none">Arthur Harrison</h4>
-               <p className="text-[#4c669a] text-sm mt-1">1892 — 1964</p>
+               <h4 className="text-xl font-bold leading-none">{focusPerson.firstName} {focusPerson.lastName}</h4>
+               <p className="text-[#4c669a] text-sm mt-1">{focusPerson.birthDate || '?'} — {focusPerson.deathDate || 'Present'}</p>
                <div className="flex gap-2 mt-2">
-                  <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold uppercase rounded">Great-Grandfather</span>
+                  <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold uppercase rounded">Person</span>
                   <span className="px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold uppercase rounded">Verified</span>
                </div>
             </div>
