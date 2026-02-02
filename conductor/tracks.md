@@ -12,8 +12,3 @@ This file tracks all major tracks for the project. Each track has its own detail
   *Link: [./conductor/tracks/social_activity_feed_20260202/](./conductor/tracks/social_activity_feed_20260202/)*
 - [x] **Track: Backend Integration & API Development**
   *Link: [./conductor/tracks/backend_integration_20260202/](./conductor/tracks/backend_integration_20260202/)*
-
----
-
-- [x] **Track: Fix all security issues identified in the audit.**
-*Link: [./tracks/security_remediation_20260202/](./tracks/security_remediation_20260202/)*
