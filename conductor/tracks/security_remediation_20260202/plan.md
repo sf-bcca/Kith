@@ -5,9 +5,9 @@ This plan outlines the steps to remediate identified security vulnerabilities, f
 ## Phase 1: Password Security & Privacy
 *Goal: Implement secure password storage and prevent credential leakage.*
 
-- [~] Task: Write Tests: Verify that member creation/update hashes passwords and retrieval excludes passwords
-    - [ ] Create tests in `tests/security_passwords.test.ts` to check password hashing in the database.
-    - [ ] Create tests to verify that `/api/members` endpoints do not return the `password` field.
+- [x] Task: Write Tests: Verify that member creation/update hashes passwords and retrieval excludes passwords [6e7d218]
+    - [x] Create tests in `tests/security_passwords.test.ts` to check password hashing in the database.
+    - [x] Create tests to verify that `/api/members` endpoints do not return the `password` field.
 - [ ] Task: Implement: Password hashing using `bcrypt`
     - [ ] Update `server/controllers/settingsController.ts` and `server/index.ts` to hash passwords on create/update.
     - [ ] Update existing members in the database to have hashed passwords (migration or script).
