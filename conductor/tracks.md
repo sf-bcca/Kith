@@ -8,3 +8,5 @@ This file tracks all major tracks for the project. Each track has its own detail
   *Link: [./conductor/tracks/data_model_20260202/](./conductor/tracks/data_model_20260202/)*
 - [x] **Track: Interactive Family Tree Visualization**
   *Link: [./conductor/tracks/family_tree_visualization_20260202/](./conductor/tracks/family_tree_visualization_20260202/)*
+- [ ] **Track: Social Activity Feed Data Model and Interaction**
+  *Link: [./conductor/tracks/social_activity_feed_20260202/](./conductor/tracks/social_activity_feed_20260202/)*
