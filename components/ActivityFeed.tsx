@@ -10,6 +10,8 @@ interface Props {
 
 const ActivityFeed: React.FC<Props> = ({ onNavigate }) => {
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [commentingId, setCommentingId] = useState<string | null>(null);
+  const [commentText, setCommentText] = useState('');
 
   useEffect(() => {
     setActivities(ActivityService.getFeed());
@@ -18,6 +20,17 @@ const ActivityFeed: React.FC<Props> = ({ onNavigate }) => {
   const handleApprove = (id: string) => {
     if (ActivityService.approveActivity(id)) {
       setActivities(ActivityService.getFeed());
+    }
+  };
+
+  const handleAddComment = (activityId: string) => {
+    if (!commentText.trim()) return;
+    
+    // Using '1' (Arthur Pendragon) as the default author for demo
+    if (ActivityService.addComment(activityId, { authorId: '1', text: commentText })) {
+      setActivities(ActivityService.getFeed());
+      setCommentingId(null);
+      setCommentText('');
     }
   };
 
@@ -154,8 +167,48 @@ const ActivityFeed: React.FC<Props> = ({ onNavigate }) => {
               <div className="p-4 flex flex-col gap-3">
                 {renderActivityContent(activity)}
                 
+                {activity.comments.length > 0 && (
+                  <div className="mt-2 space-y-2 border-t border-slate-50 pt-2">
+                    {activity.comments.map(comment => (
+                      <div key={comment.id} className="flex gap-2">
+                        <div className="size-6 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
+                          <span className="material-symbols-outlined text-[14px]">person</span>
+                        </div>
+                        <div className="bg-slate-50 rounded-lg p-2 flex-1">
+                          <p className="text-xs font-bold">{getMemberName(comment.authorId)}</p>
+                          <p className="text-xs text-slate-600">{comment.text}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {commentingId === activity.id && (
+                  <div className="mt-2 flex gap-2">
+                    <input 
+                      type="text" 
+                      value={commentText}
+                      onChange={(e) => setCommentText(e.target.value)}
+                      placeholder="Write a comment..."
+                      className="flex-1 bg-slate-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                      onKeyDown={(e) => e.key === 'Enter' && handleAddComment(activity.id)}
+                    />
+                    <button 
+                      onClick={() => handleAddComment(activity.id)}
+                      className="bg-primary text-white rounded-lg px-3 py-1 text-sm font-bold"
+                    >
+                      Post
+                    </button>
+                  </div>
+                )}
+                
                 <div className="flex items-center gap-2 pt-2 border-t border-slate-100 mt-1">
-                  <button className="flex-1 flex items-center justify-center gap-2 h-10 rounded-lg bg-slate-100 text-slate-700 font-semibold text-sm hover:bg-slate-200 transition-colors">
+                  <button 
+                    onClick={() => setCommentingId(commentingId === activity.id ? null : activity.id)}
+                    className={`flex-1 flex items-center justify-center gap-2 h-10 rounded-lg font-semibold text-sm transition-colors ${
+                      commentingId === activity.id ? 'bg-slate-200' : 'bg-slate-100 hover:bg-slate-200'
+                    } text-slate-700`}
+                  >
                     <span className="material-symbols-outlined text-[20px]">chat_bubble</span>
                     Comment
                   </button>

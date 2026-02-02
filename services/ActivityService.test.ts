@@ -48,4 +48,18 @@ describe('ActivityService', () => {
     const success = ActivityService.approveActivity('non-existent');
     expect(success).toBe(false);
   });
+
+  it('should add a comment to an activity', () => {
+    const activityId = 'a1';
+    const comment = {
+      authorId: '1',
+      text: 'Great photo!'
+    };
+    const success = ActivityService.addComment(activityId, comment);
+    expect(success).toBe(true);
+    
+    const activity = ActivityService.getFeed().find(a => a.id === activityId);
+    expect(activity?.comments).toHaveLength(1);
+    expect(activity?.comments[0].text).toBe('Great photo!');
+  });
 });

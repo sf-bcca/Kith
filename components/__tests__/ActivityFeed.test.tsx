@@ -28,6 +28,25 @@ describe('ActivityFeed', () => {
     expect(screen.getByText(/Approved/i)).toBeInTheDocument();
   });
 
+  it('allows adding a comment', () => {
+    render(<ActivityFeed onNavigate={vi.fn()} />);
+    
+    // Click comment button on first activity
+    const commentButtons = screen.getAllByRole('button', { name: /Comment/i });
+    fireEvent.click(commentButtons[0]);
+    
+    // Find input and type
+    const input = screen.getByPlaceholderText(/Write a comment.../i);
+    fireEvent.change(input, { target: { value: 'This is a test comment' } });
+    
+    // Click Post
+    const postButton = screen.getByRole('button', { name: /Post/i });
+    fireEvent.click(postButton);
+    
+    // Check if comment appears
+    expect(screen.getByText('This is a test comment')).toBeInTheDocument();
+  });
+
   it('renders the empty state if no activities are present', () => {
     // We might need to mock ActivityService for this or clear the state
     // For now, we'll just verify the initial render with mock data

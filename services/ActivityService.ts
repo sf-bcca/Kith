@@ -42,6 +42,27 @@ export const ActivityService = {
   },
 
   /**
+   * Adds a comment to an activity
+   */
+  addComment(activityId: string, comment: { authorId: string, text: string }): boolean {
+    const index = activities.findIndex(a => a.id === activityId);
+    if (index !== -1) {
+      const newComment = {
+        id: Math.random().toString(36).substr(2, 9),
+        authorId: comment.authorId,
+        text: comment.text,
+        timestamp: new Date().toISOString()
+      };
+      activities[index] = { 
+        ...activities[index], 
+        comments: [...activities[index].comments, newComment] 
+      };
+      return true;
+    }
+    return false;
+  },
+
+  /**
    * Resets the mock data (useful for tests)
    */
   reset(): void {
