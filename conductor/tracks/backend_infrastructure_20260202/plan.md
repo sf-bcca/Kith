@@ -19,5 +19,5 @@
 - [x] Task: Implement database connection logic using the `pg` pool in the backend ac5cef2
 - [x] Task: Implement the `GET /api/health` endpoint that checks both server status and DB connectivity 2bbf80c
 - [x] Task: Write unit tests for the health check endpoint (mocking the DB connection) 2bbf80c
-- [ ] Task: Verify that the backend successfully logs "Connected to PostgreSQL" on startup in the Docker container
+- [x] Task: Verify that the backend successfully logs "Connected to PostgreSQL" on startup in the Docker container 32cc4b6
 - [ ] Task: Conductor - User Manual Verification 'Phase 3' (Protocol in workflow.md)
