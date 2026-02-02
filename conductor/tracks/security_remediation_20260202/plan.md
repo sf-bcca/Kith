@@ -2,7 +2,7 @@
 
 This plan outlines the steps to remediate identified security vulnerabilities, focusing on authentication, password security, and data sanitization.
 
-## Phase 1: Password Security & Privacy
+## Phase 1: Password Security & Privacy [checkpoint: 160dbdc]
 *Goal: Implement secure password storage and prevent credential leakage.*
 
 - [x] Task: Write Tests: Verify that member creation/update hashes passwords and retrieval excludes passwords [6e7d218]
@@ -14,7 +14,7 @@ This plan outlines the steps to remediate identified security vulnerabilities, f
 - [x] Task: Implement: Password exclusion from API responses [05a3787]
     - [x] Update all SQL queries in controllers and `server/index.ts` to exclude the `password` column.
     - [x] Update `services/FamilyService.ts` and `types/family.ts` to remove `password` from frontend models.
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Password Security & Privacy' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Password Security & Privacy' (Protocol in workflow.md) [160dbdc]
 
 ## Phase 2: JWT Authentication & IDOR Protection
 *Goal: Secure API endpoints with JWT and prevent unauthorized data access.*
