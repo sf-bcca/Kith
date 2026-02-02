@@ -1,6 +1,6 @@
 # Implementation Plan: Backend Infrastructure Setup
 
-## Phase 1: Local Backend Project Initialization
+## Phase 1: Local Backend Project Initialization [checkpoint: 1f0fefb]
 - [x] Task: Create `server/` directory and initialize Node.js project (npm init) 8d74883
 - [x] Task: Install backend dependencies (express, pg, typescript, @types/node, @types/express, @types/pg, ts-node-dev, dotenv) 00347e8
 - [x] Task: Configure `server/tsconfig.json` to match project standards ba5dfb6
