@@ -12,7 +12,7 @@
 - [x] Task: Create a `Dockerfile` for the backend service c14d2ad
 - [x] Task: Create a `docker-compose.yml` defining `postgres` and `backend` services f53fe9d
 - [x] Task: Update the existing frontend to be served or orchestrated via Docker (optional, but recommended for full orchestration) f53fe9d
-- [ ] Task: Verify that `docker-compose up` starts the PostgreSQL container and the Backend container
+- [x] Task: Verify that `docker-compose up` starts the PostgreSQL container and the Backend container 83e51b4
 - [ ] Task: Conductor - User Manual Verification 'Phase 2' (Protocol in workflow.md)
 
 ## Phase 3: Connectivity & Health Check
