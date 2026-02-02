@@ -15,8 +15,8 @@ This plan outlines the full-stack implementation of the Account, Privacy, Prefer
 
 - [x] Task: Write Tests: Backend API endpoints for updating account info f9326c0
 - [x] Task: Implement: Backend logic for account updates with password verification f9326c0
-- [ ] Task: Write Tests: AccountSettings React component
-- [ ] Task: Implement: AccountSettings UI and integration with backend
+- [x] Task: Write Tests: AccountSettings React component 7ae09a8
+- [x] Task: Implement: AccountSettings UI and integration with backend 7ae09a8
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Account Settings' (Protocol in workflow.md)
 
 ## Phase 3: Privacy & Preferences
