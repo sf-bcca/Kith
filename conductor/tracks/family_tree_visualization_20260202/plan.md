@@ -1,4 +1,4 @@
-# Implementation Plan: Interactive Family Tree Visualization
+# Implementation Plan: Interactive Family Tree Visualization [checkpoint: 46e5057]
 
 This plan follows the Test-Driven Development (TDD) process.
 
@@ -17,9 +17,9 @@ This plan follows the Test-Driven Development (TDD) process.
     - [x] Ensure the tree re-renders smoothly when the focus changes
 - [x] Task: Conductor - User Manual Verification 'FamilyTreeView Component Refactor'
 
-## Phase 3: Polish and Interactions
-- [~] Task: Improve Connecting Lines
-    - [ ] Update SVG lines to be dynamic based on the number of nodes
-- [ ] Task: Integrate with Member Biography
-    - [ ] Ensure clicking a node's details navigates to the `Biography` screen
-- [ ] Task: Conductor - User Manual Verification 'Polish and Interactions'
+## Phase 3: Polish and Interactions [checkpoint: 46e5057]
+- [x] Task: Improve Connecting Lines
+    - [x] Update SVG lines to be dynamic based on the number of nodes
+- [x] Task: Integrate with Member Biography
+    - [x] Ensure clicking a node's details navigates to the `Biography` screen
+- [x] Task: Conductor - User Manual Verification 'Polish and Interactions'

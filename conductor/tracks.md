@@ -4,5 +4,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: Implement a robust Family Member data model and directory search**
+- [x] **Track: Implement a robust Family Member data model and directory search**
   *Link: [./conductor/tracks/data_model_20260202/](./conductor/tracks/data_model_20260202/)*
+- [x] **Track: Interactive Family Tree Visualization**
+  *Link: [./conductor/tracks/family_tree_visualization_20260202/](./conductor/tracks/family_tree_visualization_20260202/)*
