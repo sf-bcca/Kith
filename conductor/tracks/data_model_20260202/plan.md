@@ -11,7 +11,7 @@ This plan follows the Test-Driven Development (TDD) process as defined in the pr
     - [x] Implement `FamilyService.ts` to pass the tests
 - [ ] Task: Conductor - User Manual Verification 'Data Modeling and Service Foundation' (Protocol in workflow.md)
 
-## Phase 2: Directory Search Logic
+## Phase 2: Directory Search Logic [checkpoint: 74e2619]
 - [x] Task: Implement Fuzzy Search in `FamilyService`
     - [x] Write tests for `FamilyService.search(query: string)`
     - [x] Implement fuzzy search logic in `FamilyService.ts`
