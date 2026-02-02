@@ -9,12 +9,12 @@ This plan follows the Test-Driven Development (TDD) process.
 - [x] Task: Conductor - User Manual Verification 'Dynamic Tree Logic'
 
 ## Phase 2: FamilyTreeView Component Refactor
-- [~] Task: Refactor `FamilyTreeView` to use `TreeService`
-    - [ ] Update `FamilyTreeView.tsx` to accept a `focusId` state
-    - [ ] Dynamically render Generations 1 (Parents), 2 (Focus/Spouses), and 3 (Children)
-- [ ] Task: Implement Navigation Logic
-    - [ ] Add `onClick` handlers to nodes to update the `focusId`
-    - [ ] Ensure the tree re-renders smoothly when the focus changes
+- [x] Task: Refactor `FamilyTreeView` to use `TreeService`
+    - [x] Update `FamilyTreeView.tsx` to accept a `focusId` state
+    - [x] Dynamically render Generations 1 (Parents), 2 (Focus/Spouses), and 3 (Children)
+- [x] Task: Implement Navigation Logic
+    - [x] Add `onClick` handlers to nodes to update the `focusId`
+    - [x] Ensure the tree re-renders smoothly when the focus changes
 - [ ] Task: Conductor - User Manual Verification 'FamilyTreeView Component Refactor'
 
 ## Phase 3: Polish and Interactions
