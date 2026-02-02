@@ -35,13 +35,13 @@ This plan outlines the steps to remediate identified security vulnerabilities, f
 ## Phase 3: Hardening & Sanitization
 *Goal: Implement generic error handling and prevent CSS injection.*
 
-- [ ] Task: Write Tests: Error responses and URL sanitization
-    - [ ] Create tests to verify generic 500 responses without leakages.
-    - [ ] Create tests for `photoUrl` sanitization logic.
-- [ ] Task: Implement: Centralized Error Handling
-    - [ ] Create an error handling middleware in `server/middleware/error.ts`.
-    - [ ] Update Express app to use this middleware for all routes.
-- [ ] Task: Implement: CSS Injection Prevention
-    - [ ] Create a URL validation utility in `components/FamilyTreeView.tsx` or a shared utility file.
-    - [ ] Apply validation to the `photoUrl` before rendering in the tree.
+- [x] Task: Write Tests: Error responses and URL sanitization [13c120e]
+    - [x] Create tests to verify generic 500 responses without leakages.
+    - [x] Create tests for `photoUrl` sanitization logic.
+- [x] Task: Implement: Centralized Error Handling [13c120e]
+    - [x] Create an error handling middleware in `server/middleware/error.ts`.
+    - [x] Update Express app to use this middleware for all routes.
+- [x] Task: Implement: CSS Injection Prevention [13c120e]
+    - [x] Create a URL validation utility in `src/utils/security.ts`.
+    - [x] Apply validation to the `photoUrl` before rendering in the tree.
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Hardening & Sanitization' (Protocol in workflow.md)

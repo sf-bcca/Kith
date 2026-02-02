@@ -3,6 +3,7 @@ import BottomNav from './BottomNav';
 import { TreeService } from '../services/TreeService';
 import { FamilyMember } from '../types/family';
 import AddMemberModal from './AddMemberModal';
+import { validateImageUrl } from '../src/utils/security';
 
 interface Props {
   onNavigate: (screen: string, memberId?: string) => void;
@@ -27,7 +28,7 @@ const MemberNode: React.FC<{
     `}>
       <div 
         className="w-full h-full rounded-full bg-cover bg-center" 
-        style={{ backgroundImage: `url(${member.photoUrl || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'})` }}
+        style={{ backgroundImage: `url(${validateImageUrl(member.photoUrl)})` }}
       ></div>
       {isFocus && (
         <div className="absolute -bottom-1 -right-1 bg-primary text-white rounded-full p-1 border-2 border-white flex items-center justify-center">

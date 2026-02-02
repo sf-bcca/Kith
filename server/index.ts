@@ -6,6 +6,7 @@ import jwt from 'jsonwebtoken';
 import { pool } from './db';
 import settingsRoutes from './routes/settings';
 import { authenticate, authorizeOwner } from './middleware/auth';
+import { errorHandler } from './middleware/error';
 
 dotenv.config();
 
@@ -43,18 +44,18 @@ app.get('/api/health', async (req: Request, res: Response) => {
   }
 });
 
-app.get('/api/members', authenticate, async (req: Request, res: Response) => {
+app.get('/api/members', authenticate, async (req: Request, res: Response, next) => {
   try {
     const result = await pool.query(`SELECT ${MEMBER_COLUMNS} FROM family_members ORDER BY last_name, first_name`);
     // Explicitly sanitize results as defense in depth
     const sanitizedRows = result.rows.map(({ password, ...rest }: any) => rest);
     res.json(sanitizedRows);
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 });
 
-app.get('/api/members/:id', authenticate, authorizeOwner, async (req: Request, res: Response) => {
+app.get('/api/members/:id', authenticate, authorizeOwner, async (req: Request, res: Response, next) => {
   try {
     const { id } = req.params;
     const result = await pool.query(`SELECT ${MEMBER_COLUMNS} FROM family_members WHERE id = $1`, [id]);
@@ -65,11 +66,11 @@ app.get('/api/members/:id', authenticate, authorizeOwner, async (req: Request, r
     const { password, ...sanitizedMember } = result.rows[0];
     res.json(sanitizedMember);
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 });
 
-app.post('/api/members', async (req: Request, res: Response) => {
+app.post('/api/members', async (req: Request, res: Response, next) => {
   try {
     const { 
       first_name, last_name, maiden_name, birth_date, death_date, gender, bio, profile_image, relationships, password,
@@ -96,11 +97,11 @@ app.post('/api/members', async (req: Request, res: Response) => {
     const { password: _, ...sanitizedMember } = result.rows[0];
     res.status(201).json(sanitizedMember);
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 });
 
-app.post('/api/auth/login', async (req: Request, res: Response) => {
+app.post('/api/auth/login', async (req: Request, res: Response, next) => {
   try {
     const { first_name, last_name, birth_date, password } = req.body;
     
@@ -133,11 +134,11 @@ app.post('/api/auth/login', async (req: Request, res: Response) => {
     const { password: _, ...memberWithoutPassword } = member;
     res.json({ member: memberWithoutPassword, token });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 });
 
-app.post('/api/login', async (req: Request, res: Response) => {
+app.post('/api/login', async (req: Request, res: Response, next) => {
   // Legacy login endpoint - redirect or proxy to auth/login
   try {
     const { first_name, last_name, birth_date, password } = req.body;
@@ -161,11 +162,11 @@ app.post('/api/login', async (req: Request, res: Response) => {
     const { password: _, ...memberWithoutPassword } = member;
     res.json(memberWithoutPassword);
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 });
 
-app.put('/api/members/:id', authenticate, authorizeOwner, async (req: Request, res: Response) => {
+app.put('/api/members/:id', authenticate, authorizeOwner, async (req: Request, res: Response, next) => {
   try {
     const { id } = req.params;
     const { 
@@ -214,11 +215,11 @@ app.put('/api/members/:id', authenticate, authorizeOwner, async (req: Request, r
     const { password: _, ...sanitizedMember } = result.rows[0];
     res.json(sanitizedMember);
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 });
 
-app.delete('/api/members/:id', authenticate, authorizeOwner, async (req: Request, res: Response) => {
+app.delete('/api/members/:id', authenticate, authorizeOwner, async (req: Request, res: Response, next) => {
   try {
     const { id } = req.params;
     const result = await pool.query('DELETE FROM family_members WHERE id = $1 RETURNING *', [id]);
@@ -227,20 +228,20 @@ app.delete('/api/members/:id', authenticate, authorizeOwner, async (req: Request
     }
     res.json({ message: 'Member deleted successfully', member: result.rows[0] });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 });
 
-app.get('/api/activities', async (req: Request, res: Response) => {
+app.get('/api/activities', async (req: Request, res: Response, next) => {
   try {
     const result = await pool.query('SELECT * FROM activities ORDER BY timestamp DESC');
     res.json(result.rows);
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 });
 
-app.post('/api/activities/:id/comments', async (req: Request, res: Response) => {
+app.post('/api/activities/:id/comments', async (req: Request, res: Response, next) => {
   try {
     const { id } = req.params;
     const comment = req.body;
@@ -257,9 +258,11 @@ app.post('/api/activities/:id/comments', async (req: Request, res: Response) => 
     );
     res.status(201).json(result.rows[0]);
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 });
+
+app.use(errorHandler);
 
 // Start server if not imported
 if (require.main === module) {
