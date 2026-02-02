@@ -15,7 +15,7 @@
 - [x] Task: Verify that `docker-compose up` starts the PostgreSQL container and the Backend container 83e51b4
 - [ ] Task: Conductor - User Manual Verification 'Phase 2' (Protocol in workflow.md)
 
-## Phase 3: Connectivity & Health Check
+## Phase 3: Connectivity & Health Check [checkpoint: 1c4ff81]
 - [x] Task: Implement database connection logic using the `pg` pool in the backend ac5cef2
 - [x] Task: Implement the `GET /api/health` endpoint that checks both server status and DB connectivity 2bbf80c
 - [x] Task: Write unit tests for the health check endpoint (mocking the DB connection) 2bbf80c
