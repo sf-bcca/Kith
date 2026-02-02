@@ -8,7 +8,7 @@
 - [ ] Task: Conductor - User Manual Verification 'Phase 1' (Protocol in workflow.md)
 
 ## Phase 2: Docker & Database Configuration
-- [ ] Task: Create a `.env` file in the project root for database credentials and ports
+- [x] Task: Create a `.env` file in the project root for database credentials and ports 00250fd
 - [ ] Task: Create a `Dockerfile` for the backend service
 - [ ] Task: Create a `docker-compose.yml` defining `postgres` and `backend` services
 - [ ] Task: Update the existing frontend to be served or orchestrated via Docker (optional, but recommended for full orchestration)
