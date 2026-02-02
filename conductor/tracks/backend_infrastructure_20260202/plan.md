@@ -3,7 +3,7 @@
 ## Phase 1: Local Backend Project Initialization
 - [x] Task: Create `server/` directory and initialize Node.js project (npm init) 8d74883
 - [x] Task: Install backend dependencies (express, pg, typescript, @types/node, @types/express, @types/pg, ts-node-dev, dotenv) 00347e8
-- [ ] Task: Configure `server/tsconfig.json` to match project standards
+- [x] Task: Configure `server/tsconfig.json` to match project standards ba5dfb6
 - [ ] Task: Create a basic "Hello World" Express server in `server/index.ts`
 - [ ] Task: Conductor - User Manual Verification 'Phase 1' (Protocol in workflow.md)
 
