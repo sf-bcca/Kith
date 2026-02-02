@@ -26,8 +26,14 @@ app.get('/api/health', async (req: Request, res: Response) => {
 
 // Start server if not imported
 if (require.main === module) {
-  app.listen(port, () => {
+  app.listen(port, async () => {
     console.log(`Server running at http://localhost:${port}`);
+    try {
+      await pool.query('SELECT NOW()');
+      console.log('Connected to PostgreSQL');
+    } catch (err) {
+      console.error('Failed to connect to PostgreSQL on startup', err);
+    }
   });
 }
 
