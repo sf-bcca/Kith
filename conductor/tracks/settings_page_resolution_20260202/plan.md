@@ -19,7 +19,7 @@ This plan outlines the full-stack implementation of the Account, Privacy, Prefer
 - [x] Task: Implement: AccountSettings UI and integration with backend 7ae09a8
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Account Settings' (Protocol in workflow.md)
 
-## Phase 3: Privacy & Preferences
+## Phase 3: Privacy & Preferences [checkpoint: c2dd5dd]
 *Goal: Implement Privacy and application Preferences.*
 
 - [x] Task: Write Tests: API endpoints for privacy and preference updates 9ad0d98
