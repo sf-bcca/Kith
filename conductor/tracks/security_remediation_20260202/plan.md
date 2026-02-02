@@ -32,7 +32,7 @@ This plan outlines the steps to remediate identified security vulnerabilities, f
     - [x] Update `FamilyService.ts` to store the token and include it in `Authorization` headers.
 - [x] Task: Conductor - User Manual Verification 'Phase 2: JWT Authentication & IDOR Protection' (Protocol in workflow.md) [188ea2f]
 
-## Phase 3: Hardening & Sanitization
+## Phase 3: Hardening & Sanitization [checkpoint: a396f4a]
 *Goal: Implement generic error handling and prevent CSS injection.*
 
 - [x] Task: Write Tests: Error responses and URL sanitization [13c120e]
@@ -44,4 +44,4 @@ This plan outlines the steps to remediate identified security vulnerabilities, f
 - [x] Task: Implement: CSS Injection Prevention [13c120e]
     - [x] Create a URL validation utility in `src/utils/security.ts`.
     - [x] Apply validation to the `photoUrl` before rendering in the tree.
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Hardening & Sanitization' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Hardening & Sanitization' (Protocol in workflow.md) [a396f4a]
