@@ -13,7 +13,7 @@ This plan follows the Test-Driven Development (TDD) process.
     - [x] Verify tests pass.
 - [ ] Task: Conductor - User Manual Verification 'Phase 1' (Protocol in workflow.md)
 
-## Phase 2: Service Layer Optimization
+## Phase 2: Service Layer Optimization [checkpoint: 904e3bf]
 - [x] Task: TreeService Bulk Fetching e74eecb
     - [x] Create test `services/TreeService_performance.test.ts` mocking `FamilyService.getByIds`.
     - [x] Refactor `TreeService.ts` (`getAncestors`, `getDescendants`) to use `getByIds`.
