@@ -1,6 +1,6 @@
 import { FamilyMember, FilterCriteria, LoginCredentials } from '../types/family';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8081';
+const API_URL = import.meta.env.VITE_API_URL || '';
 
 export class FamilyService {
   private static token: string | null = localStorage.getItem('kith_token');
@@ -288,6 +288,60 @@ export class FamilyService {
   }
 
   /**
+   * Retrieves all siblings (explicit and implied) for a member.
+   * @param id The member ID.
+   * @returns A promise that resolves to an array of sibling FamilyMember objects.
+   */
+  static async getSiblings(id: string): Promise<FamilyMember[]> {
+    const response = await fetch(`${API_URL}/api/members/${id}/siblings`, {
+      headers: this.getHeaders(),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to fetch siblings');
+    }
+    const data = await response.json();
+    return this.mapBackendToFrontend(data);
+  }
+
+  /**
+   * Links two existing family members as siblings.
+   * @param memberId The ID of the member being updated.
+   * @param siblingId The ID of the relative to add as sibling.
+   */
+  static async addSibling(memberId: string, siblingId: string): Promise<void> {
+    const response = await fetch(`${API_URL}/api/members/link`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify({ memberId, relativeId: siblingId, relationshipType: 'sibling' }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Failed to add sibling');
+    }
+  }
+
+  /**
+   * Removes a sibling relationship between two members.
+   * @param memberId The ID of the member being updated.
+   * @param siblingId The ID of the sibling to remove.
+   */
+  static async removeSibling(memberId: string, siblingId: string): Promise<void> {
+    const response = await fetch(`${API_URL}/api/members/${memberId}`, {
+      method: 'PUT',
+      headers: this.getHeaders(),
+      body: JSON.stringify({
+        siblings: { action: 'remove', siblingId },
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Failed to remove sibling');
+    }
+  }
+
+  /**
    * Maps backend data (snake_case) to frontend data (camelCase).
    */
   private static mapBackendToFrontend(data: any): any {
@@ -321,6 +375,7 @@ export class FamilyService {
       parents: item.relationships?.parents || [],
       spouses: item.relationships?.spouses || [],
       children: item.relationships?.children || [],
+      siblings: item.siblings || [],
     };
   }
 
@@ -346,11 +401,12 @@ export class FamilyService {
     };
 
     // Only include relationships if at least one is explicitly provided
-    if (member.parents !== undefined || member.spouses !== undefined || member.children !== undefined) {
+    if (member.parents !== undefined || member.spouses !== undefined || member.children !== undefined || member.siblings !== undefined) {
       result.relationships = {
         parents: member.parents,
         spouses: member.spouses,
         children: member.children,
+        siblings: member.siblings,
       };
     }
 
