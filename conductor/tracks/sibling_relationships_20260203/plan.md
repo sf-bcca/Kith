@@ -28,14 +28,14 @@ Enhance the backend to handle sibling relationship CRUD operations and calculati
 ## Phase 3: Frontend Service & Context
 Update the frontend data layer to support the new sibling fields.
 
-- [x] Task: Update `FamilyService.ts` (Frontend)
-    - [x] Added `getSiblings`, `addSibling`, `removeSibling` methods
-    - [x] Updated API calls to include the `siblings` field
-- [x] Task: Update `FamilyContext.tsx`
-    - [x] Added sibling state (`siblings`, `isLoadingSiblings`)
-    - [x] Added sibling methods (`loadSiblings`, `addSibling`, `removeSibling`, `clearSiblings`)
-    - [x] Wrote integration tests for sibling state management
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Frontend Service & Context' (Protocol in workflow.md)
+- [x] Task: Update `FamilyService.ts` (Frontend) [e18bac4]
+    - [x] Added `getSiblings`, `addSibling`, `removeSibling` methods [e18bac4]
+    - [x] Updated API calls to include the `siblings` field [e18bac4]
+- [x] Task: Update `FamilyContext.tsx` [5452f3d]
+    - [x] Added sibling state (`siblings`, `isLoadingSiblings`) [5452f3d]
+    - [x] Added sibling methods (`loadSiblings`, `addSibling`, `removeSibling`, `clearSiblings`) [5452f3d]
+    - [x] Wrote integration tests for sibling state management [5452f3d]
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Frontend Service & Context' (Protocol in workflow.md) [5452f3d]
 
 ## Phase 4: Relationship Wizard (UI)
 Implement the UI for managing siblings during member creation and editing.
