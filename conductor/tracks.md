@@ -18,3 +18,14 @@ This file tracks all major tracks for the project. Each track has its own detail
   *Link: [./conductor/archive/dna_map_visualization_20260202/](./conductor/archive/dna_map_visualization_20260202/)*
 - [x] **Track: Dynamic Discovery & Heritage Hub**
   *Link: [./conductor/archive/discovery_heritage_hub_20260203/](./conductor/archive/discovery_heritage_hub_20260203/)*
+- [x] **Track: Birthplace Input Field**
+  *Link: [./conductor/archive/birthplace_input_20260203/](./conductor/archive/birthplace_input_20260203/)*
+
+---
+
+- [ ] **Track: Sibling Relationships**
+*Link: [./tracks/sibling_relationships_20260203/](./tracks/sibling_relationships_20260203/)*
+---
+
+- [ ] **Track: Date of Death Input and Display**
+*Link: [./tracks/date_of_death_20260203/](./tracks/date_of_death_20260203/)*

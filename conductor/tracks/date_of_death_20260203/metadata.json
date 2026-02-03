@@ -1,0 +1,8 @@
+{
+  "track_id": "date_of_death_20260203",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-02-03T12:00:00Z",
+  "updated_at": "2026-02-03T12:00:00Z",
+  "description": "Add Date of Death input and display lifespan in family visualizations."
+}

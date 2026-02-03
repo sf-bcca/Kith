@@ -10,10 +10,11 @@ Stores detailed profiles and system account information for all family members.
 | Column | Type | Constraints | Default | Description |
 | :--- | :--- | :--- | :--- | :--- |
 | id | UUID | PRIMARY KEY | uuid_generate_v4() | Unique identifier |
-| first_name | VARCHAR(255) | NOT NULL | | Legal first name |
-| last_name | VARCHAR(255) | NOT NULL | | Current surname |
+| first_name | VARCHAR(255) | NOT NULL, UNIQUE (composite) | | Legal first name |
+| last_name | VARCHAR(255) | NOT NULL, UNIQUE (composite) | | Current surname |
 | maiden_name | VARCHAR(255) | | | Birth surname (if applicable) |
-| birth_date | DATE | NOT NULL | | Date of birth |
+| birth_date | DATE | NOT NULL, UNIQUE (composite) | | Date of birth |
+| birth_place | VARCHAR(255) | | | City/Country of birth |
 | death_date | DATE | | | Date of death (if applicable) |
 | gender | VARCHAR(50) | NOT NULL | | Gender identification |
 | bio | TEXT | | | Personal biography or notes |
@@ -21,8 +22,8 @@ Stores detailed profiles and system account information for all family members.
 | relationships | JSONB | | '{}' | Structured relationship data |
 | role | VARCHAR(20) | | 'member' | System role (admin, member) |
 | password | VARCHAR(255) | | | Hashed password for login |
-| email | VARCHAR(255) | | | Contact email address |
-| username | VARCHAR(255) | | | System username |
+| email | VARCHAR(255) | UNIQUE | | Contact email address |
+| username | VARCHAR(255) | UNIQUE | | System username |
 | dark_mode | BOOLEAN | | FALSE | User preference for UI theme |
 | language | VARCHAR(10) | | 'en' | Preferred UI language |
 | visibility | VARCHAR(20) | | 'family-only' | Profile privacy setting |
@@ -31,6 +32,9 @@ Stores detailed profiles and system account information for all family members.
 | notifications_push | BOOLEAN | | TRUE | Push notification toggle |
 | created_at | TIMESTAMPTZ | | CURRENT_TIMESTAMP | Record creation time |
 | updated_at | TIMESTAMPTZ | | CURRENT_TIMESTAMP | Last record update time |
+
+**Constraints:**
+- `unique_member_identity`: UNIQUE(first_name, last_name, birth_date)
 
 ---
 

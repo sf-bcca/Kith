@@ -23,7 +23,7 @@ if (!process.env.JWT_SECRET && process.env.NODE_ENV === 'production') {
 
 const SALT_ROUNDS = 10;
 const MEMBER_COLUMNS = `
-  id, first_name, last_name, maiden_name, birth_date, death_date, gender, 
+  id, first_name, last_name, maiden_name, birth_date, birth_place, death_date, gender, 
   bio, profile_image, relationships, email, username, dark_mode, language, 
   visibility, data_sharing, notifications_email, notifications_push, role,
   created_at, updated_at
@@ -103,7 +103,7 @@ app.get('/api/members/:id', authenticate, async (req: Request, res: Response, ne
 app.post('/api/members', async (req: Request, res: Response, next) => {
   try {
     const { 
-      first_name, last_name, maiden_name, birth_date, death_date, gender, bio, profile_image, relationships, password,
+      first_name, last_name, maiden_name, birth_date, birth_place, death_date, gender, bio, profile_image, relationships, password,
       email, username, dark_mode, language, visibility, data_sharing, notifications_email, notifications_push, role
     } = req.body;
 
@@ -114,19 +114,67 @@ app.post('/api/members', async (req: Request, res: Response, next) => {
 
     const result = await pool.query(
       `INSERT INTO family_members 
-      (first_name, last_name, maiden_name, birth_date, death_date, gender, bio, profile_image, relationships, password,
+      (first_name, last_name, maiden_name, birth_date, birth_place, death_date, gender, bio, profile_image, relationships, password,
        email, username, dark_mode, language, visibility, data_sharing, notifications_email, notifications_push, role) 
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19) 
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20) 
       RETURNING ${MEMBER_COLUMNS}`,
       [
-        first_name, last_name, maiden_name, birth_date, death_date, gender, bio, profile_image, relationships || {}, hashedPassword,
-        email, username, dark_mode, language, visibility, data_sharing, notifications_email, notifications_push, role || 'member'
+        first_name, last_name, maiden_name, birth_date, birth_place, death_date, gender, bio, profile_image, relationships || {}, hashedPassword,
+        email || null, username || null, dark_mode, language, visibility || 'family-only', data_sharing, notifications_email, notifications_push, role || 'member'
       ]
     );
-    // Explicitly sanitize
-    const { password: _, ...sanitizedMember } = result.rows[0];
+
+    const newMember = result.rows[0];
+    const rels = relationships || {};
+    if (rels.parents?.length) {
+      for (const parentId of rels.parents) {
+        await pool.query(
+          `UPDATE family_members 
+           SET relationships = jsonb_set(
+             COALESCE(relationships, '{}')::jsonb,
+             '{children}',
+             COALESCE(relationships->'children', '[]')::jsonb || $1::jsonb
+           )
+           WHERE id = $2`,
+          [JSON.stringify([newMember.id]), parentId]
+        );
+      }
+    }
+    if (rels.children?.length) {
+      for (const childId of rels.children) {
+        await pool.query(
+          `UPDATE family_members 
+           SET relationships = jsonb_set(
+             COALESCE(relationships, '{}')::jsonb,
+             '{parents}',
+             COALESCE(relationships->'parents', '[]')::jsonb || $1::jsonb
+           )
+           WHERE id = $2`,
+          [JSON.stringify([newMember.id]), childId]
+        );
+      }
+    }
+    if (rels.spouses?.length) {
+      for (const spouseId of rels.spouses) {
+        await pool.query(
+          `UPDATE family_members 
+           SET relationships = jsonb_set(
+             COALESCE(relationships, '{}')::jsonb,
+             '{spouses}',
+             COALESCE(relationships->'spouses', '[]')::jsonb || $1::jsonb
+           )
+           WHERE id = $2`,
+          [JSON.stringify([newMember.id]), spouseId]
+        );
+      }
+    }
+
+    const { password: _, ...sanitizedMember } = newMember;
     res.status(201).json(sanitizedMember);
   } catch (err: any) {
+    if (err.code === '23505') {
+      return res.status(409).json({ error: 'A member with these details already exists.' });
+    }
     next(err);
   }
 });
@@ -176,7 +224,7 @@ app.put('/api/members/:id', authenticate, async (req: Request, res: Response, ne
   try {
     const { id } = req.params;
     const { 
-      first_name, last_name, maiden_name, birth_date, death_date, gender, bio, profile_image, relationships, password,
+      first_name, last_name, maiden_name, birth_date, birth_place, death_date, gender, bio, profile_image, relationships, password,
       email, username, dark_mode, language, visibility, data_sharing, notifications_email, notifications_push, role
     } = req.body;
     
@@ -194,25 +242,26 @@ app.put('/api/members/:id', authenticate, async (req: Request, res: Response, ne
       last_name = COALESCE($2, last_name), 
       maiden_name = COALESCE($3, maiden_name), 
       birth_date = COALESCE($4, birth_date), 
-      death_date = COALESCE($5, death_date), 
-      gender = COALESCE($6, gender), 
-      bio = COALESCE($7, bio), 
-      profile_image = COALESCE($8, profile_image), 
-      relationships = COALESCE($9, relationships),
-      password = CASE WHEN $10::VARCHAR IS NOT NULL AND $10::VARCHAR <> '' THEN $10::VARCHAR ELSE password END,
-      email = COALESCE($11, email),
-      username = COALESCE($12, username),
-      dark_mode = COALESCE($13, dark_mode),
-      language = COALESCE($14, language),
-      visibility = COALESCE($15, visibility),
-      data_sharing = COALESCE($16, data_sharing),
-      notifications_email = COALESCE($17, notifications_email),
-      notifications_push = COALESCE($18, notifications_push),
-      role = COALESCE($19, role)
-      WHERE id = $20 
+      birth_place = COALESCE($5, birth_place),
+      death_date = COALESCE($6, death_date), 
+      gender = COALESCE($7, gender), 
+      bio = COALESCE($8, bio), 
+      profile_image = COALESCE($9, profile_image), 
+      relationships = COALESCE($10, relationships),
+      password = CASE WHEN $11::VARCHAR IS NOT NULL AND $11::VARCHAR <> '' THEN $11::VARCHAR ELSE password END,
+      email = COALESCE($12, email),
+      username = COALESCE($13, username),
+      dark_mode = COALESCE($14, dark_mode),
+      language = COALESCE($15, language),
+      visibility = COALESCE($16, visibility),
+      data_sharing = COALESCE($17, data_sharing),
+      notifications_email = COALESCE($18, notifications_email),
+      notifications_push = COALESCE($19, notifications_push),
+      role = COALESCE($20, role)
+      WHERE id = $21 
       RETURNING ${MEMBER_COLUMNS}`,
       [
-        first_name, last_name, maiden_name, birth_date, death_date, gender, bio, profile_image, relationships, hashedPassword,
+        first_name, last_name, maiden_name, birth_date, birth_place, death_date, gender, bio, profile_image, relationships, hashedPassword,
         email, username, dark_mode, language, visibility, data_sharing, notifications_email, notifications_push,
         targetRole,
         id
@@ -225,6 +274,69 @@ app.put('/api/members/:id', authenticate, async (req: Request, res: Response, ne
     // Explicitly sanitize
     const { password: _, ...sanitizedMember } = result.rows[0];
     res.json(sanitizedMember);
+  } catch (err: any) {
+    next(err);
+  }
+});
+
+app.post('/api/members/link', authenticate, async (req: Request, res: Response, next) => {
+  try {
+    const { memberId, relativeId, relationshipType } = req.body;
+
+    if (!memberId || !relativeId || !relationshipType) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    if (memberId === relativeId) {
+      return res.status(400).json({ error: 'Cannot link a member to themselves' });
+    }
+
+    // Determine reciprocal relationship
+    let memberKey: string; // Key to update in memberId's relationships
+    let relativeKey: string; // Key to update in relativeId's relationships
+
+    switch (relationshipType) {
+      case 'parent': // relativeId is parent of memberId
+        memberKey = 'parents';
+        relativeKey = 'children';
+        break;
+      case 'child': // relativeId is child of memberId
+        memberKey = 'children';
+        relativeKey = 'parents';
+        break;
+      case 'spouse': // relativeId is spouse of memberId
+        memberKey = 'spouses';
+        relativeKey = 'spouses';
+        break;
+      default:
+        return res.status(400).json({ error: 'Invalid relationship type' });
+    }
+
+    // Update memberId's relationships
+    await pool.query(
+      `UPDATE family_members 
+       SET relationships = jsonb_set(
+         COALESCE(relationships, '{}')::jsonb,
+         '{${memberKey}}',
+         COALESCE(relationships->'${memberKey}', '[]')::jsonb || $1::jsonb
+       )
+       WHERE id = $2 AND NOT (COALESCE(relationships->'${memberKey}', '[]')::jsonb @> $1::jsonb)`,
+      [JSON.stringify([relativeId]), memberId]
+    );
+
+    // Update relativeId's relationships
+    await pool.query(
+      `UPDATE family_members 
+       SET relationships = jsonb_set(
+         COALESCE(relationships, '{}')::jsonb,
+         '{${relativeKey}}',
+         COALESCE(relationships->'${relativeKey}', '[]')::jsonb || $1::jsonb
+       )
+       WHERE id = $2 AND NOT (COALESCE(relationships->'${relativeKey}', '[]')::jsonb @> $1::jsonb)`,
+      [JSON.stringify([memberId]), relativeId]
+    );
+
+    res.json({ message: 'Members linked successfully' });
   } catch (err: any) {
     next(err);
   }

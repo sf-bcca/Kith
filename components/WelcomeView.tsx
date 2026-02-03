@@ -41,6 +41,15 @@ export default function WelcomeView({ onComplete }: Props) {
           spouses: [],
           children: []
         });
+
+        // Automatically log in after creation to get the token
+        await FamilyService.login({
+          firstName,
+          lastName,
+          birthDate,
+          password
+        });
+
         onComplete(newMember.id);
       }
     } catch (err: any) {

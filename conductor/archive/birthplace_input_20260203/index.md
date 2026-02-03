@@ -1,0 +1,1 @@
+# Birthplace Input Field\n\n## Goal\nAdd a 'Birthplace' input field to the Add/Edit Member forms to enable DNA Map functionality.\n\n## Context\nUser reported DNA Map is useless without birthplace data. The type definition exists, but UI and potentially DB support is missing.

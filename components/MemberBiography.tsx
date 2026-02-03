@@ -16,6 +16,7 @@ const MemberBiography: React.FC<Props> = ({ onNavigate, memberId, loggedInId }) 
   const [editData, setEditData] = useState<Partial<FamilyMember>>({});
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -54,14 +55,16 @@ const MemberBiography: React.FC<Props> = ({ onNavigate, memberId, loggedInId }) 
 
   const handleSave = async () => {
     if (!member?.id) return;
+    setError(null);
     setSaving(true);
     try {
       const updated = await FamilyService.update(member.id, editData);
       setMember(updated);
       setIsEditing(false);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to update member:', err);
-      alert('Failed to save changes.');
+      const errorMessage = err.message || err.error || 'Failed to save changes. Please try again.';
+      setError(errorMessage);
     } finally {
       setSaving(false);
     }
@@ -192,6 +195,26 @@ const MemberBiography: React.FC<Props> = ({ onNavigate, memberId, loggedInId }) 
                 />
               </div>
               <div>
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Birth Place</label>
+                <input
+                  type="text"
+                  value={editData.birthPlace || ''}
+                  onChange={(e) => setEditData({ ...editData, birthPlace: e.target.value })}
+                  className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-primary transition-colors"
+                  placeholder="e.g. London, UK"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Email Address</label>
+                <input
+                  type="email"
+                  value={editData.email || ''}
+                  onChange={(e) => setEditData({ ...editData, email: e.target.value })}
+                  className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-primary transition-colors"
+                  placeholder="e.g. john.doe@example.com"
+                />
+              </div>
+              <div>
                 <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Biography</label>
                 <textarea
                   value={editData.biography || ''}
@@ -264,7 +287,14 @@ const MemberBiography: React.FC<Props> = ({ onNavigate, memberId, loggedInId }) 
                 </div>
               </div>
             </div>
-            
+
+            {error && (
+              <div className="p-4 bg-red-50 text-red-600 rounded-xl text-sm font-medium border border-red-100 flex items-center gap-2 animate-in shake-in">
+                <span className="material-symbols-outlined text-[20px]">error</span>
+                {error}
+              </div>
+            )}
+
             {canDelete && (
               <div className="pt-4 border-t border-slate-100">
                 <button 
@@ -320,6 +350,12 @@ const MemberBiography: React.FC<Props> = ({ onNavigate, memberId, loggedInId }) 
                     <span className="material-symbols-outlined text-primary text-sm">family_history</span>
                     <span className="text-primary text-xs font-bold uppercase tracking-wider">Family Member</span>
                   </div>
+                  {member.email && (
+                    <a href={`mailto:${member.email}`} className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-slate-100 border border-slate-200 hover:bg-slate-200 transition-colors">
+                      <span className="material-symbols-outlined text-slate-500 text-sm">mail</span>
+                      <span className="text-slate-600 text-xs font-bold uppercase tracking-wider">Email</span>
+                    </a>
+                  )}
                 </div>
               </div>
             </section>

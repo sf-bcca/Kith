@@ -1,0 +1,5 @@
+# Track date_of_death_20260203 Context
+
+- [Specification](./spec.md)
+- [Implementation Plan](./plan.md)
+- [Metadata](./metadata.json)

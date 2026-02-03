@@ -189,11 +189,31 @@ export class FamilyService {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to create family member');
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Failed to create family member');
     }
 
     const data = await response.json();
     return this.mapSingleToFrontend(data);
+  }
+
+  /**
+   * Links two existing family members.
+   * @param memberId The ID of the member being updated.
+   * @param relativeId The ID of the relative being linked.
+   * @param relationshipType The type of relationship (parent, child, spouse).
+   */
+  static async linkMembers(memberId: string, relativeId: string, relationshipType: 'parent' | 'child' | 'spouse'): Promise<void> {
+    const response = await fetch(`${API_URL}/api/members/link`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify({ memberId, relativeId, relationshipType }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Failed to link family members');
+    }
   }
 
   /**
@@ -210,8 +230,9 @@ export class FamilyService {
       body: JSON.stringify(backendData),
     });
 
-    if (!response.ok) {
-      throw new Error('Failed to update family member');
+     if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(errorData.error || `Failed to update family member (status: ${response.status})`);
     }
 
     const data = await response.json();
@@ -283,6 +304,7 @@ export class FamilyService {
       lastName: item.last_name,
       gender: item.gender,
       birthDate: item.birth_date,
+      birthPlace: item.birth_place,
       deathDate: item.death_date,
       biography: item.bio,
       photoUrl: item.profile_image,
@@ -302,11 +324,12 @@ export class FamilyService {
   }
 
   private static mapFrontendToBackend(member: Partial<FamilyMember>): any {
-    return {
+    const result: any = {
       first_name: member.firstName,
       last_name: member.lastName,
       gender: member.gender,
       birth_date: member.birthDate,
+      birth_place: member.birthPlace,
       death_date: member.deathDate,
       bio: member.biography,
       profile_image: member.photoUrl,
@@ -318,11 +341,17 @@ export class FamilyService {
       data_sharing: member.dataSharing,
       notifications_email: member.notificationsEmail,
       notifications_push: member.notificationsPush,
-      relationships: {
+    };
+
+    // Only include relationships if at least one is explicitly provided
+    if (member.parents !== undefined || member.spouses !== undefined || member.children !== undefined) {
+      result.relationships = {
         parents: member.parents,
         spouses: member.spouses,
         children: member.children,
-      }
-    };
+      };
+    }
+
+    return result;
   }
 }

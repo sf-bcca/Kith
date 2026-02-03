@@ -68,7 +68,10 @@ export const updateSettings = async (req: Request, res: Response, next: any) => 
       notifications_email = COALESCE($7, notifications_email),
       notifications_push = COALESCE($8, notifications_push)
       WHERE id = $9 
-      RETURNING email, username, dark_mode, language, visibility, data_sharing, notifications_email, notifications_push`,
+      RETURNING id, first_name, last_name, maiden_name, birth_date, birth_place, death_date, gender, 
+        bio, profile_image, relationships, email, username, dark_mode, language, 
+        visibility, data_sharing, notifications_email, notifications_push, role,
+        created_at, updated_at`,
       [
         email, username, dark_mode, language, visibility, data_sharing, notifications_email, notifications_push,
         id
