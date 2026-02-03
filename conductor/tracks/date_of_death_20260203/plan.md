@@ -10,9 +10,9 @@
 ## Phase 2: Frontend Data Entry (TDD)
 - [x] Task: Create a test in `components/__tests__/AddMemberModal.test.tsx` to verify that checking the "Deceased" box reveals the death-related input fields. [02ebc39]
 - [x] Task: Update `components/AddMemberModal.tsx` to include a "Deceased" checkbox, a "Date of Death" input, and a "Place of Death" input. [02ebc39]
-- [ ] Task: Create a test in `components/__tests__/MemberBiography.test.tsx` to verify the same behavior in the biography edit mode.
-- [ ] Task: Update `components/MemberBiography.tsx` to include the "Deceased" toggle and death-related inputs in the edit view.
-- [ ] Task: Implement client-side validation in both components to ensure the Date of Death is not in the future and is after the Date of Birth.
+- [x] Task: Create a test in `components/__tests__/MemberBiography.test.tsx` to verify the same behavior in the biography edit mode. [7be8928]
+- [x] Task: Update `components/MemberBiography.tsx` to include the "Deceased" toggle and death-related inputs in the edit view. [7be8928]
+- [x] Task: Implement client-side validation in both components to ensure the Date of Death is not in the future and is after the Date of Birth. [7be8928]
 - [ ] Task: Conductor - User Manual Verification 'Data Entry' (Protocol in workflow.md)
 
 ## Phase 3: Frontend Visualization & Verification
