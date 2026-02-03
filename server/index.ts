@@ -23,7 +23,7 @@ if (!process.env.JWT_SECRET && process.env.NODE_ENV === 'production') {
 
 const SALT_ROUNDS = 10;
 const MEMBER_COLUMNS = `
-  id, first_name, last_name, maiden_name, birth_date, birth_place, death_date, gender, 
+  id, first_name, last_name, maiden_name, birth_date, birth_place, death_date, death_place, gender, 
   bio, profile_image, relationships, email, username, dark_mode, language, 
   visibility, data_sharing, notifications_email, notifications_push, role,
   created_at, updated_at
@@ -103,7 +103,7 @@ app.get('/api/members/:id', authenticate, async (req: Request, res: Response, ne
 app.post('/api/members', async (req: Request, res: Response, next) => {
   try {
     const { 
-      first_name, last_name, maiden_name, birth_date, birth_place, death_date, gender, bio, profile_image, relationships, password,
+      first_name, last_name, maiden_name, birth_date, birth_place, death_date, death_place, gender, bio, profile_image, relationships, password,
       email, username, dark_mode, language, visibility, data_sharing, notifications_email, notifications_push, role
     } = req.body;
 
@@ -114,12 +114,12 @@ app.post('/api/members', async (req: Request, res: Response, next) => {
 
     const result = await pool.query(
       `INSERT INTO family_members 
-      (first_name, last_name, maiden_name, birth_date, birth_place, death_date, gender, bio, profile_image, relationships, password,
+      (first_name, last_name, maiden_name, birth_date, birth_place, death_date, death_place, gender, bio, profile_image, relationships, password,
        email, username, dark_mode, language, visibility, data_sharing, notifications_email, notifications_push, role) 
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20) 
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21) 
       RETURNING ${MEMBER_COLUMNS}`,
       [
-        first_name, last_name, maiden_name, birth_date, birth_place, death_date, gender, bio, profile_image, relationships || {}, hashedPassword,
+        first_name, last_name, maiden_name, birth_date, birth_place, death_date, death_place, gender, bio, profile_image, relationships || {}, hashedPassword,
         email || null, username || null, dark_mode, language, visibility || 'family-only', data_sharing, notifications_email, notifications_push, role || 'member'
       ]
     );
@@ -224,7 +224,7 @@ app.put('/api/members/:id', authenticate, async (req: Request, res: Response, ne
   try {
     const { id } = req.params;
     const { 
-      first_name, last_name, maiden_name, birth_date, birth_place, death_date, gender, bio, profile_image, relationships, password,
+      first_name, last_name, maiden_name, birth_date, birth_place, death_date, death_place, gender, bio, profile_image, relationships, password,
       email, username, dark_mode, language, visibility, data_sharing, notifications_email, notifications_push, role
     } = req.body;
     
@@ -244,24 +244,25 @@ app.put('/api/members/:id', authenticate, async (req: Request, res: Response, ne
       birth_date = COALESCE($4, birth_date), 
       birth_place = COALESCE($5, birth_place),
       death_date = COALESCE($6, death_date), 
-      gender = COALESCE($7, gender), 
-      bio = COALESCE($8, bio), 
-      profile_image = COALESCE($9, profile_image), 
-      relationships = COALESCE($10, relationships),
-      password = CASE WHEN $11::VARCHAR IS NOT NULL AND $11::VARCHAR <> '' THEN $11::VARCHAR ELSE password END,
-      email = COALESCE($12, email),
-      username = COALESCE($13, username),
-      dark_mode = COALESCE($14, dark_mode),
-      language = COALESCE($15, language),
-      visibility = COALESCE($16, visibility),
-      data_sharing = COALESCE($17, data_sharing),
-      notifications_email = COALESCE($18, notifications_email),
-      notifications_push = COALESCE($19, notifications_push),
-      role = COALESCE($20, role)
-      WHERE id = $21 
+      death_place = COALESCE($7, death_place),
+      gender = COALESCE($8, gender), 
+      bio = COALESCE($9, bio), 
+      profile_image = COALESCE($10, profile_image), 
+      relationships = COALESCE($11, relationships),
+      password = CASE WHEN $12::VARCHAR IS NOT NULL AND $12::VARCHAR <> '' THEN $12::VARCHAR ELSE password END,
+      email = COALESCE($13, email),
+      username = COALESCE($14, username),
+      dark_mode = COALESCE($15, dark_mode),
+      language = COALESCE($16, language),
+      visibility = COALESCE($17, visibility),
+      data_sharing = COALESCE($18, data_sharing),
+      notifications_email = COALESCE($19, notifications_email),
+      notifications_push = COALESCE($20, notifications_push),
+      role = COALESCE($21, role)
+      WHERE id = $22 
       RETURNING ${MEMBER_COLUMNS}`,
       [
-        first_name, last_name, maiden_name, birth_date, birth_place, death_date, gender, bio, profile_image, relationships, hashedPassword,
+        first_name, last_name, maiden_name, birth_date, birth_place, death_date, death_place, gender, bio, profile_image, relationships, hashedPassword,
         email, username, dark_mode, language, visibility, data_sharing, notifications_email, notifications_push,
         targetRole,
         id
