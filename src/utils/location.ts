@@ -33,3 +33,39 @@ export const getCoordinates = (location?: string): Coordinates | null => {
   
   return null;
 };
+
+/**
+ * Asynchronously fetches coordinates from Nominatim (OpenStreetMap).
+ */
+export const fetchCoordinates = async (location: string): Promise<Coordinates | null> => {
+  if (!location) return null;
+
+  // Check hardcoded lookup first
+  const staticCoords = getCoordinates(location);
+  if (staticCoords) return staticCoords;
+
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}&limit=1`,
+      {
+        headers: {
+          'User-Agent': 'Kith-Genealogy-App'
+        }
+      }
+    );
+
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    if (data && data.length > 0) {
+      return {
+        lat: parseFloat(data[0].lat),
+        lng: parseFloat(data[0].lon)
+      };
+    }
+  } catch (error) {
+    console.warn('Geocoding warning:', error);
+  }
+
+  return null;
+};

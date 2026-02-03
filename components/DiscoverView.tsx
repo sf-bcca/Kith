@@ -1,11 +1,33 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import BottomNav from './BottomNav';
+import { DiscoverService, DiscoverySummary } from '../services/DiscoverService';
 
 interface Props {
-  onNavigate: (screen: string) => void;
+  onNavigate: (screen: string, memberId?: string) => void;
 }
 
 const DiscoverView: React.FC<Props> = ({ onNavigate }) => {
+  const [summary, setSummary] = useState<DiscoverySummary | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchSummary = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await DiscoverService.getSummary();
+      setSummary(data);
+    } catch (err) {
+      setError('Unable to load discovery data. Please check your connection and try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSummary();
+  }, []);
+
   const tools = [
     { title: 'Directory', subtitle: 'Browse all relatives', icon: 'group', screen: 'Directory', color: 'bg-blue-500' },
     { title: 'Pedigree', subtitle: 'Vertical lineage', icon: 'account_tree', screen: 'Pedigree', color: 'bg-emerald-500' },
@@ -38,16 +60,52 @@ const DiscoverView: React.FC<Props> = ({ onNavigate }) => {
         <div className="mb-8">
             <div className="flex items-center justify-between mb-3">
                 <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wider">Daily Heritage</h2>
-                <span className="text-xs font-semibold text-primary">View All</span>
             </div>
-            <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex items-start gap-4 hover:shadow-md transition-shadow cursor-pointer">
-            <div className="size-20 rounded-xl bg-slate-200 bg-cover bg-center shrink-0 border border-slate-100" style={{backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuC2PtVEad10c4J_EkwJM1WJ_uYtyc7TBDmYXRnsKuVjk76HzMImPw1TCwV6DVFl26wsuLCnstE1XqzK-ezgNh_25Wka-8V6FmxTG1ghHhmniuIoJ8MgaRUIBnHjjW282nXt51AKUWZCNSl9sBUL_dOsx-GoHdtWCo23yqqiepBtz2hF7DPyaIzTNGO4MkTjiK5_CaXhrAJNLR1_-vJqQZjVmHluRDtzdpeR2xiMIXceCl3qHpoDL_FhUqURfw0GB2JLaFw_d9hWXUQ')"}}></div>
-            <div>
-                <span className="inline-block px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold uppercase mb-1">On This Day</span>
-                <h3 className="font-bold text-slate-900 leading-snug">Arthur & Martha's 80th Anniversary</h3>
-                <p className="text-xs text-slate-500 mt-1 line-clamp-2">Today marks 80 years since they were married in Brooklyn at St. Jude's Chapel.</p>
-            </div>
-            </div>
+            
+            {loading ? (
+              <div className="animate-pulse bg-white rounded-2xl p-4 h-24 border border-slate-100"></div>
+            ) : error ? (
+              <div className="bg-red-50 rounded-2xl p-4 border border-red-100">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="material-symbols-outlined text-red-500">error</span>
+                  <p className="text-sm font-medium text-red-700">{error}</p>
+                </div>
+                <button
+                  onClick={fetchSummary}
+                  className="text-xs font-bold text-red-600 hover:text-red-800 bg-red-100 px-3 py-1.5 rounded-lg"
+                >
+                  Try Again
+                </button>
+              </div>
+            ) : summary?.onThisDay && summary.onThisDay.length > 0 ? (
+              <div className="space-y-3">
+                {summary.onThisDay.map((event) => {
+                  const isBirthday = !event.death_date;
+                  return (
+                    <div 
+                      key={event.id}
+                      onClick={() => onNavigate('Biography', event.id)}
+                      className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex items-start gap-4 hover:shadow-md transition-shadow cursor-pointer"
+                    >
+                      <div className="size-20 rounded-xl bg-slate-200 bg-cover bg-center shrink-0 border border-slate-100" style={{backgroundImage: `url('${event.profile_image || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'}')`}}></div>
+                      <div>
+                          <span className={`inline-block px-2 py-0.5 rounded-full ${isBirthday ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-700'} text-[10px] font-bold uppercase mb-1`}>
+                            {isBirthday ? 'Birthday Today' : 'Death Anniversary'}
+                          </span>
+                          <h3 className="font-bold text-slate-900 leading-snug">{event.first_name} {event.last_name}</h3>
+                          <p className="text-xs text-slate-500 mt-1 line-clamp-2">
+                            {isBirthday ? `Celebrating another year of ${event.first_name}'s legacy.` : `Remembering ${event.first_name} on this day.`}
+                          </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="bg-slate-50 rounded-2xl p-6 text-center border border-dashed border-slate-200">
+                <p className="text-slate-400 text-sm font-medium">No family milestones today.</p>
+              </div>
+            )}
         </div>
 
         {/* Research Tools Grid */}
@@ -76,29 +134,42 @@ const DiscoverView: React.FC<Props> = ({ onNavigate }) => {
         <div>
             <div className="flex items-center justify-between mb-3">
                 <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wider">Hints & Tasks</h2>
-                <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">3 New</span>
+                {!loading && summary?.hints && summary.hints.length > 0 && (
+                  <span className="bg-primary text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{summary.hints.length} New</span>
+                )}
             </div>
+            
             <div className="space-y-3">
-                <div className="bg-white p-3 rounded-xl border border-slate-100 flex items-center gap-3">
-                    <div className="size-8 rounded-full bg-green-100 flex items-center justify-center text-green-600">
-                        <span className="material-symbols-outlined text-sm">description</span>
+                {loading ? (
+                  <>
+                    <div className="animate-pulse bg-white rounded-xl h-16 border border-slate-100"></div>
+                    <div className="animate-pulse bg-white rounded-xl h-16 border border-slate-100"></div>
+                  </>
+                ) : summary?.hints && summary.hints.length > 0 ? (
+                  summary.hints.map((hint, i) => (
+                    <div key={i} className="bg-white p-3 rounded-xl border border-slate-100 flex items-center gap-3">
+                        <div className={`size-8 rounded-full ${hint.subtype === 'photo' ? 'bg-orange-100 text-orange-600' : 'bg-green-100 text-green-600'} flex items-center justify-center`}>
+                            <span className="material-symbols-outlined text-sm">
+                              {hint.subtype === 'photo' ? 'photo_camera' : 'description'}
+                            </span>
+                        </div>
+                        <div className="flex-1">
+                            <p className="text-sm font-bold text-slate-800">{hint.message}</p>
+                            <p className="text-xs text-slate-500">{hint.name}</p>
+                        </div>
+                        <button 
+                          onClick={() => onNavigate('Biography', hint.memberId)}
+                          className="text-primary font-bold text-xs bg-primary/5 px-3 py-1.5 rounded-lg hover:bg-primary/10"
+                        >
+                          Resolve
+                        </button>
                     </div>
-                    <div className="flex-1">
-                        <p className="text-sm font-bold text-slate-800">1950 Census Record Found</p>
-                        <p className="text-xs text-slate-500">Likely match for <span className="font-semibold">Sarah Miller</span></p>
-                    </div>
-                    <button className="text-primary font-bold text-xs bg-primary/5 px-3 py-1.5 rounded-lg hover:bg-primary/10">Review</button>
-                </div>
-                <div className="bg-white p-3 rounded-xl border border-slate-100 flex items-center gap-3">
-                    <div className="size-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600">
-                        <span className="material-symbols-outlined text-sm">lightbulb</span>
-                    </div>
-                    <div className="flex-1">
-                        <p className="text-sm font-bold text-slate-800">Missing Mother</p>
-                        <p className="text-xs text-slate-500">Add details for <span className="font-semibold">Robert Doe's</span> mother</p>
-                    </div>
-                    <button className="text-primary font-bold text-xs bg-primary/5 px-3 py-1.5 rounded-lg hover:bg-primary/10">Add</button>
-                </div>
+                  ))
+                ) : (
+                  <div className="bg-slate-50 rounded-xl p-4 text-center border border-dashed border-slate-200">
+                    <p className="text-slate-400 text-xs font-medium">All data looks great! No hints at the moment.</p>
+                  </div>
+                )}
             </div>
         </div>
 

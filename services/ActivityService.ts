@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import { Activity, ActivityType } from '../types/activity';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
@@ -61,6 +62,26 @@ export const ActivityService = {
       headers: this.getHeaders()
     });
     return response.ok;
+  },
+
+  async createActivity(activity: { 
+    type: ActivityType, 
+    content?: any, 
+    image_url?: string, 
+    target_id?: string 
+  }): Promise<Activity | null> {
+    const response = await fetch(`${API_URL}/api/activities`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify(activity),
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = await response.json();
+    return this.mapBackendToFrontend([data])[0];
   },
 
   /**

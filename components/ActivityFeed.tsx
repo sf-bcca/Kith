@@ -1,13 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import BottomNav from './BottomNav';
+import MediaGallery from './MediaGallery';
+import AddMediaModal from './AddMediaModal';
 import { ActivityService } from '../services/ActivityService';
 import { FamilyService } from '../services/FamilyService';
 import { Activity } from '../types/activity';
 
 interface Props {
-  onNavigate: (screen: string) => void;
+  onNavigate: (screen: string, memberId?: string) => void;
   currentUserId?: string | null;
 }
+
+type Tab = 'all' | 'photos';
 
 const ActivityFeed: React.FC<Props> = ({ onNavigate, currentUserId }) => {
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -15,6 +19,9 @@ const ActivityFeed: React.FC<Props> = ({ onNavigate, currentUserId }) => {
   const [commentingId, setCommentingId] = useState<string | null>(null);
   const [commentText, setCommentText] = useState('');
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<Tab>('all');
+  const [selectedMedia, setSelectedMedia] = useState<any | null>(null);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   const fetchFeed = async () => {
     try {
@@ -88,6 +95,24 @@ const ActivityFeed: React.FC<Props> = ({ onNavigate, currentUserId }) => {
   const getMemberName = (id: string) => {
     return membersMap[id] || 'Unknown Member';
   };
+
+  const mediaItems = useMemo(() => {
+    const items: any[] = [];
+    activities.forEach(a => {
+      if (a.type === 'photo_added' && a.content.photoUrls) {
+        a.content.photoUrls.forEach(url => {
+          items.push({
+            url,
+            activityId: a.id,
+            timestamp: a.timestamp,
+            actorName: getMemberName(a.actorId),
+            description: a.content.description
+          });
+        });
+      }
+    });
+    return items;
+  }, [activities, membersMap]);
 
   const renderActivityContent = (activity: Activity) => {
     const actorName = getMemberName(activity.actorId);
@@ -198,14 +223,24 @@ const ActivityFeed: React.FC<Props> = ({ onNavigate, currentUserId }) => {
         {/* Tabs */}
         <nav className="bg-background-light sticky top-[60px] z-10">
           <div className="flex border-b border-slate-200 px-4 gap-6">
-            <button className="flex flex-col items-center justify-center border-b-[3px] border-primary text-primary pb-3 pt-4 px-2">
+            <button 
+              onClick={() => setActiveTab('all')}
+              className={`flex flex-col items-center justify-center border-b-[3px] pb-3 pt-4 px-2 transition-colors ${
+                activeTab === 'all' ? 'border-primary text-primary' : 'border-transparent text-slate-500 hover:text-slate-700'
+              }`}
+            >
               <p className="text-sm font-bold tracking-tight">All Updates</p>
             </button>
-            <button className="flex flex-col items-center justify-center border-b-[3px] border-transparent text-slate-500 hover:text-slate-700 pb-3 pt-4 px-2 transition-colors">
+            <button 
+              onClick={() => setActiveTab('photos')}
+              className={`flex flex-col items-center justify-center border-b-[3px] pb-3 pt-4 px-2 transition-colors ${
+                activeTab === 'photos' ? 'border-primary text-primary' : 'border-transparent text-slate-500 hover:text-slate-700'
+              }`}
+            >
               <p className="text-sm font-bold tracking-tight">Photos</p>
             </button>
             <button className="flex flex-col items-center justify-center border-b-[3px] border-transparent text-slate-500 hover:text-slate-700 pb-3 pt-4 px-2 transition-colors">
-              <p className="text-sm font-bold tracking-tight">Profile</p>
+              <p className="text-sm font-bold tracking-tight">Stories</p>
             </button>
           </div>
         </nav>
@@ -216,6 +251,8 @@ const ActivityFeed: React.FC<Props> = ({ onNavigate, currentUserId }) => {
             <div className="flex items-center justify-center p-8 text-slate-500">
               Loading memories...
             </div>
+          ) : activeTab === 'photos' ? (
+            <MediaGallery items={mediaItems} onSelect={setSelectedMedia} />
           ) : activities.length === 0 ? (
             <div className="flex flex-col items-center justify-center p-12 text-center">
               <div className="size-16 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 mb-4">
@@ -223,83 +260,149 @@ const ActivityFeed: React.FC<Props> = ({ onNavigate, currentUserId }) => {
               </div>
               <p className="text-slate-500 font-medium">No activities yet</p>
             </div>
-          ) : activities.map((activity) => (
-            <section key={activity.id} className="bg-white rounded-xl overflow-hidden border border-slate-200 shadow-sm">
-              <div className="p-4 flex flex-col gap-3">
-                {renderActivityContent(activity)}
-                
-                {activity.comments.length > 0 && (
-                  <div className="mt-2 space-y-2 border-t border-slate-50 pt-2">
-                    {activity.comments.map(comment => (
-                      <div key={comment.id} className="flex gap-2">
-                        <div className="size-6 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
-                          <span className="material-symbols-outlined text-[14px]">person</span>
+          ) : (
+            activities.map((activity) => (
+              <section key={activity.id} className="bg-white rounded-xl overflow-hidden border border-slate-200 shadow-sm">
+                <div className="p-4 flex flex-col gap-3">
+                  {renderActivityContent(activity)}
+                  
+                  {activity.comments.length > 0 && (
+                    <div className="mt-2 space-y-2 border-t border-slate-50 pt-2">
+                      {activity.comments.map(comment => (
+                        <div key={comment.id} className="flex gap-2">
+                          <div className="size-6 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
+                            <span className="material-symbols-outlined text-[14px]">person</span>
+                          </div>
+                          <div className="bg-slate-50 rounded-lg p-2 flex-1">
+                            <p className="text-xs font-bold">{getMemberName(comment.authorId)}</p>
+                            <p className="text-xs text-slate-600">{comment.text}</p>
+                          </div>
                         </div>
-                        <div className="bg-slate-50 rounded-lg p-2 flex-1">
-                          <p className="text-xs font-bold">{getMemberName(comment.authorId)}</p>
-                          <p className="text-xs text-slate-600">{comment.text}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      ))}
+                    </div>
+                  )}
 
-                {commentingId === activity.id && (
-                  <div className="mt-2 flex gap-2">
-                    <input 
-                      type="text" 
-                      value={commentText}
-                      onChange={(e) => setCommentText(e.target.value)}
-                      placeholder="Write a comment..."
-                      className="flex-1 bg-slate-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-                      onKeyDown={(e) => e.key === 'Enter' && handleAddComment(activity.id)}
-                    />
+                  {commentingId === activity.id && (
+                    <div className="mt-2 flex gap-2">
+                      <input 
+                        type="text" 
+                        value={commentText}
+                        onChange={(e) => setCommentText(e.target.value)}
+                        placeholder="Write a comment..."
+                        className="flex-1 bg-slate-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                        onKeyDown={(e) => e.key === 'Enter' && handleAddComment(activity.id)}
+                      />
+                      <button 
+                        onClick={() => handleAddComment(activity.id)}
+                        className="bg-primary text-white rounded-lg px-3 py-1 text-sm font-bold"
+                      >
+                        Post
+                      </button>
+                    </div>
+                  )}
+                  
+                  <div className="flex items-center gap-2 pt-2 border-t border-slate-100 mt-1">
                     <button 
-                      onClick={() => handleAddComment(activity.id)}
-                      className="bg-primary text-white rounded-lg px-3 py-1 text-sm font-bold"
+                      onClick={() => setCommentingId(commentingId === activity.id ? null : activity.id)}
+                      className={`flex-1 flex items-center justify-center gap-2 h-10 rounded-lg font-semibold text-sm transition-colors ${
+                        commentingId === activity.id ? 'bg-slate-200' : 'bg-slate-100 hover:bg-slate-200'
+                      } text-slate-700`}
                     >
-                      Post
+                      <span className="material-symbols-outlined text-[20px]">chat_bubble</span>
+                      Comment
+                    </button>
+                    <button 
+                      onClick={() => handleApprove(activity.id)}
+                      disabled={activity.status === 'approved'}
+                      className={`flex-1 flex items-center justify-center gap-2 h-10 rounded-lg font-semibold text-sm transition-colors ${
+                        activity.status === 'approved' 
+                          ? 'bg-slate-100 text-slate-400 cursor-not-allowed' 
+                          : 'bg-primary text-white hover:bg-blue-600'
+                      }`}
+                    >
+                      <span className="material-symbols-outlined text-[20px]">
+                        {activity.status === 'approved' ? 'check_circle' : 'verified'}
+                      </span>
+                      {activity.status === 'approved' ? 'Approved' : 'Approve'}
                     </button>
                   </div>
-                )}
-                
-                <div className="flex items-center gap-2 pt-2 border-t border-slate-100 mt-1">
-                  <button 
-                    onClick={() => setCommentingId(commentingId === activity.id ? null : activity.id)}
-                    className={`flex-1 flex items-center justify-center gap-2 h-10 rounded-lg font-semibold text-sm transition-colors ${
-                      commentingId === activity.id ? 'bg-slate-200' : 'bg-slate-100 hover:bg-slate-200'
-                    } text-slate-700`}
-                  >
-                    <span className="material-symbols-outlined text-[20px]">chat_bubble</span>
-                    Comment
-                  </button>
-                  <button 
-                    onClick={() => handleApprove(activity.id)}
-                    disabled={activity.status === 'approved'}
-                    className={`flex-1 flex items-center justify-center gap-2 h-10 rounded-lg font-semibold text-sm transition-colors ${
-                      activity.status === 'approved' 
-                        ? 'bg-slate-100 text-slate-400 cursor-not-allowed' 
-                        : 'bg-primary text-white hover:bg-blue-600'
-                    }`}
-                  >
-                    <span className="material-symbols-outlined text-[20px]">
-                      {activity.status === 'approved' ? 'check_circle' : 'verified'}
-                    </span>
-                    {activity.status === 'approved' ? 'Approved' : 'Approve'}
-                  </button>
                 </div>
-              </div>
-            </section>
-          ))}
+              </section>
+            ))
+          )}
         </main>
 
         {/* FAB */}
-        <button className="fixed bottom-24 right-6 size-14 rounded-full bg-primary text-white shadow-lg flex items-center justify-center hover:scale-105 active:scale-95 transition-transform hover:shadow-primary/30 z-20">
+        <button 
+          onClick={() => setIsAddModalOpen(true)}
+          className="fixed bottom-24 right-6 size-14 rounded-full bg-primary text-white shadow-lg flex items-center justify-center hover:scale-105 active:scale-95 transition-transform hover:shadow-primary/30 z-20"
+        >
           <span className="material-symbols-outlined text-3xl">add</span>
         </button>
 
         <BottomNav current="Memories" onNavigate={onNavigate} />
       </div>
+
+      <AddMediaModal 
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onSuccess={fetchFeed}
+        members={Object.entries(membersMap).map(([id, name]) => ({ id, name }))}
+      />
+
+      {selectedMedia && (
+        <div 
+          className="fixed inset-0 z-[200] bg-black/90 flex flex-col items-center justify-center p-4 animate-in fade-in duration-300"
+          onClick={() => setSelectedMedia(null)}
+        >
+          <button 
+            className="absolute top-6 right-6 text-white hover:scale-110 transition-transform"
+            onClick={() => setSelectedMedia(null)}
+          >
+            <span className="material-symbols-outlined text-4xl">close</span>
+          </button>
+          
+          <div className="max-w-4xl w-full h-[70vh] flex items-center justify-center" onClick={e => e.stopPropagation()}>
+            <img 
+              src={selectedMedia.url} 
+              alt="Full size" 
+              className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+            />
+          </div>
+          
+          <div className="mt-8 text-white text-center max-w-lg" onClick={e => e.stopPropagation()}>
+            <h3 className="text-xl font-bold">{selectedMedia.actorName}</h3>
+            <p className="text-sm text-gray-400 mb-4">{new Date(selectedMedia.timestamp).toLocaleDateString()}</p>
+            {selectedMedia.description && (
+              <p className="text-lg italic text-gray-200">"{selectedMedia.description}"</p>
+            )}
+            
+            <div className="mt-6 flex gap-4 justify-center">
+               <button className="flex flex-col items-center gap-1 group">
+                 <div className="size-12 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-colors">
+                   <span className="material-symbols-outlined">download</span>
+                 </div>
+                 <span className="text-[10px] font-bold uppercase tracking-wider">Save</span>
+               </button>
+               <button className="flex flex-col items-center gap-1 group">
+                 <div className="size-12 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-colors">
+                   <span className="material-symbols-outlined">share</span>
+                 </div>
+                 <span className="text-[10px] font-bold uppercase tracking-wider">Share</span>
+               </button>
+               <button 
+                 onClick={() => onNavigate('Biography', selectedMedia.actorId)}
+                 className="flex flex-col items-center gap-1 group"
+               >
+                 <div className="size-12 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-colors">
+                   <span className="material-symbols-outlined">person</span>
+                 </div>
+                 <span className="text-[10px] font-bold uppercase tracking-wider">Profile</span>
+               </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
