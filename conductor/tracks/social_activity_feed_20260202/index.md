@@ -1,7 +1,7 @@
-# Track: Collaborative Editing and Admin Dashboard
+# Track: Social Activity Feed Data Model and Interaction
 
 ## Description
-Implements full member editing/deletion and a dynamic admin dashboard with stats and activity approval queue.
+Implements the data model and UI for the social activity feed (Memories), including interactions like comments and approvals.
 
 ## Documents
 - [Specification](./spec.md)

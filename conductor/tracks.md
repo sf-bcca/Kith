@@ -14,5 +14,5 @@ This file tracks all major tracks for the project. Each track has its own detail
   *Link: [./conductor/tracks/backend_integration_20260202/](./conductor/tracks/backend_integration_20260202/)*
 - [x] **Track: Collaborative Editing and Admin Dashboard**
   *Link: [./conductor/tracks/collaborative_editing_20260202/](./conductor/tracks/collaborative_editing_20260202/)*
-- [ ] **Track: DNA Map Visualization**
+- [x] **Track: DNA Map Visualization**
   *Link: [./conductor/tracks/dna_map_visualization_20260202/](./conductor/tracks/dna_map_visualization_20260202/)*

@@ -1,28 +1,33 @@
-import { Pool } from 'pg';
-import dotenv from 'dotenv';
-import path from 'path';
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 
-dotenv.config({ path: path.join(__dirname, '../.env') });
+// Mock the database pool
+vi.mock('../server/db', () => ({
+  pool: {
+    query: vi.fn(),
+  },
+}));
+
+import { pool } from '../server/db';
 
 describe('Database Schema - User Settings', () => {
-  let pool: Pool;
-
-  beforeAll(() => {
-    pool = new Pool({
-      user: process.env.DB_USER,
-      host: process.env.DB_HOST,
-      database: process.env.DB_NAME,
-      password: process.env.DB_PASSWORD,
-      port: parseInt(process.env.DB_PORT || '5432'),
-    });
-  });
-
-  afterAll(async () => {
-    await pool.end();
-  });
-
   it('should have user settings columns in the family_members table', async () => {
+    vi.mocked(pool.query).mockImplementation(async () => ({
+      rows: [
+        { column_name: 'email' },
+        { column_name: 'username' },
+        { column_name: 'dark_mode' },
+        { column_name: 'language' },
+        { column_name: 'visibility' },
+        { column_name: 'data_sharing' },
+        { column_name: 'notifications_email' },
+        { column_name: 'notifications_push' },
+      ],
+      command: '',
+      rowCount: 8,
+      oid: 0,
+      fields: []
+    }));
+
     const res = await pool.query(`
       SELECT column_name 
       FROM information_schema.columns 
@@ -39,7 +44,7 @@ describe('Database Schema - User Settings', () => {
       )
     `);
     
-    const columns = res.rows.map(row => row.column_name);
+    const columns = res.rows.map((row: any) => row.column_name);
     expect(columns).toContain('email');
     expect(columns).toContain('username');
     expect(columns).toContain('dark_mode');

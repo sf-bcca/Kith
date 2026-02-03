@@ -1,7 +1,7 @@
-# Track: Collaborative Editing and Admin Dashboard
+# Track: Interactive Family Tree Visualization
 
 ## Description
-Implements full member editing/deletion and a dynamic admin dashboard with stats and activity approval queue.
+Implements dynamic tree visualization with navigation between generations, connecting lines, and integration with member biographies.
 
 ## Documents
 - [Specification](./spec.md)

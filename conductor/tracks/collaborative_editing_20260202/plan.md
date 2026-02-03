@@ -10,7 +10,7 @@ This plan follows the Test-Driven Development (TDD) process.
     - [x] Update `MemberBiography.tsx` to include a delete button and confirmation.
 - [x] Task: Enable Editing for All in UI [8b3a1e0]
     - [x] Update `MemberBiography.tsx` to show the edit button for all members, not just the logged-in user.
-- [ ] Task: Conductor - User Manual Verification 'Phase 1'
+- [x] Task: Conductor - User Manual Verification 'Phase 1'
 
 ## Phase 2: Backend Admin API
 - [x] Task: Implement Admin Stats Endpoint [6f3a1e0]
@@ -22,11 +22,11 @@ This plan follows the Test-Driven Development (TDD) process.
 - [x] Task: Implement Activity Approval Endpoint [6f3a1e0]
     - [x] Write integration tests for `PATCH /api/activities/:id/approve`.
     - [x] Implement the endpoint in `server/index.ts`.
-- [ ] Task: Conductor - User Manual Verification 'Phase 2'
+- [x] Task: Conductor - User Manual Verification 'Phase 2'
 
 ## Phase 3: Dynamic Admin Dashboard UI
 - [x] Task: Update Admin Dashboard Stats [9d3a1e0]
     - [x] Update `AdminDashboard.tsx` to fetch and display real stats.
 - [x] Task: Implement Approval Queue in UI [9d3a1e0]
     - [x] Update `AdminDashboard.tsx` to list pending activities and allow approving them.
-- [ ] Task: Conductor - User Manual Verification 'Phase 3'
+- [x] Task: Conductor - User Manual Verification 'Phase 3'

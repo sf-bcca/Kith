@@ -7,6 +7,6 @@ This track implements the geographic visualization of family history, showing or
 - [Implementation Plan](./plan.md)
 
 ## Status
-- **Status:** In Progress
+- **Status:** Completed
 - **Started:** 2026-02-02
-- **Target Completion:** 2026-02-03
+- **Completed:** 2026-02-03

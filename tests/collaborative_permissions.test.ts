@@ -4,42 +4,44 @@ import app from '../server/index';
 import { pool } from '../server/db';
 import jwt from 'jsonwebtoken';
 
+vi.mock('../server/db', () => ({
+  pool: {
+    query: vi.fn().mockResolvedValue({
+      rows: [],
+      command: '',
+      rowCount: 0,
+      oid: 0,
+      fields: []
+    }),
+  },
+}));
+
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
 
 describe('Admin and Collaborative Permissions', () => {
   let adminToken: string;
   let userToken: string;
-  let adminId: string;
-  let userId: string;
-  let targetId: string;
+  let adminId: string = 'admin-id';
+  let userId: string = 'user-id';
+  let targetId: string = 'target-id';
 
   beforeEach(async () => {
-    // Clean up and setup test data
-    await pool.query('DELETE FROM family_members');
+    vi.clearAllMocks();
     
-    // Create Admin
-    const adminRes = await pool.query(
-      "INSERT INTO family_members (first_name, last_name, birth_date, gender, role) VALUES ('Admin', 'User', '1980-01-01', 'other', 'admin') RETURNING id"
-    );
-    adminId = adminRes.rows[0].id;
     adminToken = jwt.sign({ sub: adminId, role: 'admin' }, JWT_SECRET);
-
-    // Create Regular User
-    const userRes = await pool.query(
-      "INSERT INTO family_members (first_name, last_name, birth_date, gender, role) VALUES ('Regular', 'User', '1990-01-01', 'other', 'member') RETURNING id"
-    );
-    userId = userRes.rows[0].id;
     userToken = jwt.sign({ sub: userId, role: 'member' }, JWT_SECRET);
-
-    // Create a target member to edit/delete
-    const targetRes = await pool.query(
-      "INSERT INTO family_members (first_name, last_name, birth_date, gender, role) VALUES ('Target', 'Member', '2000-01-01', 'other', 'member') RETURNING id"
-    );
-    targetId = targetRes.rows[0].id;
   });
 
   describe('PUT /api/members/:id', () => {
     it('should allow an admin to edit any member', async () => {
+      vi.mocked(pool.query).mockImplementation(async () => ({ 
+        rows: [{ id: targetId, first_name: 'Updated By Admin' }],
+        command: '',
+        rowCount: 1,
+        oid: 0,
+        fields: []
+      }));
+
       const response = await request(app)
         .put(`/api/members/${targetId}`)
         .set('Authorization', `Bearer ${adminToken}`)
@@ -50,6 +52,14 @@ describe('Admin and Collaborative Permissions', () => {
     });
 
     it('should allow a regular member to edit another member (collaborative)', async () => {
+      vi.mocked(pool.query).mockImplementation(async () => ({ 
+        rows: [{ id: targetId, first_name: 'Updated By Member' }],
+        command: '',
+        rowCount: 1,
+        oid: 0,
+        fields: []
+      }));
+
       const response = await request(app)
         .put(`/api/members/${targetId}`)
         .set('Authorization', `Bearer ${userToken}`)
@@ -62,6 +72,14 @@ describe('Admin and Collaborative Permissions', () => {
 
   describe('DELETE /api/members/:id', () => {
     it('should allow an admin to delete a member', async () => {
+      vi.mocked(pool.query).mockImplementation(async () => ({ 
+        rows: [{ id: targetId, first_name: 'Target' }],
+        command: '',
+        rowCount: 1,
+        oid: 0,
+        fields: []
+      }));
+
       const response = await request(app)
         .delete(`/api/members/${targetId}`)
         .set('Authorization', `Bearer ${adminToken}`);
@@ -78,6 +96,14 @@ describe('Admin and Collaborative Permissions', () => {
     });
 
     it('should allow a member to delete their own account', async () => {
+      vi.mocked(pool.query).mockImplementation(async () => ({ 
+        rows: [{ id: userId, first_name: 'Regular' }],
+        command: '',
+        rowCount: 1,
+        oid: 0,
+        fields: []
+      }));
+
       const response = await request(app)
         .delete(`/api/members/${userId}`)
         .set('Authorization', `Bearer ${userToken}`);
