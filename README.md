@@ -1,5 +1,9 @@
 <p align="center">
-  <img src="public/logo.png" alt="Kith Logo" width="200">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="public/logo.png">
+    <source media="(prefers-color-scheme: light)" srcset="public/logo.png">
+    <img src="public/logo.png" alt="Kith Logo" width="200">
+  </picture>
 </p>
 
 # Kith
@@ -45,12 +49,14 @@ Kith is a modern family history and genealogy application built to help you visu
 ### Installation
 
 1.  **Clone the repository:**
+
     ```bash
     git clone <repository-url>
     cd Kith
     ```
 
 2.  **Install dependencies:**
+
     ```bash
     npm install
     ```
@@ -61,16 +67,19 @@ Kith is a modern family history and genealogy application built to help you visu
 ### Running the Application
 
 - **Full Stack (with Docker):**
+
   ```bash
   docker-compose up
   ```
 
 - **Frontend Development:**
+
   ```bash
   npm run dev
   ```
 
 - **Backend Development:**
+
   ```bash
   cd server && npm run dev
   ```
@@ -115,7 +124,6 @@ Kith leverages specialized Gemini skills for automated maintenance:
 - **API Bridge:** Full-stack data model synchronization.
 - **Conductor:** Development track orchestration.
 ```
-
 
 ## Navigation
 
