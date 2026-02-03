@@ -90,7 +90,59 @@ describe('FamilyService', () => {
     expect(member).not.toHaveProperty('password');
   });
 
+  it('should map death details correctly', async () => {
+    const targetId = '1';
+    (fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({
+        id: targetId,
+        first_name: 'Uther',
+        last_name: 'Pendragon',
+        death_date: '1050-01-01',
+        death_place: 'Camelot'
+      })
+    });
+
+    const member = await FamilyService.getById(targetId);
+    expect(member?.deathDate).toBe('1050-01-01');
+    expect(member?.deathPlace).toBe('Camelot');
+  });
+
   it('should map settings fields correctly to backend', async () => {
+    (fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ id: '1' })
+    });
+
+    await FamilyService.update('1', {
+      email: 'new@example.com',
+      darkMode: false
+    });
+
+    const lastCall = (fetch as any).mock.calls[(fetch as any).mock.calls.length - 1];
+    const body = JSON.parse(lastCall[1].body);
+    expect(body.email).toBe('new@example.com');
+    expect(body.dark_mode).toBe(false);
+  });
+
+  it('should map death details to backend', async () => {
+    (fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ id: '1' })
+    });
+
+    await FamilyService.update('1', {
+      deathDate: '1050-01-01',
+      deathPlace: 'Camelot'
+    });
+
+    const lastCall = (fetch as any).mock.calls[(fetch as any).mock.calls.length - 1];
+    const body = JSON.parse(lastCall[1].body);
+    expect(body.death_date).toBe('1050-01-01');
+    expect(body.death_place).toBe('Camelot');
+  });
+
+  it('should return undefined for a non-existent ID', async () => {
     (fetch as any).mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({ id: '1' })
