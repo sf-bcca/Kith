@@ -25,7 +25,7 @@ Enhance the backend to handle sibling relationship CRUD operations and calculati
     - [x] Added bidirectional sibling link synchronization [e2b2a8a]
 - [x] Task: Conductor - User Manual Verification 'Phase 2: Backend Logic & API Updates' (Protocol in workflow.md) [e2b2a8a]
 
-## Phase 3: Frontend Service & Context
+## Phase 3: Frontend Service & Context [checkpoint: e114fdf]
 Update the frontend data layer to support the new sibling fields.
 
 - [x] Task: Update `FamilyService.ts` (Frontend) [e18bac4]
