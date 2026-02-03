@@ -24,11 +24,11 @@ This plan follows the Test-Driven Development (TDD) process.
     - [x] Verify tests pass.
 - [ ] Task: Conductor - User Manual Verification 'Phase 2' (Protocol in workflow.md)
 
-## Phase 3: Frontend Refactoring & Hygiene
+## Phase 3: Frontend Refactoring & Hygiene [checkpoint: 9dd4925]
 - [x] Task: Horizontal Tree Layout Refactor 54021d5
     - [x] Create test `components/__tests__/HorizontalTree_layout.test.tsx` (snapshot/render test).
     - [x] Refactor `HorizontalTree.tsx` to use Flexbox/Grid instead of absolute positioning.
     - [x] Verify tests pass.
 - [x] Task: Console Log Hygiene 54021d5
     - [x] Update `src/utils/location.ts` to use `console.warn` for geocoding errors.
-- [ ] Task: Conductor - User Manual Verification 'Phase 3' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 3' (Protocol in workflow.md) 9dd4925
