@@ -74,4 +74,37 @@ describe('Members API', () => {
       expect(response.body).toEqual({ error: 'Member not found or unauthorized' });
     });
   });
+
+  describe('POST /api/members', () => {
+    it('should create a new member with death details', async () => {
+      const newMember = {
+        first_name: 'Uther',
+        last_name: 'Pendragon',
+        birth_date: '1000-01-01',
+        death_date: '1050-01-01',
+        death_place: 'Camelot',
+        gender: 'male'
+      };
+      
+      const mockCreatedMember = { ...newMember, id: '3' };
+      // Mock the INSERT query result
+      (pool.query as any).mockResolvedValueOnce({ rows: [mockCreatedMember] });
+
+      const response = await request(app)
+        .post('/api/members')
+        .send(newMember);
+
+      expect(response.status).toBe(201);
+      expect(response.body).toEqual(mockCreatedMember);
+      
+      // Verify pool.query was called with correct arguments
+      const queryCall = (pool.query as any).mock.calls[0];
+      const sql = queryCall[0];
+      const params = queryCall[1];
+      
+      expect(sql).toContain('death_place');
+      expect(params).toContain('Camelot');
+      expect(params).toContain('1050-01-01');
+    });
+  });
 });
