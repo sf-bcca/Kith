@@ -1,9 +1,5 @@
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="public/logo.png">
-    <source media="(prefers-color-scheme: light)" srcset="public/logo.png">
-    <img src="public/logo.png" alt="Kith Logo" width="200">
-  </picture>
+  <img src="public/logo.png" alt="Kith Logo" width="200">
 </p>
 
 # Kith
