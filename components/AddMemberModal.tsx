@@ -18,6 +18,9 @@ export default function AddMemberModal({ isOpen, onClose, onSuccess, initialData
   const [gender, setGender] = useState<Gender>('male');
   const [birthDate, setBirthDate] = useState('');
   const [birthPlace, setBirthPlace] = useState('');
+  const [isDeceased, setIsDeceased] = useState(false);
+  const [deathDate, setDeathDate] = useState('');
+  const [deathPlace, setDeathPlace] = useState('');
   const [email, setEmail] = useState('');
   const [photoUrl, setPhotoUrl] = useState('');
   const [loading, setLoading] = useState(false);
@@ -37,6 +40,9 @@ export default function AddMemberModal({ isOpen, onClose, onSuccess, initialData
         setFirstName('');
         setBirthDate('');
         setBirthPlace('');
+        setIsDeceased(false);
+        setDeathDate('');
+        setDeathPlace('');
         setEmail('');
         setPhotoUrl('');
       } else {
@@ -85,6 +91,8 @@ export default function AddMemberModal({ isOpen, onClose, onSuccess, initialData
         gender,
         birthDate,
         birthPlace,
+        deathDate: isDeceased ? deathDate : undefined,
+        deathPlace: isDeceased ? deathPlace : undefined,
         email,
         photoUrl,
         parents: relationshipType === 'child' && relativeId ? [relativeId] : [],
@@ -219,6 +227,45 @@ export default function AddMemberModal({ isOpen, onClose, onSuccess, initialData
                   placeholder="e.g. New York, USA"
                 />
               </div>
+
+              <div className="flex items-center gap-2 ml-1">
+                <input
+                  type="checkbox"
+                  id="isDeceased"
+                  checked={isDeceased}
+                  onChange={(e) => setIsDeceased(e.target.checked)}
+                  className="w-5 h-5 rounded border-slate-300 text-primary focus:ring-primary/20 transition-all"
+                />
+                <label htmlFor="isDeceased" className="text-sm font-semibold text-slate-700 cursor-pointer">
+                  Deceased
+                </label>
+              </div>
+
+              {isDeceased && (
+                <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div>
+                    <label htmlFor="deathDate" className="block text-sm font-semibold text-slate-700 mb-1.5 ml-1">Date of Death</label>
+                    <input
+                      type="date"
+                      id="deathDate"
+                      value={deathDate}
+                      onChange={(e) => setDeathDate(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="deathPlace" className="block text-sm font-semibold text-slate-700 mb-1.5 ml-1">Place of Death</label>
+                    <input
+                      type="text"
+                      id="deathPlace"
+                      value={deathPlace}
+                      onChange={(e) => setDeathPlace(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none"
+                      placeholder="e.g. London, UK"
+                    />
+                  </div>
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1.5 ml-1">Email Address (Optional)</label>
