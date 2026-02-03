@@ -15,15 +15,15 @@ Update the core data structures to support explicit and implicit sibling links.
 ## Phase 2: Backend Logic & API Updates
 Enhance the backend to handle sibling relationship CRUD operations and calculations.
 
-- [x] Task: Update Backend Logic
-    - [x] Add `siblings` column to `MEMBER_COLUMNS` constant
-    - [x] Update `POST /api/members` to handle `siblings` field
-    - [x] Update `PUT /api/members/:id` to handle `siblings` field
-    - [x] Implement `GET /api/members/:id/siblings` endpoint with implied sibling derivation
-- [x] Task: Update Member Creation/Update Controllers
-    - [x] Update `server/index.ts` to process `siblings` field in requests
-    - [x] Added bidirectional sibling link synchronization
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Backend Logic & API Updates' (Protocol in workflow.md)
+- [x] Task: Update Backend Logic [e2b2a8a]
+    - [x] Add `siblings` column to `MEMBER_COLUMNS` constant [e2b2a8a]
+    - [x] Update `POST /api/members` to handle `siblings` field [e2b2a8a]
+    - [x] Update `PUT /api/members/:id` to handle `siblings` field [e2b2a8a]
+    - [x] Implement `GET /api/members/:id/siblings` endpoint with implied sibling derivation [e2b2a8a]
+- [x] Task: Update Member Creation/Update Controllers [e2b2a8a]
+    - [x] Update `server/index.ts` to process `siblings` field in requests [e2b2a8a]
+    - [x] Added bidirectional sibling link synchronization [e2b2a8a]
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Backend Logic & API Updates' (Protocol in workflow.md) [e2b2a8a]
 
 ## Phase 3: Frontend Service & Context
 Update the frontend data layer to support the new sibling fields.
