@@ -25,6 +25,7 @@ export interface FamilyMember {
   parents: string[];
   spouses: string[];
   children: string[];
+  siblings: string[]; // Array of FamilyMember IDs for explicit sibling links
 }
 
 export interface LoginCredentials {
