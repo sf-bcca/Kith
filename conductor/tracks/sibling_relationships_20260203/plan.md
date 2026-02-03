@@ -12,7 +12,7 @@ Update the core data structures to support explicit and implicit sibling links.
     - [x] Update `server/SCHEMA.md` to reflect the new column. [5e0829d]
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Data Model & Database Schema' (Protocol in workflow.md) [3a50497]
 
-## Phase 2: Backend Logic & API Updates
+## Phase 2: Backend Logic & API Updates [checkpoint: 696a2b2]
 Enhance the backend to handle sibling relationship CRUD operations and calculations.
 
 - [x] Task: Update Backend Logic [e2b2a8a]
