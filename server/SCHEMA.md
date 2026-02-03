@@ -16,6 +16,7 @@ Stores detailed profiles and system account information for all family members.
 | birth_date | DATE | NOT NULL, UNIQUE (composite) | | Date of birth |
 | birth_place | VARCHAR(255) | | | City/Country of birth |
 | death_date | DATE | | | Date of death (if applicable) |
+| death_place | VARCHAR(255) | | | City/Country of death (if applicable) |
 | gender | VARCHAR(50) | NOT NULL | | Gender identification |
 | bio | TEXT | | | Personal biography or notes |
 | profile_image | TEXT | | | URL or path to profile image |
