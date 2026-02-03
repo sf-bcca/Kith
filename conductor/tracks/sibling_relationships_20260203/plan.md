@@ -2,7 +2,7 @@
 
 This plan outlines the steps to implement sibling relationship support using a hybrid data model, a management wizard, and visualization updates.
 
-## Phase 1: Data Model & Database Schema
+## Phase 1: Data Model & Database Schema [checkpoint: 3a50497]
 Update the core data structures to support explicit and implicit sibling links.
 
 - [x] Task: Update `FamilyMember` TypeScript type [5e0829d]
@@ -10,7 +10,7 @@ Update the core data structures to support explicit and implicit sibling links.
 - [x] Task: Create Database Migration for Sibling Links [5e0829d]
     - [x] Create `008_add_siblings_column.sql` to add a `siblings` JSONB column to `family_members`. [5e0829d]
     - [x] Update `server/SCHEMA.md` to reflect the new column. [5e0829d]
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Data Model & Database Schema' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Data Model & Database Schema' (Protocol in workflow.md) [3a50497]
 
 ## Phase 2: Backend Logic & API Updates
 Enhance the backend to handle sibling relationship CRUD operations and calculations.
