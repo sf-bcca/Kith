@@ -2,7 +2,7 @@
 
 This plan follows the Test-Driven Development (TDD) process.
 
-## Phase 1: Backend Security & Validation
+## Phase 1: Backend Security & Validation [checkpoint: a119bf3]
 - [x] Task: Implement Activity Type Validation af6c1d5
     - [x] Create test `tests/server_activity_validation.test.ts` asserting 400 for invalid types.
     - [x] Update `server/index.ts` to validate `type` against allowlist.
