@@ -15,6 +15,13 @@ export interface AncestryData {
   greatGrandparents: FamilyMember[];
 }
 
+export interface DescendantData {
+  focusPerson: FamilyMember;
+  children: FamilyMember[];
+  grandchildren: FamilyMember[];
+  greatGrandchildren: FamilyMember[];
+}
+
 export class TreeService {
   /**
    * Retrieves the tree data centered around a specific focus member.
@@ -25,21 +32,17 @@ export class TreeService {
     const focus = await FamilyService.getById(focusId);
     if (!focus) return undefined;
 
-    const parents = await Promise.all(
-      focus.parents.map(id => FamilyService.getById(id))
-    );
-    const spouses = await Promise.all(
-      focus.spouses.map(id => FamilyService.getById(id))
-    );
-    const children = await Promise.all(
-      focus.children.map(id => FamilyService.getById(id))
-    );
+    const [parents, spouses, children] = await Promise.all([
+      FamilyService.getByIds(focus.parents),
+      FamilyService.getByIds(focus.spouses),
+      FamilyService.getByIds(focus.children)
+    ]);
 
     return {
       focus,
-      parents: parents.filter((m): m is FamilyMember => !!m),
-      spouses: spouses.filter((m): m is FamilyMember => !!m),
-      children: children.filter((m): m is FamilyMember => !!m)
+      parents,
+      spouses,
+      children
     };
   }
 
@@ -53,28 +56,16 @@ export class TreeService {
       throw new Error('Focus person not found');
     }
 
-    const parents: FamilyMember[] = [];
-    const grandparents: FamilyMember[] = [];
-    const greatGrandparents: FamilyMember[] = [];
+    // Gen 1: Parents
+    const parents = await FamilyService.getByIds(focusPerson.parents);
+    
+    // Gen 2: Grandparents
+    const gpIds = parents.flatMap(p => p.parents);
+    const grandparents = await FamilyService.getByIds(gpIds);
 
-    for (const parentId of focusPerson.parents) {
-      const parent = await FamilyService.getById(parentId);
-      if (parent) {
-        parents.push(parent);
-        for (const gpId of parent.parents) {
-          const gp = await FamilyService.getById(gpId);
-          if (gp) {
-            grandparents.push(gp);
-            for (const ggpId of gp.parents) {
-              const ggp = await FamilyService.getById(ggpId);
-              if (ggp) {
-                greatGrandparents.push(ggp);
-              }
-            }
-          }
-        }
-      }
-    }
+    // Gen 3: Great-Grandparents
+    const ggpIds = grandparents.flatMap(gp => gp.parents);
+    const greatGrandparents = await FamilyService.getByIds(ggpIds);
 
     return {
       focusPerson,
@@ -85,22 +76,54 @@ export class TreeService {
   }
 
   /**
+   * Retrieves descendants for horizontal chart (children, grandchildren, great-grandchildren).
+   */
+  static async getDescendants(focusPersonId: string): Promise<DescendantData> {
+    const focusPerson = await FamilyService.getById(focusPersonId);
+
+    if (!focusPerson) {
+      throw new Error('Focus person not found');
+    }
+
+    // Gen 1: Children
+    const children = await FamilyService.getByIds(focusPerson.children);
+
+    // Gen 2: Grandchildren
+    const gcIds = children.flatMap(c => c.children);
+    const grandchildren = await FamilyService.getByIds(gcIds);
+
+    // Gen 3: Great-Grandchildren
+    const ggcIds = grandchildren.flatMap(gc => gc.children);
+    const greatGrandchildren = await FamilyService.getByIds(ggcIds);
+
+    return {
+      focusPerson,
+      children,
+      grandchildren,
+      greatGrandchildren
+    };
+  }
+
+  /**
    * Helper for FanChart, returning a flattened list by generation.
    */
   static async getFanChartData(focusPersonId: string, generations: number = 3): Promise<{ person: FamilyMember, generation: number }[]> {
       const result: { person: FamilyMember, generation: number }[] = [];
-      const queue: { id: string, gen: number }[] = [{ id: focusPersonId, gen: 0 }];
+      const focus = await FamilyService.getById(focusPersonId);
+      if (!focus) return result;
 
-      while (queue.length > 0) {
-          const { id, gen } = queue.shift()!;
-          const person = await FamilyService.getById(id);
-          if (person) {
-              result.push({ person, generation: gen });
-              if (gen < generations) {
-                  person.parents.forEach(pid => queue.push({ id: pid, gen: gen + 1 }));
-              }
-          }
+      let currentGeneration: FamilyMember[] = [focus];
+      result.push({ person: focus, generation: 0 });
+
+      for (let gen = 1; gen <= generations; gen++) {
+          const parentIds = currentGeneration.flatMap(p => p.parents);
+          if (parentIds.length === 0) break;
+
+          const parents = await FamilyService.getByIds(parentIds);
+          parents.forEach(p => result.push({ person: p, generation: gen }));
+          currentGeneration = parents;
       }
+
       return result;
   }
 }
