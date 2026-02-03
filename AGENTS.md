@@ -30,7 +30,7 @@
 
 ### Entry & Navigation
 - **Entry Point:** `index.tsx` renders `App.tsx`.
-- **Navigation:** Custom state-based routing managed in `App.tsx` using the `Screen` enum (WELCOME, TREE, BIO, MEMORIES, DISCOVER, SETTINGS, PEDIGREE, FAN, DIRECTORY, HORIZONTAL, ADMIN).
+- **Navigation:** Custom state-based routing managed in `App.tsx` using the `Screen` enum (WELCOME, TREE, BIO, MEMORIES, DISCOVER, SETTINGS, PEDIGREE, FAN, DIRECTORY, HORIZONTAL, ADMIN, DNA_MAP).
 - **Onboarding:** `WelcomeView.tsx` handles initial setup and first-member creation.
 - **Global UI:** A floating "View Switcher" (top-right) allows quick switching between screens for development.
 
@@ -42,7 +42,9 @@ Contains all UI views and widgets.
     - `FamilyTreeView.tsx`: Main interactive hierarchical tree.
     - `HorizontalTree.tsx`: Alternative horizontal layout.
     - `PedigreeChart.tsx` / `FanChart.tsx`: Ancestry visualizations.
+    - `DNAMap.tsx` / `WorldMap.tsx`: Geospatial and genetic data visualizations.
     - `MemberBiography.tsx`: Detailed profile view.
+    - `MediaGallery.tsx`: View of family photos and documents.
     - `ActivityFeed.tsx`: Social stream of updates ("Memories").
     - `FamilyDirectory.tsx`: List/Grid view of members.
     - `DiscoverView.tsx`: Exploration tools.
@@ -52,6 +54,7 @@ Contains all UI views and widgets.
     - `WelcomeView.tsx`: Initial onboarding and login screen.
 - **Widgets & Modals:**
     - `AddMemberModal.tsx`: Interface for adding new family members.
+    - `AddMediaModal.tsx`: Modal for uploading family media.
     - `DirectorySearch.tsx`: Search bar for the directory.
     - `BottomNav.tsx`: Navigation bar for mobile-friendly views.
 - **Admin:**
@@ -62,6 +65,7 @@ Node.js/Express backend with PostgreSQL.
 - `index.ts`: API entry point.
 - `db.ts`: Database connection and query utilities.
 - `controllers/`: Request handlers (e.g., `settingsController.ts`).
+- `middleware/`: Custom Express middleware (auth, error handling).
 - `routes/`: API route definitions (e.g., `settings.ts`).
 - `migrations/`: SQL migration files for schema evolution.
 - `scripts/`: Database management scripts (migrate, reset, seed).
@@ -71,6 +75,14 @@ Frontend logic for communicating with the backend API.
 - `FamilyService.ts`: Core CRUD for family members.
 - `TreeService.ts`: Logic for tree traversal and structure.
 - `ActivityService.ts`: Manages social activity data.
+- `LocationService.ts`: Handles geospatial data for maps.
+- `DiscoverService.ts`: Discovery features and intelligent connections.
+
+#### `scripts/`
+Utility scripts for manual verification and maintenance.
+- `manual_verify_service.ts`: Script for testing FamilyService in a Node environment.
+- `manual_verify_tree.ts`: Script for testing TreeService logic.
+- `check-secrets.cjs`: Pre-commit hook script to prevent secret leakage.
 
 #### `context/`
 - `FamilyContext.tsx`: React Context for global state management.
@@ -79,6 +91,12 @@ Frontend logic for communicating with the backend API.
 TypeScript definitions for core domain entities.
 - `family.ts`: `FamilyMember`, `Relationship`, etc.
 - `activity.ts`: `ActivityItem`, `Feed`, etc.
+
+#### `src/utils/`
+Shared utility functions for data formatting, date manipulation, etc.
+
+#### `conductor/`
+Project development tracks, styleguides, and planning documents.
 
 #### `mocks/`
 Static data for development and testing.

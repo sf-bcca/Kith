@@ -19,6 +19,7 @@ Stores detailed profiles and system account information for all family members.
 | bio | TEXT | | | Personal biography or notes |
 | profile_image | TEXT | | | URL or path to profile image |
 | relationships | JSONB | | '{}' | Structured relationship data |
+| role | VARCHAR(20) | | 'member' | System role (admin, member) |
 | password | VARCHAR(255) | | | Hashed password for login |
 | email | VARCHAR(255) | | | Contact email address |
 | username | VARCHAR(255) | | | System username |
@@ -44,6 +45,7 @@ Stores social feed items, memories, and system-generated updates.
 | content | TEXT | NOT NULL | | The main text or narrative |
 | image_url | TEXT | | | Optional image attachment |
 | timestamp | TIMESTAMPTZ | | CURRENT_TIMESTAMP | Logical time of the activity |
+| status | VARCHAR(20) | | 'approved' | Approval status (pending, approved, rejected) |
 | likes | INTEGER | | 0 | Engagement count |
 | comments | JSONB | | '[]' | List of nested comment objects |
 | created_at | TIMESTAMPTZ | | CURRENT_TIMESTAMP | Record creation time |

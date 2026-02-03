@@ -15,6 +15,7 @@ Kith is a modern family history and genealogy application built to help you visu
 - **Interactive Family Trees:**
   - **Vertical & Horizontal Trees:** Hierarchical visualizations of family lineages.
   - **Pedigree & Fan Charts:** Specialized ancestry visualizations for research and exploration.
+  - **DNA & World Maps:** Geospatial and genetic data visualizations.
 
 - **Member Management:**
   - **Onboarding:** Smooth welcome experience for first-time users.
@@ -24,6 +25,7 @@ Kith is a modern family history and genealogy application built to help you visu
 
 - **Engagement & Personalization:**
   - **Activity Feed (Memories):** A social timeline of family events and stories.
+  - **Media Gallery:** Unified view of family photos and documents.
   - **Advanced Settings:** Granular control over Account, Preferences (including reactive Dark Mode), and Privacy.
   - **Discover:** Intelligent tools for finding connections.
 
@@ -98,17 +100,26 @@ Kith/
 │   ├── FamilyTreeView.tsx
 │   ├── FamilyManagement.tsx
 │   ├── SettingsView.tsx
+│   ├── DNAMap.tsx
+│   ├── MediaGallery.tsx
 │   └── ...
 ├── server/              # Node.js/Express Backend
 │   ├── controllers/     # Request Handlers
 │   ├── routes/          # API Route Definitions
+│   ├── middleware/      # Custom Express Middleware
 │   ├── migrations/      # SQL Schema Migrations
 │   └── db.ts            # Database Connection
 ├── services/            # Frontend API Clients
 │   ├── FamilyService.ts
+│   ├── TreeService.ts
+│   ├── ActivityService.ts
+│   ├── LocationService.ts
+│   ├── DiscoverService.ts
 │   └── ...
 ├── context/             # React Context Providers
 ├── types/               # Shared TypeScript Definitions
+├── src/utils/           # Shared Utility Functions
+├── scripts/             # Utility Scripts (Verification, Secrets Check)
 ├── mocks/               # Static Mock Data for Dev/Testing
 ├── tests/               # Backend & Integration Tests
 ├── conductor/           # Project Tracks & Planning
