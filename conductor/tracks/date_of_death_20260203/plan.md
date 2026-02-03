@@ -8,8 +8,8 @@
 - [x] Task: Conductor - User Manual Verification 'Backend Infrastructure' (Protocol in workflow.md) [281375d]
 
 ## Phase 2: Frontend Data Entry (TDD)
-- [ ] Task: Create a test in `components/__tests__/AddMemberModal.test.tsx` to verify that checking the "Deceased" box reveals the death-related input fields.
-- [ ] Task: Update `components/AddMemberModal.tsx` to include a "Deceased" checkbox, a "Date of Death" input, and a "Place of Death" input.
+- [x] Task: Create a test in `components/__tests__/AddMemberModal.test.tsx` to verify that checking the "Deceased" box reveals the death-related input fields. [02ebc39]
+- [x] Task: Update `components/AddMemberModal.tsx` to include a "Deceased" checkbox, a "Date of Death" input, and a "Place of Death" input. [02ebc39]
 - [ ] Task: Create a test in `components/__tests__/MemberBiography.test.tsx` to verify the same behavior in the biography edit mode.
 - [ ] Task: Update `components/MemberBiography.tsx` to include the "Deceased" toggle and death-related inputs in the edit view.
 - [ ] Task: Implement client-side validation in both components to ensure the Date of Death is not in the future and is after the Date of Birth.
