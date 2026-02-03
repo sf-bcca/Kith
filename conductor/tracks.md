@@ -17,4 +17,4 @@ This file tracks all major tracks for the project. Each track has its own detail
 - [x] **Track: DNA Map Visualization**
   *Link: [./conductor/tracks/dna_map_visualization_20260202/](./conductor/tracks/dna_map_visualization_20260202/)*
 - [x] **Track: Dynamic Discovery & Heritage Hub**
-  *Link: [./conductor/tracks/discovery_heritage_hub_20260203/](./conductor/tracks/discovery_heritage_hub_20260203/)*
+  *Link: [./conductor/archive/discovery_heritage_hub_20260203/](./conductor/archive/discovery_heritage_hub_20260203/)*
