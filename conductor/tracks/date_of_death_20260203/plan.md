@@ -4,7 +4,7 @@
 - [x] Task: Create a new SQL migration `server/migrations/008_add_death_place.sql` to add `death_place` to the `family_members` table. [2f0ca6d]
 - [x] Task: Update `server/SCHEMA.md` using the `kith-schema-maintainer` skill to reflect the new column. [d6ed12d]
 - [x] Task: Update `services/FamilyService.ts` to map the `death_place` database field to the `deathPlace` TypeScript property. [e2a7ad6]
-- [ ] Task: Create a backend test in `tests/members.test.ts` to verify that both `death_date` and `death_place` are correctly persisted and retrieved via the API.
+- [x] Task: Create a backend test in `tests/members.test.ts` to verify that both `death_date` and `death_place` are correctly persisted and retrieved via the API. [9c82553]
 - [ ] Task: Conductor - User Manual Verification 'Backend Infrastructure' (Protocol in workflow.md)
 
 ## Phase 2: Frontend Data Entry (TDD)
