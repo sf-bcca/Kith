@@ -1,3 +1,6 @@
+process.env.JWT_SECRET = 'dev-secret';
+process.env.VITE_API_URL = 'http://localhost:8080';
+
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
 import { mockFamilyData } from './mocks/familyData';

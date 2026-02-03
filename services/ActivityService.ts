@@ -5,14 +5,34 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 export interface ActivityFilter {
   type?: ActivityType;
   actorId?: string;
+  status?: string;
 }
 
 export const ActivityService = {
+  getToken(): string | null {
+    return localStorage.getItem('kith_token');
+  },
+
+  getHeaders(extraHeaders: Record<string, string> = {}): Record<string, string> {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...extraHeaders,
+    };
+    const token = this.getToken();
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    return headers;
+  },
+
   /**
    * Returns activities sorted by timestamp (newest first) from the API.
    */
   async getFeed(filter?: ActivityFilter): Promise<Activity[]> {
-    const response = await fetch(`${API_URL}/api/activities`);
+    const query = filter?.status ? `?status=${filter.status}` : '';
+    const response = await fetch(`${API_URL}/api/activities${query}`, {
+      headers: this.getHeaders()
+    });
     if (!response.ok) {
       throw new Error('Failed to fetch activities');
     }
@@ -33,13 +53,14 @@ export const ActivityService = {
   },
 
   /**
-   * Approves an activity (Still local for now as backend doesn't support it yet, 
-   * but could be implemented as a PATCH /api/activities/:id)
+   * Approves an activity.
    */
   async approveActivity(id: string): Promise<boolean> {
-    // This is a placeholder as backend migration for status isn't fully spec'd
-    console.warn('Approve activity is not yet implemented in backend');
-    return true;
+    const response = await fetch(`${API_URL}/api/activities/${id}/approve`, {
+      method: 'PATCH',
+      headers: this.getHeaders()
+    });
+    return response.ok;
   },
 
   /**
@@ -48,9 +69,7 @@ export const ActivityService = {
   async addComment(activityId: string, comment: { authorId: string, text: string }): Promise<boolean> {
     const response = await fetch(`${API_URL}/api/activities/${activityId}/comments`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: this.getHeaders(),
       body: JSON.stringify(comment),
     });
 

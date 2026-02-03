@@ -12,7 +12,7 @@ const DiscoverView: React.FC<Props> = ({ onNavigate }) => {
     { title: 'Fan Chart', subtitle: 'Circular view', icon: 'blur_on', screen: 'Fan Chart', color: 'bg-purple-500' },
     { title: 'Horizontal', subtitle: 'Wide family view', icon: 'linear_scale', screen: 'Horizontal Tree', color: 'bg-orange-500' },
     { title: 'Admin', subtitle: 'Manage content', icon: 'dashboard', screen: 'Admin', color: 'bg-slate-700' },
-    { title: 'DNA Map', subtitle: 'Origins & migrations', icon: 'public', screen: 'Tree', color: 'bg-pink-500' },
+    { title: 'DNA Map', subtitle: 'Origins & migrations', icon: 'public', screen: 'DNA Map', color: 'bg-pink-500' },
   ];
 
   return (

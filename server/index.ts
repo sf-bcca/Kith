@@ -1,20 +1,21 @@
-import express, { Request, Response } from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { pool } from './db';
 import settingsRoutes from './routes/settings';
-import { authenticate, authorizeOwner } from './middleware/auth';
+import { authenticate, authorizeOwner, authorizeAdminOrOwner, authorizeAdmin } from './middleware/auth';
 import { errorHandler } from './middleware/error';
 
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 8080;
-const JWT_SECRET = process.env.JWT_SECRET;
 
-if (!JWT_SECRET && process.env.NODE_ENV === 'production') {
+const getJwtSecret = () => process.env.JWT_SECRET || 'dev-secret';
+
+if (!process.env.JWT_SECRET && process.env.NODE_ENV === 'production') {
   console.error('FATAL: JWT_SECRET environment variable is not set.');
   process.exit(1);
 }
@@ -23,7 +24,7 @@ const SALT_ROUNDS = 10;
 const MEMBER_COLUMNS = `
   id, first_name, last_name, maiden_name, birth_date, death_date, gender, 
   bio, profile_image, relationships, email, username, dark_mode, language, 
-  visibility, data_sharing, notifications_email, notifications_push, 
+  visibility, data_sharing, notifications_email, notifications_push, role,
   created_at, updated_at
 `;
 
@@ -45,6 +46,16 @@ app.get('/api/health', async (req: Request, res: Response) => {
       status: 'error', 
       database: 'disconnected'
     });
+  }
+});
+
+app.get('/api/init-check', async (req: Request, res: Response, next) => {
+  try {
+    const result = await pool.query('SELECT COUNT(*) FROM family_members');
+    const count = parseInt(result.rows[0].count);
+    res.json({ initialized: count > 0 });
+  } catch (err: any) {
+    next(err);
   }
 });
 
@@ -92,7 +103,7 @@ app.post('/api/members', async (req: Request, res: Response, next) => {
   try {
     const { 
       first_name, last_name, maiden_name, birth_date, death_date, gender, bio, profile_image, relationships, password,
-      email, username, dark_mode, language, visibility, data_sharing, notifications_email, notifications_push
+      email, username, dark_mode, language, visibility, data_sharing, notifications_email, notifications_push, role
     } = req.body;
 
     let hashedPassword = null;
@@ -103,12 +114,12 @@ app.post('/api/members', async (req: Request, res: Response, next) => {
     const result = await pool.query(
       `INSERT INTO family_members 
       (first_name, last_name, maiden_name, birth_date, death_date, gender, bio, profile_image, relationships, password,
-       email, username, dark_mode, language, visibility, data_sharing, notifications_email, notifications_push) 
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18) 
+       email, username, dark_mode, language, visibility, data_sharing, notifications_email, notifications_push, role) 
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19) 
       RETURNING ${MEMBER_COLUMNS}`,
       [
         first_name, last_name, maiden_name, birth_date, death_date, gender, bio, profile_image, relationships || {}, hashedPassword,
-        email, username, dark_mode, language, visibility, data_sharing, notifications_email, notifications_push
+        email, username, dark_mode, language, visibility, data_sharing, notifications_email, notifications_push, role || 'member'
       ]
     );
     // Explicitly sanitize
@@ -145,8 +156,12 @@ app.post('/api/auth/login', async (req: Request, res: Response, next) => {
       return res.status(401).json({ error: 'Invalid password' });
     }
 
-    // Generate JWT
-    const token = jwt.sign({ sub: member.id }, JWT_SECRET || 'dev-secret', { expiresIn: '24h' });
+    // Generate JWT with role
+    const token = jwt.sign(
+      { sub: member.id, role: member.role }, 
+      getJwtSecret(), 
+      { expiresIn: '24h' }
+    );
 
     // Exclude password from response
     const { password: _, ...memberWithoutPassword } = member;
@@ -156,18 +171,21 @@ app.post('/api/auth/login', async (req: Request, res: Response, next) => {
   }
 });
 
-app.put('/api/members/:id', authenticate, authorizeOwner, async (req: Request, res: Response, next) => {
+app.put('/api/members/:id', authenticate, async (req: Request, res: Response, next) => {
   try {
     const { id } = req.params;
     const { 
       first_name, last_name, maiden_name, birth_date, death_date, gender, bio, profile_image, relationships, password,
-      email, username, dark_mode, language, visibility, data_sharing, notifications_email, notifications_push
+      email, username, dark_mode, language, visibility, data_sharing, notifications_email, notifications_push, role
     } = req.body;
     
     let hashedPassword = password;
     if (password && !password.startsWith('$2b$')) { // Basic check to avoid re-hashing
       hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
     }
+
+    // Only admins can change roles
+    const targetRole = (req as any).user.role === 'admin' ? role : undefined;
 
     const result = await pool.query(
       `UPDATE family_members SET 
@@ -180,7 +198,7 @@ app.put('/api/members/:id', authenticate, authorizeOwner, async (req: Request, r
       bio = COALESCE($7, bio), 
       profile_image = COALESCE($8, profile_image), 
       relationships = COALESCE($9, relationships),
-      password = CASE WHEN $10 IS NOT NULL AND $10 <> '' THEN $10 ELSE password END,
+      password = CASE WHEN $10::VARCHAR IS NOT NULL AND $10::VARCHAR <> '' THEN $10::VARCHAR ELSE password END,
       email = COALESCE($11, email),
       username = COALESCE($12, username),
       dark_mode = COALESCE($13, dark_mode),
@@ -188,12 +206,14 @@ app.put('/api/members/:id', authenticate, authorizeOwner, async (req: Request, r
       visibility = COALESCE($15, visibility),
       data_sharing = COALESCE($16, data_sharing),
       notifications_email = COALESCE($17, notifications_email),
-      notifications_push = COALESCE($18, notifications_push)
-      WHERE id = $19 
+      notifications_push = COALESCE($18, notifications_push),
+      role = COALESCE($19, role)
+      WHERE id = $20 
       RETURNING ${MEMBER_COLUMNS}`,
       [
         first_name, last_name, maiden_name, birth_date, death_date, gender, bio, profile_image, relationships, hashedPassword,
         email, username, dark_mode, language, visibility, data_sharing, notifications_email, notifications_push,
+        targetRole,
         id
       ]
     );
@@ -209,7 +229,7 @@ app.put('/api/members/:id', authenticate, authorizeOwner, async (req: Request, r
   }
 });
 
-app.delete('/api/members/:id', authenticate, authorizeOwner, async (req: Request, res: Response, next) => {
+app.delete('/api/members/:id', authenticate, authorizeAdminOrOwner, async (req: Request, res: Response, next) => {
   try {
     const { id } = req.params;
     const result = await pool.query(`DELETE FROM family_members WHERE id = $1 RETURNING ${MEMBER_COLUMNS}`, [id]);
@@ -222,10 +242,52 @@ app.delete('/api/members/:id', authenticate, authorizeOwner, async (req: Request
   }
 });
 
+app.get('/api/admin/stats', authenticate, authorizeAdmin, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const membersRes = await pool.query('SELECT COUNT(*) FROM family_members');
+    const activitiesRes = await pool.query('SELECT COUNT(*) FROM activities');
+    const pendingRes = await pool.query("SELECT COUNT(*) FROM activities WHERE status = 'pending'");
+
+    res.json({
+      totalMembers: parseInt(membersRes.rows[0].count),
+      totalActivities: parseInt(activitiesRes.rows[0].count),
+      pendingApprovals: parseInt(pendingRes.rows[0].count),
+    });
+  } catch (err: any) {
+    next(err);
+  }
+});
+
 app.get('/api/activities', async (req: Request, res: Response, next) => {
   try {
-    const result = await pool.query('SELECT * FROM activities ORDER BY timestamp DESC');
+    const { status } = req.query;
+    let query = 'SELECT * FROM activities';
+    let params: any[] = [];
+
+    if (status) {
+      query += ' WHERE status = $1';
+      params.push(status);
+    }
+
+    query += ' ORDER BY timestamp DESC';
+    const result = await pool.query(query, params);
     res.json(result.rows);
+  } catch (err: any) {
+    next(err);
+  }
+});
+
+app.patch('/api/activities/:id/approve', authenticate, authorizeAdmin, async (req: Request, res: Response, next) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      "UPDATE activities SET status = 'approved' WHERE id = $1 RETURNING *",
+      [id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Activity not found' });
+    }
+    res.json(result.rows[0]);
   } catch (err: any) {
     next(err);
   }
@@ -256,8 +318,8 @@ app.use(errorHandler);
 
 // Start server if not imported
 if (require.main === module) {
-  app.listen(port, async () => {
-    console.log(`Server running at http://localhost:${port}`);
+  app.listen(Number(port), '0.0.0.0', async () => {
+    console.log(`Server running at http://0.0.0.0:${port}`);
     try {
       await pool.query('SELECT NOW()');
       console.log('Connected to PostgreSQL');

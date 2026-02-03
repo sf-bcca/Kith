@@ -10,30 +10,47 @@ interface Props {
 
 const MemberBiography: React.FC<Props> = ({ onNavigate, memberId, loggedInId }) => {
   const [member, setMember] = useState<FamilyMember | null>(null);
+  const [loggedInMember, setLoggedInMember] = useState<FamilyMember | null>(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<Partial<FamilyMember>>({});
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    const fetchMember = async () => {
-      if (!memberId) return;
+    const fetchData = async () => {
       setLoading(true);
       try {
-        const result = await FamilyService.getById(memberId);
-        setMember(result || null);
-        if (result) {
-          setEditData(result);
+        const promises: Promise<any>[] = [];
+        if (memberId) {
+          promises.push(FamilyService.getById(memberId));
+        } else {
+          promises.push(Promise.resolve(null));
+        }
+
+        if (loggedInId) {
+          promises.push(FamilyService.getById(loggedInId));
+        } else {
+          promises.push(Promise.resolve(null));
+        }
+
+        const [memberResult, loggedInResult] = await Promise.all(promises);
+        
+        setMember(memberResult || null);
+        setLoggedInMember(loggedInResult || null);
+        
+        if (memberResult) {
+          setEditData(memberResult);
         }
       } catch (err) {
-        console.error('Failed to fetch member:', err);
+        console.error('Failed to fetch data:', err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchMember();
-  }, [memberId]);
+    fetchData();
+  }, [memberId, loggedInId]);
 
   const handleSave = async () => {
     if (!member?.id) return;
@@ -50,10 +67,36 @@ const MemberBiography: React.FC<Props> = ({ onNavigate, memberId, loggedInId }) 
     }
   };
 
+  const handleDelete = async () => {
+    if (!member?.id) return;
+    if (!window.confirm(`Are you sure you want to delete ${member.firstName} ${member.lastName}? This action cannot be undone.`)) {
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      await FamilyService.delete(member.id);
+      if (loggedInId === member.id) {
+        // If deleting own account, we should probably log out or go to welcome
+        onNavigate('Welcome');
+      } else {
+        onNavigate('Tree');
+      }
+    } catch (err) {
+      console.error('Failed to delete member:', err);
+      alert('Failed to delete member.');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center bg-background-light min-h-screen">
-        <p className="text-slate-500">Loading...</p>
+        <div className="animate-pulse flex flex-col items-center">
+           <div className="size-10 bg-primary/20 rounded-full mb-2"></div>
+           <p className="text-slate-400 text-xs font-medium tracking-tight">Loading Profile...</p>
+        </div>
       </div>
     );
   }
@@ -61,12 +104,19 @@ const MemberBiography: React.FC<Props> = ({ onNavigate, memberId, loggedInId }) 
   if (!member) {
     return (
       <div className="flex-1 flex items-center justify-center bg-background-light min-h-screen">
-        <p className="text-slate-500">Member not found.</p>
+        <div className="text-center p-6">
+           <span className="material-symbols-outlined text-4xl text-slate-300 mb-2">person_off</span>
+           <p className="text-slate-500 font-bold">Member not found.</p>
+           <button onClick={() => onNavigate('Tree')} className="mt-4 text-primary font-bold text-sm">Return to Tree</button>
+        </div>
       </div>
     );
   }
 
-  const isOwnProfile = loggedInId === member.id;
+  const isOwner = loggedInId === member.id;
+  const isAdmin = loggedInMember?.role === 'admin';
+  const canDelete = isOwner || isAdmin;
+  const canEdit = !!loggedInId; // Collaborative editing: any logged in user can edit
 
   const years = `${member.birthDate ? new Date(member.birthDate).getFullYear() : ''}–${member.deathDate ? new Date(member.deathDate).getFullYear() : 'Present'}`;
 
@@ -93,9 +143,19 @@ const MemberBiography: React.FC<Props> = ({ onNavigate, memberId, loggedInId }) 
               {saving ? 'Saving...' : 'Save'}
             </button>
           ) : (
-            <button className="flex items-center justify-center size-10 rounded-full hover:bg-gray-200 transition-colors">
-              <span className="material-symbols-outlined text-[#0d121b]">ios_share</span>
-            </button>
+            <div className="flex items-center gap-1">
+              {canEdit && (
+                <button 
+                  onClick={() => setIsEditing(true)}
+                  className="flex items-center justify-center size-10 rounded-full hover:bg-gray-200 transition-colors"
+                >
+                  <span className="material-symbols-outlined text-[#0d121b]">edit</span>
+                </button>
+              )}
+              <button className="flex items-center justify-center size-10 rounded-full hover:bg-gray-200 transition-colors">
+                <span className="material-symbols-outlined text-[#0d121b]">ios_share</span>
+              </button>
+            </div>
           )}
         </div>
       </nav>
@@ -204,6 +264,23 @@ const MemberBiography: React.FC<Props> = ({ onNavigate, memberId, loggedInId }) 
                 </div>
               </div>
             </div>
+            
+            {canDelete && (
+              <div className="pt-4 border-t border-slate-100">
+                <button 
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="w-full py-4 rounded-2xl bg-red-50 text-red-600 font-bold text-sm border border-red-100 hover:bg-red-100 transition-colors flex items-center justify-center gap-2"
+                >
+                  <span className="material-symbols-outlined text-[20px]">delete_forever</span>
+                  {deleting ? 'Deleting...' : 'Delete Member'}
+                </button>
+                <p className="text-[10px] text-slate-400 text-center mt-3 px-4">
+                  Deleting a member will permanently remove them and all their associated records from the family tree. This action cannot be undone.
+                </p>
+              </div>
+            )}
+
             <button 
               onClick={() => setIsEditing(false)}
               className="w-full py-3 text-gray-500 font-bold hover:bg-gray-100 rounded-xl transition-colors"
@@ -251,7 +328,12 @@ const MemberBiography: React.FC<Props> = ({ onNavigate, memberId, loggedInId }) 
             <section className="mt-8 px-4">
               <div className="flex items-center justify-between pb-4">
                 <h2 className="text-xl font-bold tracking-tight">Life Events</h2>
-                <button className="text-primary text-sm font-semibold hover:underline">View map</button>
+                <button 
+                  onClick={() => onNavigate('DNA Map')}
+                  className="text-primary text-sm font-semibold hover:underline"
+                >
+                  View map
+                </button>
               </div>
               
               <div className="grid grid-cols-[40px_1fr] gap-x-3 mt-2">
@@ -288,20 +370,12 @@ const MemberBiography: React.FC<Props> = ({ onNavigate, memberId, loggedInId }) 
 
       {/* Bottom Action Bar */}
       {!isEditing && (
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background-light via-background-light to-transparent">
-          <div className="max-w-md mx-auto flex gap-3">
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background-light via-background-light to-transparent pointer-events-none">
+          <div className="max-w-md mx-auto flex gap-3 pointer-events-auto">
             <button className="flex-1 bg-primary text-white font-bold py-3.5 rounded-xl shadow-lg shadow-primary/30 flex items-center justify-center gap-2 hover:bg-blue-600 active:scale-95 transition-all">
               <span className="material-symbols-outlined text-[20px]">add_circle</span>
               Add Memory
             </button>
-            {isOwnProfile && (
-              <button 
-                onClick={() => setIsEditing(true)}
-                className="size-[52px] bg-white border border-gray-200 rounded-xl flex items-center justify-center shadow-sm hover:bg-gray-50 active:scale-95 transition-all"
-              >
-                <span className="material-symbols-outlined text-gray-700">edit</span>
-              </button>
-            )}
           </div>
         </div>
       )}

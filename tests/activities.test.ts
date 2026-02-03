@@ -27,7 +27,7 @@ describe('Activities API', () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(mockActivities);
-      expect(pool.query).toHaveBeenCalledWith('SELECT * FROM activities ORDER BY timestamp DESC');
+      expect(pool.query).toHaveBeenCalledWith('SELECT * FROM activities ORDER BY timestamp DESC', []);
     });
   });
 

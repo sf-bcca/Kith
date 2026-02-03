@@ -19,6 +19,7 @@ export interface FamilyMember {
   dataSharing?: boolean;
   notificationsEmail?: boolean;
   notificationsPush?: boolean;
+  role?: 'admin' | 'member';
   
   // Relations stored as IDs
   parents: string[];

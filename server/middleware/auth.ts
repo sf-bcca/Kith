@@ -1,15 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
-
-export interface AuthRequest extends Request {
-  user?: {
-    id: string;
-    [key: string]: any;
-  };
-}
-
 /**
  * Middleware to verify JWT and protect routes.
  */
@@ -23,10 +14,11 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
   const token = authHeader.split(' ')[1];
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as any;
-    req.user = { id: decoded.sub };
+    const secret = process.env.JWT_SECRET || 'dev-secret';
+    const decoded = jwt.verify(token, secret) as any;
+    req.user = { id: decoded.sub, role: decoded.role };
     next();
-  } catch (err) {
+  } catch (err: any) {
     return res.status(401).json({ error: 'Invalid or expired token' });
   }
 };
@@ -40,6 +32,38 @@ export const authorizeOwner = (req: AuthRequest, res: Response, next: NextFuncti
   
   if (!req.user || req.user.id !== id) {
     return res.status(403).json({ error: 'Access denied: unauthorized' });
+  }
+
+  next();
+};
+
+/**
+ * Middleware to ensure the user is an admin or the owner.
+ */
+export const authorizeAdminOrOwner = (req: AuthRequest, res: Response, next: NextFunction) => {
+  const { id } = req.params;
+  
+  if (!req.user) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  if (req.user.role === 'admin' || req.user.id === id) {
+    return next();
+  }
+
+  res.status(403).json({ error: 'Access denied: admin or owner role required' });
+};
+
+/**
+ * Middleware to ensure the user is an admin.
+ */
+export const authorizeAdmin = (req: AuthRequest, res: Response, next: NextFunction) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Access denied: admin role required' });
   }
 
   next();

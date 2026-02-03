@@ -1,10 +1,66 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { FamilyService } from '../services/FamilyService';
+import { ActivityService } from '../services/ActivityService';
+import { Activity } from '../types/activity';
 
 interface Props {
   onNavigate: (screen: string) => void;
 }
 
+interface Stats {
+  totalMembers: number;
+  totalActivities: number;
+  pendingApprovals: number;
+}
+
 const AdminDashboard: React.FC<Props> = ({ onNavigate }) => {
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [pendingActivities, setPendingActivities] = useState<Activity[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [statsRes, pendingRes] = await Promise.all([
+        FamilyService.getAdminStats(),
+        ActivityService.getFeed({ status: 'pending' })
+      ]);
+      setStats(statsRes);
+      setPendingActivities(pendingRes);
+    } catch (err) {
+      console.error('Failed to fetch admin data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const handleApprove = async (id: string) => {
+    try {
+      const success = await ActivityService.approveActivity(id);
+      if (success) {
+        // Refresh data
+        fetchData();
+      }
+    } catch (err) {
+      console.error('Failed to approve activity:', err);
+    }
+  };
+
+  if (loading && !stats) {
+    return (
+      <div className="bg-background-dark text-slate-100 font-display min-h-screen flex items-center justify-center">
+        <div className="animate-pulse flex flex-col items-center">
+           <div className="size-12 bg-primary/20 rounded-full mb-4"></div>
+           <p className="text-slate-400 font-medium">Loading Dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-background-dark text-slate-100 font-display min-h-screen">
       <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden">
@@ -20,12 +76,14 @@ const AdminDashboard: React.FC<Props> = ({ onNavigate }) => {
               <h2 className="text-white text-lg font-bold leading-tight tracking-tight">Admin Dashboard</h2>
            </div>
            <div className="flex items-center gap-1">
-              <button className="relative flex size-10 items-center justify-center rounded-lg text-slate-300 hover:bg-slate-800 transition-colors">
-                 <span className="material-symbols-outlined">notifications</span>
-                 <span className="absolute top-2 right-2 flex h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>
+              <button 
+                onClick={() => fetchData()}
+                className="relative flex size-10 items-center justify-center rounded-lg text-slate-300 hover:bg-slate-800 transition-colors"
+              >
+                 <span className={`material-symbols-outlined ${loading ? 'animate-spin' : ''}`}>refresh</span>
               </button>
-              <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center ml-2 border border-primary/30 cursor-pointer hover:bg-primary/30 transition-colors">
-                 <span className="text-xs font-bold text-primary">JD</span>
+              <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center ml-2 border border-primary/30">
+                 <span className="text-xs font-bold text-primary">AD</span>
               </div>
            </div>
         </header>
@@ -39,111 +97,94 @@ const AdminDashboard: React.FC<Props> = ({ onNavigate }) => {
                  <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Total Users</p>
               </div>
               <div className="flex items-baseline justify-between">
-                 <p className="text-white text-2xl font-bold tracking-tight">12,840</p>
-                 <span className="text-emerald-500 text-xs font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded">+5%</span>
+                 <p className="text-white text-2xl font-bold tracking-tight">{stats?.totalMembers || 0}</p>
               </div>
            </div>
            {/* Stat 2 */}
            <div className="flex flex-col gap-2 rounded-xl p-5 border border-slate-800 bg-slate-900 shadow-sm hover:border-slate-700 transition-colors">
               <div className="flex items-center gap-2">
                  <span className="material-symbols-outlined text-primary text-sm">account_tree</span>
-                 <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Active Trees</p>
+                 <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Total Activities</p>
               </div>
               <div className="flex items-baseline justify-between">
-                 <p className="text-white text-2xl font-bold tracking-tight">3,150</p>
-                 <span className="text-emerald-500 text-xs font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded">+2%</span>
+                 <p className="text-white text-2xl font-bold tracking-tight">{stats?.totalActivities || 0}</p>
               </div>
            </div>
            {/* Stat 3 */}
            <div className="flex flex-col gap-2 rounded-xl p-5 border border-slate-800 bg-slate-900 shadow-sm col-span-2 hover:border-slate-700 transition-colors">
               <div className="flex items-center gap-2">
                  <span className="material-symbols-outlined text-orange-500 text-sm">report_problem</span>
-                 <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Pending Reports</p>
+                 <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Pending Approvals</p>
               </div>
               <div className="flex items-baseline justify-between">
-                 <p className="text-white text-2xl font-bold tracking-tight">24 Issues</p>
-                 <span className="text-orange-500 text-xs font-bold bg-orange-500/10 px-1.5 py-0.5 rounded">-10%</span>
+                 <p className="text-white text-2xl font-bold tracking-tight">{stats?.pendingApprovals || 0} Items</p>
               </div>
            </div>
         </div>
 
         {/* Pending Approvals */}
         <div className="flex items-center justify-between px-4 pt-4">
-           <h2 className="text-white text-xl font-bold leading-tight tracking-tight">Pending Approvals</h2>
-           <button className="text-primary text-sm font-semibold hover:text-blue-400 transition-colors">View All</button>
+           <h2 className="text-white text-xl font-bold leading-tight tracking-tight">Approval Queue</h2>
+           <span className="text-xs font-bold bg-slate-800 px-2 py-1 rounded-md text-slate-400">
+             {pendingActivities.length} Pending
+           </span>
         </div>
 
         <div className="flex flex-col gap-4 p-4">
-           {/* Approval Card 1 */}
-           <div className="flex flex-col gap-4 rounded-xl border border-slate-800 bg-slate-900 p-4 shadow-sm hover:border-slate-700 transition-colors">
-              <div className="flex justify-between items-start">
-                 <div className="flex flex-col gap-1">
-                    <p className="text-white text-base font-bold leading-tight">Edit Birth Date</p>
-                    <p className="text-slate-400 text-sm font-normal">Submitted by <span className="text-primary font-medium">John Doe</span> for <span className="font-medium">'Sarah Smith'</span></p>
-                 </div>
-                 <div className="h-12 w-12 shrink-0 rounded-lg bg-slate-800 bg-center bg-cover border border-slate-700" style={{backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuCuTROIIxNRFF8sP7C4v7uPrSfTGrPwwTOOoSseYpx-kAzYtcqfwrIoiua1rks9UcXLIph7OvRUc9l92FVcZYF33GXnP6KZ4ha7TV5SJAuzfawCufJurpKZgXiGtbtZxaXDPClFIjsLL-g--fcCoQ--2QPD5XCbwloKPbjSxMEcP_MIWUjOsBC90dt45XSOs2O834K4H4d9FQNZDYfn7wCiwrK5hNANzKoo_W3beyyuvhjWemhsExa8_NLJ4CYVU2yGb7Ny8DtHxUI")'}}></div>
-              </div>
-              <div className="flex gap-2">
-                 <button className="flex-1 flex h-10 items-center justify-center rounded-lg bg-primary text-white gap-2 text-sm font-bold shadow-sm shadow-primary/20 hover:bg-blue-600 transition-colors">
-                    <span className="material-symbols-outlined text-[18px]">check</span>
-                    <span>Approve</span>
-                 </button>
-                 <button className="flex-1 flex h-10 items-center justify-center rounded-lg bg-slate-800 text-slate-300 gap-2 text-sm font-bold border border-slate-700 hover:bg-slate-700 transition-colors">
-                    <span className="material-symbols-outlined text-[18px]">close</span>
-                    <span>Reject</span>
-                 </button>
-              </div>
-           </div>
-           {/* Approval Card 2 */}
-           <div className="flex flex-col gap-4 rounded-xl border border-slate-800 bg-slate-900 p-4 shadow-sm hover:border-slate-700 transition-colors">
-              <div className="flex justify-between items-start">
-                 <div className="flex flex-col gap-1">
-                    <p className="text-white text-base font-bold leading-tight">Add Relationship</p>
-                    <p className="text-slate-400 text-sm font-normal">Submitted by <span className="text-primary font-medium">Emily Chen</span> for <span className="font-medium">'Robert Miller'</span></p>
-                 </div>
-                 <div className="h-12 w-12 shrink-0 rounded-lg bg-slate-800 bg-center bg-cover border border-slate-700" style={{backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuCIslO6fdx8LtzpioWJjiwHajUpr2un0P5-WKJsSHDpy5IdVpj-XKEN4qSZOjHQmvjfjipwVEbtI0NHt1uuBrgXpF4_6iq6SRx0L73R_uLC4gCIc9_AzGKUgReQjKYfY5S6LVv1ZU6SUzSQD-aqAGf4QoN1J6Oue457GJSck2tludE0cc7Z6_r1Mu460X94a8zqXzzq-3wCNdbqPnji566VDHAMIS917KG_0hAuqSBoRtNprFJL6FyuAfpgOBpfVv53jVgfzIw7xbk")'}}></div>
-              </div>
-              <div className="flex gap-2">
-                 <button className="flex-1 flex h-10 items-center justify-center rounded-lg bg-primary text-white gap-2 text-sm font-bold shadow-sm shadow-primary/20 hover:bg-blue-600 transition-colors">
-                    <span className="material-symbols-outlined text-[18px]">check</span>
-                    <span>Approve</span>
-                 </button>
-                 <button className="flex-1 flex h-10 items-center justify-center rounded-lg bg-slate-800 text-slate-300 gap-2 text-sm font-bold border border-slate-700 hover:bg-slate-700 transition-colors">
-                    <span className="material-symbols-outlined text-[18px]">close</span>
-                    <span>Reject</span>
-                 </button>
-              </div>
-           </div>
+           {pendingActivities.length === 0 ? (
+             <div className="py-12 text-center bg-slate-900/50 rounded-2xl border border-dashed border-slate-800">
+                <span className="material-symbols-outlined text-slate-700 text-4xl mb-2">check_circle</span>
+                <p className="text-slate-500 font-medium">All caught up! No pending approvals.</p>
+             </div>
+           ) : (
+             pendingActivities.map((activity) => (
+               <div key={activity.id} className="flex flex-col gap-4 rounded-xl border border-slate-800 bg-slate-900 p-4 shadow-sm hover:border-slate-700 transition-colors">
+                  <div className="flex justify-between items-start">
+                     <div className="flex flex-col gap-1">
+                        <p className="text-white text-base font-bold leading-tight capitalize">{activity.type.replace('_', ' ')}</p>
+                        <p className="text-slate-400 text-sm font-normal">
+                          {activity.content.description}
+                        </p>
+                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">
+                          {new Date(activity.timestamp).toLocaleString()}
+                        </p>
+                     </div>
+                     {activity.content.photoUrls?.[0] && (
+                       <div className="h-12 w-12 shrink-0 rounded-lg bg-slate-800 bg-center bg-cover border border-slate-700" style={{backgroundImage: `url("${activity.content.photoUrls[0]}")`}}></div>
+                     )}
+                  </div>
+                  <div className="flex gap-2">
+                     <button 
+                        onClick={() => handleApprove(activity.id)}
+                        className="flex-1 flex h-10 items-center justify-center rounded-lg bg-primary text-white gap-2 text-sm font-bold shadow-sm shadow-primary/20 hover:bg-blue-600 transition-colors"
+                     >
+                        <span className="material-symbols-outlined text-[18px]">check</span>
+                        <span>Approve</span>
+                     </button>
+                     <button className="flex-1 flex h-10 items-center justify-center rounded-lg bg-slate-800 text-slate-300 gap-2 text-sm font-bold border border-slate-700 hover:bg-slate-700 transition-colors">
+                        <span className="material-symbols-outlined text-[18px]">close</span>
+                        <span>Dismiss</span>
+                     </button>
+                  </div>
+               </div>
+             ))
+           )}
         </div>
 
-        {/* Flagged */}
+        {/* Flagged Section - Remains Static for now as per spec */}
         <div className="flex items-center justify-between px-4 pt-2">
-           <h2 className="text-white text-xl font-bold leading-tight tracking-tight">Recent Flagged Content</h2>
-           <button className="text-primary text-sm font-semibold hover:text-blue-400 transition-colors">Review Queue</button>
+           <h2 className="text-white text-xl font-bold leading-tight tracking-tight">Security Alerts</h2>
         </div>
 
-        <div className="flex flex-col gap-2 p-4">
-           {/* Item 1 */}
-           <div className="flex items-center gap-4 rounded-xl bg-slate-900 border border-slate-800 p-3 hover:bg-slate-800/50 transition-colors cursor-pointer">
+        <div className="flex flex-col gap-2 p-4 pb-20">
+           <div className="flex items-center gap-4 rounded-xl bg-slate-900 border border-slate-800 p-3 hover:bg-slate-800/50 transition-colors cursor-pointer text-left">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-500/20 text-red-400">
-                 <span className="material-symbols-outlined">warning</span>
+                 <span className="material-symbols-outlined">shield</span>
               </div>
               <div className="flex-1 min-w-0">
-                 <p className="text-white text-sm font-bold truncate">Privacy Violation</p>
-                 <p className="text-slate-400 text-xs truncate">Sensitive address data detected</p>
+                 <p className="text-white text-sm font-bold truncate">RBAC Active</p>
+                 <p className="text-slate-400 text-xs truncate">Collaborative editing enabled</p>
               </div>
-              <button className="h-8 px-3 rounded-lg bg-slate-800 text-slate-300 text-xs font-bold border border-slate-700 hover:bg-slate-700 transition-colors">Review</button>
-           </div>
-           {/* Item 2 */}
-           <div className="flex items-center gap-4 rounded-xl bg-slate-900 border border-slate-800 p-3 hover:bg-slate-800/50 transition-colors cursor-pointer">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-500/20 text-amber-400">
-                 <span className="material-symbols-outlined">content_copy</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                 <p className="text-white text-sm font-bold truncate">Duplicate Profile</p>
-                 <p className="text-slate-400 text-xs truncate">Probable match: ID #8824</p>
-              </div>
-              <button className="h-8 px-3 rounded-lg bg-slate-800 text-slate-300 text-xs font-bold border border-slate-700 hover:bg-slate-700 transition-colors">Review</button>
            </div>
         </div>
       </div>

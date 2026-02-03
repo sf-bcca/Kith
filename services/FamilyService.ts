@@ -1,6 +1,6 @@
 import { FamilyMember, FilterCriteria, LoginCredentials } from '../types/family';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8081';
 
 export class FamilyService {
   private static token: string | null = localStorage.getItem('kith_token');
@@ -23,6 +23,18 @@ export class FamilyService {
     } else {
       localStorage.removeItem('kith_token');
     }
+  }
+
+  /**
+   * Checks if the application has been initialized (i.e., has at least one member).
+   */
+  static async isInitialized(): Promise<boolean> {
+    const response = await fetch(`${API_URL}/api/init-check`);
+    if (!response.ok) {
+      throw new Error('Failed to check initialization status');
+    }
+    const data = await response.json();
+    return data.initialized;
   }
 
   /**
@@ -236,6 +248,19 @@ export class FamilyService {
 
     const data = await response.json();
     return this.mapSingleToFrontend(data);
+  }
+
+  /**
+   * Retrieves administrative statistics.
+   */
+  static async getAdminStats(): Promise<any> {
+    const response = await fetch(`${API_URL}/api/admin/stats`, {
+      headers: this.getHeaders(),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to fetch admin stats');
+    }
+    return response.json();
   }
 
   /**

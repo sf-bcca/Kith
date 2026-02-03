@@ -10,6 +10,7 @@ import AdminDashboard from './components/AdminDashboard';
 import DiscoverView from './components/DiscoverView';
 import SettingsView from './components/SettingsView';
 import WelcomeView from './components/WelcomeView';
+import DNAMap from './components/DNAMap';
 import { FamilyService } from './services/FamilyService';
 
 enum Screen {
@@ -24,6 +25,7 @@ enum Screen {
   DIRECTORY = 'Directory',
   HORIZONTAL = 'Horizontal Tree',
   ADMIN = 'Admin',
+  DNA_MAP = 'DNA Map',
 }
 
 export default function App() {
@@ -41,11 +43,11 @@ export default function App() {
         setError(null);
         
         if (!loggedInMemberId) {
-          const members = await FamilyService.getAll();
-          if (members.length === 0) {
+          const initialized = await FamilyService.isInitialized();
+          if (!initialized) {
             setCurrentScreen(Screen.WELCOME);
           } else {
-            // Force welcome if no one is logged in
+            // Not logged in but db has members, show welcome/login
             setCurrentScreen(Screen.WELCOME);
           }
         } else {
@@ -64,7 +66,7 @@ export default function App() {
         }
       } catch (err: any) {
         console.error('Failed to check app state:', err);
-        setError('Unable to connect to the server. Please make sure the backend is running.');
+        setError('Unable to connect to the backend server. Please ensure the backend is running on port 8081.');
       } finally {
         setLoading(false);
       }
@@ -157,6 +159,7 @@ export default function App() {
       case Screen.DIRECTORY: return <FamilyDirectory onNavigate={handleNavigate} />;
       case Screen.HORIZONTAL: return <HorizontalTree onNavigate={handleNavigate} />;
       case Screen.ADMIN: return <AdminDashboard onNavigate={handleNavigate} />;
+      case Screen.DNA_MAP: return <DNAMap onNavigate={handleNavigate} />;
       default: return <FamilyTreeView onNavigate={handleNavigate} selectedId={selectedMemberId} onSelect={setSelectedMemberId} />;
     }
   };
