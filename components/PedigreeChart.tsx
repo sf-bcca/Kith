@@ -6,9 +6,10 @@ interface Props {
   onNavigate: (screen: string) => void;
   selectedId: string;
   onSelect: (id: string) => void;
+  loggedInId?: string;
 }
 
-const PedigreeChart: React.FC<Props> = ({ onNavigate, selectedId, onSelect }) => {
+const PedigreeChart: React.FC<Props> = ({ onNavigate, selectedId, onSelect, loggedInId }) => {
   const [treeData, setTreeData] = useState<AncestryData | null>(null);
 
   useEffect(() => {
@@ -276,8 +277,9 @@ const PedigreeChart: React.FC<Props> = ({ onNavigate, selectedId, onSelect }) =>
             Filter
           </button>
           <button
-             className="flex-1 flex items-center justify-center gap-2 bg-primary text-white py-3 rounded-xl font-semibold shadow-lg shadow-primary/25 transition-transform active:scale-95 hover:bg-blue-600"
-             onClick={() => onSelect('1')}
+             className="flex-1 flex items-center justify-center gap-2 bg-primary text-white py-3 rounded-xl font-semibold shadow-lg shadow-primary/25 transition-transform active:scale-95 hover:bg-blue-600 disabled:opacity-50"
+             onClick={() => loggedInId && onSelect(loggedInId)}
+             disabled={!loggedInId}
           >
             <span className="material-symbols-outlined">my_location</span>
             Focus

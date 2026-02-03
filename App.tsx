@@ -154,10 +154,10 @@ export default function App() {
           }}
         />
       );
-      case Screen.PEDIGREE: return <PedigreeChart onNavigate={handleNavigate} selectedId={selectedMemberId} onSelect={setSelectedMemberId} />;
-      case Screen.FAN: return <FanChart onNavigate={handleNavigate} selectedId={selectedMemberId} onSelect={setSelectedMemberId} />;
+      case Screen.PEDIGREE: return <PedigreeChart onNavigate={handleNavigate} selectedId={selectedMemberId} onSelect={setSelectedMemberId} loggedInId={loggedInMemberId || undefined} />;
+      case Screen.FAN: return <FanChart onNavigate={handleNavigate} selectedId={selectedMemberId} onSelect={setSelectedMemberId} loggedInId={loggedInMemberId || undefined} />;
       case Screen.DIRECTORY: return <FamilyDirectory onNavigate={handleNavigate} />;
-      case Screen.HORIZONTAL: return <HorizontalTree onNavigate={handleNavigate} />;
+      case Screen.HORIZONTAL: return <HorizontalTree onNavigate={handleNavigate} selectedId={selectedMemberId} onSelect={setSelectedMemberId} />;
       case Screen.ADMIN: return <AdminDashboard onNavigate={handleNavigate} />;
       case Screen.DNA_MAP: return <DNAMap onNavigate={handleNavigate} />;
       default: return <FamilyTreeView onNavigate={handleNavigate} selectedId={selectedMemberId} onSelect={setSelectedMemberId} />;

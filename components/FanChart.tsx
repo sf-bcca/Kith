@@ -6,9 +6,9 @@ interface Props {
   onNavigate: (screen: string) => void;
   selectedId: string;
   onSelect: (id: string) => void;
+  loggedInId?: string;
 }
 
-// SVG Helpers
 const polarToCartesian = (centerX: number, centerY: number, radius: number, angleInDegrees: number) => {
   const angleInRadians = (angleInDegrees) * Math.PI / 180.0;
   return {
@@ -36,7 +36,7 @@ const describeArc = (x: number, y: number, innerRadius: number, outerRadius: num
     return d;
 };
 
-const FanChart: React.FC<Props> = ({ onNavigate, selectedId, onSelect }) => {
+const FanChart: React.FC<Props> = ({ onNavigate, selectedId, onSelect, loggedInId }) => {
   const [treeData, setTreeData] = useState<AncestryData | null>(null);
 
   useEffect(() => {
@@ -203,8 +203,9 @@ const FanChart: React.FC<Props> = ({ onNavigate, selectedId, onSelect }) => {
           </div>
           <div className="absolute bottom-4 left-0">
              <button
-                className="bg-white shadow-xl rounded-lg px-3 h-12 flex items-center gap-2 text-primary text-sm font-bold active:scale-95 transition-transform hover:bg-gray-50"
-                onClick={() => onSelect('1')}
+                className="bg-white shadow-xl rounded-lg px-3 h-12 flex items-center gap-2 text-primary text-sm font-bold active:scale-95 transition-transform hover:bg-gray-50 disabled:opacity-50"
+                onClick={() => loggedInId && onSelect(loggedInId)}
+                disabled={!loggedInId}
              >
                 <span className="material-symbols-outlined text-[20px]">filter_center_focus</span>
                 Recenter
