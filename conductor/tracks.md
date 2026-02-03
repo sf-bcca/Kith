@@ -18,5 +18,3 @@ This file tracks all major tracks for the project. Each track has its own detail
   *Link: [./conductor/tracks/dna_map_visualization_20260202/](./conductor/tracks/dna_map_visualization_20260202/)*
 - [x] **Track: Dynamic Discovery & Heritage Hub**
   *Link: [./conductor/tracks/discovery_heritage_hub_20260203/](./conductor/tracks/discovery_heritage_hub_20260203/)*
-- [x] **Track: Code Review Remediation & Performance Optimization**
-  *Link: [./conductor/tracks/code_review_remediation_20260203/](./conductor/tracks/code_review_remediation_20260203/)*
