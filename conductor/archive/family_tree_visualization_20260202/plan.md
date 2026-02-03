@@ -1,0 +1,25 @@
+# Implementation Plan: Interactive Family Tree Visualization [checkpoint: 46e5057]
+
+This plan follows the Test-Driven Development (TDD) process.
+
+## Phase 1: Dynamic Tree Logic [checkpoint: ffc7458]
+- [x] Task: Implement `TreeData` helper functions
+    - [x] Create `services/TreeService.ts` for tree-specific data fetching (e.g., `getTreeFor(memberId)`)
+    - [x] Write tests for `TreeService` to ensure correct generation retrieval
+- [x] Task: Conductor - User Manual Verification 'Dynamic Tree Logic'
+
+## Phase 2: FamilyTreeView Component Refactor [checkpoint: 77aae4a]
+- [x] Task: Refactor `FamilyTreeView` to use `TreeService`
+    - [x] Update `FamilyTreeView.tsx` to accept a `focusId` state
+    - [x] Dynamically render Generations 1 (Parents), 2 (Focus/Spouses), and 3 (Children)
+- [x] Task: Implement Navigation Logic
+    - [x] Add `onClick` handlers to nodes to update the `focusId`
+    - [x] Ensure the tree re-renders smoothly when the focus changes
+- [x] Task: Conductor - User Manual Verification 'FamilyTreeView Component Refactor'
+
+## Phase 3: Polish and Interactions [checkpoint: 46e5057]
+- [x] Task: Improve Connecting Lines
+    - [x] Update SVG lines to be dynamic based on the number of nodes
+- [x] Task: Integrate with Member Biography
+    - [x] Ensure clicking a node's details navigates to the `Biography` screen
+- [x] Task: Conductor - User Manual Verification 'Polish and Interactions'
