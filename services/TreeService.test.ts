@@ -6,7 +6,9 @@ import { mockFamilyData } from '../mocks/familyData';
 // Mock FamilyService
 vi.mock('./FamilyService', () => ({
   FamilyService: {
-    getById: vi.fn()
+    getById: vi.fn(),
+    getByIds: vi.fn(),
+    getSiblings: vi.fn()
   }
 }));
 
@@ -15,21 +17,25 @@ describe('TreeService', () => {
     vi.clearAllMocks();
   });
 
-  it('should get focus member, parents, and children for Merlin (ID: 7)', async () => {
-    // Mock Merlin
-    const merlin = mockFamilyData.find(m => m.id === '7');
+  it('should get focus member, parents, and children for Arthur (ID: 1)', async () => {
+    // Mock Arthur
+    const arthur = mockFamilyData.find(m => m.id === '1');
     (FamilyService.getById as any).mockImplementation((id: string) => {
       return Promise.resolve(mockFamilyData.find(m => m.id === id));
     });
+    (FamilyService.getByIds as any).mockImplementation((ids: string[]) => {
+      return Promise.resolve(mockFamilyData.filter(m => ids.includes(m.id)));
+    });
+    (FamilyService.getSiblings as any).mockResolvedValue([]);
 
-    const treeData = await TreeService.getTreeFor('7');
+    const treeData = await TreeService.getTreeFor('1');
     
-    expect(treeData?.focus.firstName).toBe('Merlin');
+    expect(treeData?.focus.firstName).toBe('Arthur');
     
-    // Parents of Merlin (7) are Mordred (5) and Morgana (6)
+    // Parents of Arthur (1) are Uther (4) and Igraine (5)
     expect(treeData?.parents).toHaveLength(2);
+    expect(treeData?.parents.map(p => p.id)).toContain('4');
     expect(treeData?.parents.map(p => p.id)).toContain('5');
-    expect(treeData?.parents.map(p => p.id)).toContain('6');
   });
 
   it('should return undefined focus if ID is not found', async () => {

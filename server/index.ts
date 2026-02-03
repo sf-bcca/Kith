@@ -24,7 +24,7 @@ if (!process.env.JWT_SECRET && process.env.NODE_ENV === 'production') {
 const SALT_ROUNDS = 10;
 const MEMBER_COLUMNS = `
   id, first_name, last_name, maiden_name, birth_date, birth_place, death_date, death_place, gender, 
-  bio, profile_image, relationships, email, username, dark_mode, language, 
+  bio, profile_image, relationships, siblings, email, username, dark_mode, language, 
   visibility, data_sharing, notifications_email, notifications_push, role,
   created_at, updated_at
 `;
@@ -100,10 +100,62 @@ app.get('/api/members/:id', authenticate, async (req: Request, res: Response, ne
   }
 });
 
+app.get('/api/members/:id/siblings', authenticate, async (req: Request, res: Response, next) => {
+  try {
+    const { id } = req.params;
+    
+    // Get the member's explicit siblings and parents
+    const memberResult = await pool.query(
+      'SELECT siblings, relationships FROM family_members WHERE id = $1',
+      [id]
+    );
+    
+    if (memberResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Member not found' });
+    }
+    
+    const { siblings: explicitSiblings, relationships } = memberResult.rows[0];
+    const parents = relationships?.parents || [];
+    
+    // Get implied siblings (share at least one parent)
+    let impliedSiblings: string[] = [];
+    if (parents.length > 0) {
+      const impliedResult = await pool.query(
+        `SELECT DISTINCT id FROM family_members 
+         WHERE id <> $1 
+         AND relationships::jsonb->'parents' IS NOT NULL
+         AND (
+           (relationships->'parents')::jsonb && $2::jsonb
+         )`,
+        [id, JSON.stringify(parents)]
+      );
+      impliedSiblings = impliedResult.rows.map(row => row.id);
+    }
+    
+    // Combine and deduplicate siblings
+    const allSiblingIds = new Set([...(explicitSiblings || []), ...impliedSiblings]);
+    
+    // Get full sibling records
+    if (allSiblingIds.size === 0) {
+      return res.json([]);
+    }
+    
+    const siblingsResult = await pool.query(
+      `SELECT ${MEMBER_COLUMNS} FROM family_members WHERE id = ANY($1)`,
+      [Array.from(allSiblingIds)]
+    );
+    
+    const sanitizedSiblings = siblingsResult.rows.map(({ password, ...rest }: any) => rest);
+    res.json(sanitizedSiblings);
+  } catch (err: any) {
+    next(err);
+  }
+});
+
 app.post('/api/members', async (req: Request, res: Response, next) => {
   try {
     const { 
-      first_name, last_name, maiden_name, birth_date, birth_place, death_date, death_place, gender, bio, profile_image, relationships, password,
+      first_name, last_name, maiden_name, birth_date, birth_place, death_date, death_place, gender, bio, profile_image, relationships, siblings, password,
       email, username, dark_mode, language, visibility, data_sharing, notifications_email, notifications_push, role
     } = req.body;
 
@@ -114,12 +166,12 @@ app.post('/api/members', async (req: Request, res: Response, next) => {
 
     const result = await pool.query(
       `INSERT INTO family_members 
-      (first_name, last_name, maiden_name, birth_date, birth_place, death_date, death_place, gender, bio, profile_image, relationships, password,
+      (first_name, last_name, maiden_name, birth_date, birth_place, death_date, death_place, gender, bio, profile_image, relationships, siblings, password,
        email, username, dark_mode, language, visibility, data_sharing, notifications_email, notifications_push, role) 
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21) 
       RETURNING ${MEMBER_COLUMNS}`,
       [
-        first_name, last_name, maiden_name, birth_date, birth_place, death_date, death_place, gender, bio, profile_image, relationships || {}, hashedPassword,
+        first_name, last_name, maiden_name, birth_date, birth_place, death_date, death_place, gender, bio, profile_image, relationships || {}, siblings || [], hashedPassword,
         email || null, username || null, dark_mode, language, visibility || 'family-only', data_sharing, notifications_email, notifications_push, role || 'member'
       ]
     );
@@ -165,6 +217,25 @@ app.post('/api/members', async (req: Request, res: Response, next) => {
            )
            WHERE id = $2`,
           [JSON.stringify([newMember.id]), spouseId]
+        );
+      }
+    }
+    // Handle explicit sibling links
+    if (rels.siblings?.length) {
+      for (const siblingId of rels.siblings) {
+        // Add new member to sibling's siblings list
+        await pool.query(
+          `UPDATE family_members 
+           SET siblings = COALESCE(siblings, '[]')::jsonb || $1::jsonb
+           WHERE id = $2 AND NOT (COALESCE(siblings, '[]')::jsonb @> $1::jsonb)`,
+          [JSON.stringify([newMember.id]), siblingId]
+        );
+        // Add sibling to new member's siblings list
+        await pool.query(
+          `UPDATE family_members 
+           SET siblings = COALESCE(siblings, '[]')::jsonb || $1::jsonb
+           WHERE id = $2`,
+          [JSON.stringify([siblingId]), newMember.id]
         );
       }
     }
@@ -224,7 +295,7 @@ app.put('/api/members/:id', authenticate, async (req: Request, res: Response, ne
   try {
     const { id } = req.params;
     const { 
-      first_name, last_name, maiden_name, birth_date, birth_place, death_date, death_place, gender, bio, profile_image, relationships, password,
+      first_name, last_name, maiden_name, birth_date, birth_place, death_date, death_place, gender, bio, profile_image, relationships, siblings, password,
       email, username, dark_mode, language, visibility, data_sharing, notifications_email, notifications_push, role
     } = req.body;
     
@@ -249,20 +320,21 @@ app.put('/api/members/:id', authenticate, async (req: Request, res: Response, ne
       bio = COALESCE($9, bio), 
       profile_image = COALESCE($10, profile_image), 
       relationships = COALESCE($11, relationships),
-      password = CASE WHEN $12::VARCHAR IS NOT NULL AND $12::VARCHAR <> '' THEN $12::VARCHAR ELSE password END,
-      email = COALESCE($13, email),
-      username = COALESCE($14, username),
-      dark_mode = COALESCE($15, dark_mode),
-      language = COALESCE($16, language),
-      visibility = COALESCE($17, visibility),
-      data_sharing = COALESCE($18, data_sharing),
-      notifications_email = COALESCE($19, notifications_email),
-      notifications_push = COALESCE($20, notifications_push),
-      role = COALESCE($21, role)
-      WHERE id = $22 
+      siblings = COALESCE($12, siblings),
+      password = CASE WHEN $13::VARCHAR IS NOT NULL AND $13::VARCHAR <> '' THEN $13::VARCHAR ELSE password END,
+      email = COALESCE($14, email),
+      username = COALESCE($15, username),
+      dark_mode = COALESCE($16, dark_mode),
+      language = COALESCE($17, language),
+      visibility = COALESCE($18, visibility),
+      data_sharing = COALESCE($19, data_sharing),
+      notifications_email = COALESCE($20, notifications_email),
+      notifications_push = COALESCE($21, notifications_push),
+      role = COALESCE($22, role)
+      WHERE id = $23 
       RETURNING ${MEMBER_COLUMNS}`,
       [
-        first_name, last_name, maiden_name, birth_date, birth_place, death_date, death_place, gender, bio, profile_image, relationships, hashedPassword,
+        first_name, last_name, maiden_name, birth_date, birth_place, death_date, death_place, gender, bio, profile_image, relationships, siblings, hashedPassword,
         email, username, dark_mode, language, visibility, data_sharing, notifications_email, notifications_push,
         targetRole,
         id

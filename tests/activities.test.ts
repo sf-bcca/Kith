@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
+import crypto from 'crypto';
 import app from '../server/index';
 import { pool } from '../server/db';
 
@@ -34,21 +35,24 @@ describe('Activities API', () => {
   describe('POST /api/activities/:id/comments', () => {
     it('should add a comment to an activity', async () => {
       const mockActivity = { id: 'a1', comments: [] };
-      const newComment = { author: 'User', text: 'Nice!' };
+      const newComment = { authorId: 'u1', text: 'Nice!' };
       
+      // Mock crypto.randomUUID
+      vi.spyOn(crypto, 'randomUUID').mockReturnValue('uuid-123' as any);
+
       (pool.query as any)
         .mockResolvedValueOnce({ rows: [mockActivity] }) // Check if activity exists
-        .mockResolvedValueOnce({ rows: [{ ...mockActivity, comments: [newComment] }] }); // Update activity
+        .mockResolvedValueOnce({ rows: [{ ...mockActivity, comments: [{ ...newComment, id: 'uuid-123', timestamp: expect.any(String) }] }] }); // Update activity
 
       const response = await request(app)
         .post('/api/activities/a1/comments')
         .send(newComment);
 
       expect(response.status).toBe(201);
-      expect(response.body.comments).toContainEqual(newComment);
+      expect(response.body.comments[0]).toMatchObject(newComment);
       expect(pool.query).toHaveBeenCalledWith(
         'UPDATE activities SET comments = comments || $1::jsonb WHERE id = $2 RETURNING *',
-        [JSON.stringify(newComment), 'a1']
+        [expect.any(String), 'a1']
       );
     });
 
@@ -57,7 +61,7 @@ describe('Activities API', () => {
 
       const response = await request(app)
         .post('/api/activities/999/comments')
-        .send({ author: 'User', text: 'Hi' });
+        .send({ authorId: 'u1', text: 'Hi' });
 
       expect(response.status).toBe(404);
       expect(response.body).toEqual({ error: 'Activity not found' });

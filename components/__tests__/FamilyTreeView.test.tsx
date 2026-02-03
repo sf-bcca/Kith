@@ -1,8 +1,33 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import FamilyTreeView from '../FamilyTreeView';
+import { TreeService } from '../../services/TreeService';
+
+vi.mock('../../services/TreeService', () => ({
+  TreeService: {
+    getTreeFor: vi.fn(),
+  },
+}));
 
 describe('FamilyTreeView', () => {
+  const mockTree = {
+    focus: { id: '7', firstName: 'Merlin', lastName: 'Pendragon', birthDate: '463-01-01' },
+    parents: [
+      { id: '5', firstName: 'Mordred', lastName: 'Pendragon', birthDate: '440-01-01' },
+      { id: '6', firstName: 'Morgana', lastName: 'Pendragon', birthDate: '442-01-01' },
+    ],
+    spouses: [],
+    children: [
+      { id: '8', firstName: 'Lancelot', lastName: 'Pendragon', birthDate: '485-01-01' },
+    ],
+    siblings: [],
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(TreeService.getTreeFor).mockResolvedValue(mockTree as any);
+  });
+
   it('renders the focus member and their relations', async () => {
     render(<FamilyTreeView onNavigate={vi.fn()} selectedId="7" onSelect={vi.fn()} />);
     

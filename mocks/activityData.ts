@@ -8,5 +8,15 @@ export const mockActivities = [
     content: { text: 'Uploaded a photo' },
     status: 'approved',
     comments: []
+  },
+  {
+    id: '2',
+    type: 'member_updated',
+    timestamp: new Date(Date.now() - 10000).toISOString(),
+    actorId: '2',
+    targetId: '2',
+    content: { text: 'Updated bio' },
+    status: 'approved',
+    comments: []
   }
 ];

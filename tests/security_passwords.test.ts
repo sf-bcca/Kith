@@ -90,9 +90,9 @@ describe('Security: Password Privacy & Hashing', () => {
         password: plainPassword
       });
 
-      // Verify that the password sent to the database is NOT the plain password
-      const queryArgs = (pool.query as any).mock.calls[0][1];
-      const passwordArg = queryArgs[11]; // 12th parameter in the INSERT query (after death_place addition)
+      // Verify hash comparison
+      const queryArgs = vi.mocked(pool.query).mock.calls[0][1];
+      const passwordArg = queryArgs[12]; // 13th parameter in the INSERT query
       expect(passwordArg).not.toBe(plainPassword);
       expect(bcrypt.compareSync(plainPassword, passwordArg)).toBe(true);
     });
