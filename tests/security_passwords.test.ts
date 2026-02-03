@@ -92,7 +92,7 @@ describe('Security: Password Privacy & Hashing', () => {
 
       // Verify that the password sent to the database is NOT the plain password
       const queryArgs = (pool.query as any).mock.calls[0][1];
-      const passwordArg = queryArgs[9]; // 10th parameter in the INSERT query
+      const passwordArg = queryArgs[11]; // 12th parameter in the INSERT query (after death_place addition)
       expect(passwordArg).not.toBe(plainPassword);
       expect(bcrypt.compareSync(plainPassword, passwordArg)).toBe(true);
     });

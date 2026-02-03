@@ -27,5 +27,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 *Link: [./tracks/sibling_relationships_20260203/](./tracks/sibling_relationships_20260203/)*
 ---
 
-- [ ] **Track: Date of Death Input and Display**
+- [~] **Track: Date of Death Input and Display**
 *Link: [./tracks/date_of_death_20260203/](./tracks/date_of_death_20260203/)*
