@@ -16,6 +16,7 @@ const MemberBiography: React.FC<Props> = ({ onNavigate, memberId, loggedInId }) 
   const [editData, setEditData] = useState<Partial<FamilyMember>>({});
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [isDeceased, setIsDeceased] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -42,6 +43,7 @@ const MemberBiography: React.FC<Props> = ({ onNavigate, memberId, loggedInId }) 
         
         if (memberResult) {
           setEditData(memberResult);
+          setIsDeceased(!!memberResult.deathDate);
         }
       } catch (err) {
         console.error('Failed to fetch data:', err);
@@ -56,9 +58,32 @@ const MemberBiography: React.FC<Props> = ({ onNavigate, memberId, loggedInId }) 
   const handleSave = async () => {
     if (!member?.id) return;
     setError(null);
+
+    // Validation
+    if (isDeceased && editData.deathDate) {
+      const birth = editData.birthDate ? new Date(editData.birthDate) : null;
+      const death = new Date(editData.deathDate);
+      const today = new Date();
+
+      if (death > today) {
+        setError("Date of Death cannot be in the future.");
+        return;
+      }
+
+      if (birth && death < birth) {
+        setError("Date of Death must be after Date of Birth.");
+        return;
+      }
+    }
+
     setSaving(true);
     try {
-      const updated = await FamilyService.update(member.id, editData);
+      const finalData = { ...editData };
+      if (!isDeceased) {
+        finalData.deathDate = undefined;
+        finalData.deathPlace = undefined;
+      }
+      const updated = await FamilyService.update(member.id, finalData);
       setMember(updated);
       setIsEditing(false);
     } catch (err: any) {
@@ -168,42 +193,83 @@ const MemberBiography: React.FC<Props> = ({ onNavigate, memberId, loggedInId }) 
           <div className="p-6 space-y-6">
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">First Name</label>
+                <label htmlFor="firstName" className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">First Name</label>
                 <input
                   type="text"
+                  id="firstName"
                   value={editData.firstName || ''}
                   onChange={(e) => setEditData({ ...editData, firstName: e.target.value })}
                   className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-primary transition-colors"
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Last Name</label>
+                <label htmlFor="lastName" className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Last Name</label>
                 <input
                   type="text"
+                  id="lastName"
                   value={editData.lastName || ''}
                   onChange={(e) => setEditData({ ...editData, lastName: e.target.value })}
                   className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-primary transition-colors"
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Birth Date</label>
+                <label htmlFor="birthDate" className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Birth Date</label>
                 <input
                   type="date"
+                  id="birthDate"
                   value={editData.birthDate || ''}
                   onChange={(e) => setEditData({ ...editData, birthDate: e.target.value })}
                   className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-primary transition-colors"
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Birth Place</label>
+                <label htmlFor="birthPlace" className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Birth Place</label>
                 <input
                   type="text"
+                  id="birthPlace"
                   value={editData.birthPlace || ''}
                   onChange={(e) => setEditData({ ...editData, birthPlace: e.target.value })}
                   className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-primary transition-colors"
                   placeholder="e.g. London, UK"
                 />
               </div>
+              <div className="flex items-center gap-2 ml-1 py-2">
+                <input
+                  type="checkbox"
+                  id="isDeceased"
+                  checked={isDeceased}
+                  onChange={(e) => setIsDeceased(e.target.checked)}
+                  className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary/20 transition-all"
+                />
+                <label htmlFor="isDeceased" className="text-sm font-bold text-gray-700 cursor-pointer">
+                  Deceased
+                </label>
+              </div>
+              {isDeceased && (
+                <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div>
+                    <label htmlFor="deathDate" className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Date of Death</label>
+                    <input
+                      type="date"
+                      id="deathDate"
+                      value={editData.deathDate || ''}
+                      onChange={(e) => setEditData({ ...editData, deathDate: e.target.value })}
+                      className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-primary transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="deathPlace" className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Place of Death</label>
+                    <input
+                      type="text"
+                      id="deathPlace"
+                      value={editData.deathPlace || ''}
+                      onChange={(e) => setEditData({ ...editData, deathPlace: e.target.value })}
+                      className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-primary transition-colors"
+                      placeholder="e.g. London, UK"
+                    />
+                  </div>
+                </div>
+              )}
               <div>
                 <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Email Address</label>
                 <input

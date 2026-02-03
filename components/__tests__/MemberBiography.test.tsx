@@ -144,4 +144,74 @@ describe('MemberBiography', () => {
     
     vi.unstubAllGlobals();
   });
+
+  it('shows death fields in edit mode when "Deceased" is toggled', async () => {
+    vi.mocked(FamilyService.getById)
+      .mockResolvedValueOnce(mockMember)
+      .mockResolvedValueOnce(mockUser);
+
+    render(<MemberBiography onNavigate={vi.fn()} memberId="1" loggedInId="user-id" />);
+    
+    await waitFor(() => {
+      fireEvent.click(screen.getByText('edit'));
+    });
+
+    await waitFor(() => {
+      const deceasedToggle = screen.getByLabelText(/Deceased/i);
+      fireEvent.click(deceasedToggle);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/Date of Death/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/Place of Death/i)).toBeInTheDocument();
+    });
+  });
+
+  it('shows error if death date is in the future in edit mode', async () => {
+    vi.mocked(FamilyService.getById)
+      .mockResolvedValueOnce(mockMember)
+      .mockResolvedValueOnce(mockUser);
+
+    render(<MemberBiography onNavigate={vi.fn()} memberId="1" loggedInId="user-id" />);
+    
+    await waitFor(() => {
+      fireEvent.click(screen.getByText('edit'));
+    });
+
+    await waitFor(() => {
+      fireEvent.click(screen.getByLabelText(/Deceased/i));
+    });
+
+    const futureDate = new Date();
+    futureDate.setFullYear(futureDate.getFullYear() + 1);
+    const futureDateStr = futureDate.toISOString().split('T')[0];
+
+    fireEvent.change(screen.getByLabelText(/Date of Death/i), { target: { value: futureDateStr } });
+    fireEvent.click(screen.getByText('Save'));
+
+    expect(await screen.findByText(/Date of Death cannot be in the future/i)).toBeInTheDocument();
+    expect(FamilyService.update).not.toHaveBeenCalled();
+  });
+
+  it('shows error if death date is before birth date in edit mode', async () => {
+    vi.mocked(FamilyService.getById)
+      .mockResolvedValueOnce(mockMember)
+      .mockResolvedValueOnce(mockUser);
+
+    render(<MemberBiography onNavigate={vi.fn()} memberId="1" loggedInId="user-id" />);
+    
+    await waitFor(() => {
+      fireEvent.click(screen.getByText('edit'));
+    });
+
+    await waitFor(() => {
+      fireEvent.click(screen.getByLabelText(/Deceased/i));
+    });
+
+    fireEvent.change(screen.getByLabelText(/Date of Death/i), { target: { value: '1970-01-01' } });
+    fireEvent.click(screen.getByText('Save'));
+
+    expect(await screen.findByText(/Date of Death must be after Date of Birth/i)).toBeInTheDocument();
+    expect(FamilyService.update).not.toHaveBeenCalled();
+  });
 });
