@@ -14,14 +14,14 @@ This plan follows the Test-Driven Development (TDD) process.
 - [ ] Task: Conductor - User Manual Verification 'Phase 1' (Protocol in workflow.md)
 
 ## Phase 2: Service Layer Optimization
-- [ ] Task: TreeService Bulk Fetching
-    - [ ] Create test `services/TreeService_performance.test.ts` mocking `FamilyService.getByIds`.
-    - [ ] Refactor `TreeService.ts` (`getAncestors`, `getDescendants`) to use `getByIds`.
-    - [ ] Verify tests pass.
-- [ ] Task: LocationService Caching & Rate Limiting
-    - [ ] Create test `services/LocationService_throttling.test.ts` to verify caching behavior.
-    - [ ] Update `services/LocationService.ts` to implement `localStorage` cache and delay loop.
-    - [ ] Verify tests pass.
+- [x] Task: TreeService Bulk Fetching e74eecb
+    - [x] Create test `services/TreeService_performance.test.ts` mocking `FamilyService.getByIds`.
+    - [x] Refactor `TreeService.ts` (`getAncestors`, `getDescendants`) to use `getByIds`.
+    - [x] Verify tests pass.
+- [x] Task: LocationService Caching & Rate Limiting e74eecb
+    - [x] Create test `services/LocationService_throttling.test.ts` to verify caching behavior.
+    - [x] Update `services/LocationService.ts` to implement `localStorage` cache and delay loop.
+    - [x] Verify tests pass.
 - [ ] Task: Conductor - User Manual Verification 'Phase 2' (Protocol in workflow.md)
 
 ## Phase 3: Frontend Refactoring & Hygiene
