@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { pool } from './db';
 import settingsRoutes from './routes/settings';
 import { authenticate, authorizeOwner, authorizeAdminOrOwner, authorizeAdmin } from './middleware/auth';
@@ -258,6 +259,46 @@ app.get('/api/admin/stats', authenticate, authorizeAdmin, async (req: Request, r
   }
 });
 
+app.get('/api/discover/summary', authenticate, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    // Use UTC to ensure consistent results regardless of server timezone
+    const now = new Date();
+    const month = now.getUTCMonth() + 1;
+    const day = now.getUTCDate();
+
+    const onThisDayRes = await pool.query(
+      `SELECT id, first_name, last_name, birth_date, death_date, profile_image 
+       FROM family_members 
+       WHERE (EXTRACT(MONTH FROM birth_date) = $1 AND EXTRACT(DAY FROM birth_date) = $2)
+          OR (death_date IS NOT NULL AND EXTRACT(MONTH FROM death_date) = $1 AND EXTRACT(DAY FROM death_date) = $2)`,
+      [month, day]
+    );
+
+    const hintsRes = await pool.query(
+      `SELECT id, first_name, last_name, profile_image, bio 
+       FROM family_members 
+       WHERE (profile_image IS NULL OR profile_image = '') 
+          OR (bio IS NULL OR bio = '')
+       LIMIT 5`,
+      []
+    );
+
+    const hints = hintsRes.rows.map(m => {
+      if (!m.profile_image || m.profile_image === '') {
+        return { type: 'missing_info', subtype: 'photo', memberId: m.id, name: `${m.first_name} ${m.last_name}`, message: `Add a photo for ${m.first_name}` };
+      }
+      return { type: 'missing_info', subtype: 'bio', memberId: m.id, name: `${m.first_name} ${m.last_name}`, message: `Add a biography for ${m.first_name}` };
+    });
+
+    res.json({
+      onThisDay: onThisDayRes.rows,
+      hints: hints
+    });
+  } catch (err: any) {
+    next(err);
+  }
+});
+
 app.get('/api/activities', async (req: Request, res: Response, next) => {
   try {
     const { status } = req.query;
@@ -272,6 +313,30 @@ app.get('/api/activities', async (req: Request, res: Response, next) => {
     query += ' ORDER BY timestamp DESC';
     const result = await pool.query(query, params);
     res.json(result.rows);
+  } catch (err: any) {
+    next(err);
+  }
+});
+
+app.post('/api/activities', authenticate, async (req: Request, res: Response, next) => {
+  try {
+    const { type, content, image_url, target_id } = req.body;
+    
+    const validTypes = ['photo_added', 'member_updated', 'member_added', 'milestone'];
+    if (!validTypes.includes(type)) {
+      return res.status(400).json({ error: 'Invalid activity type' });
+    }
+
+    const member_id = (req as any).user.id;
+
+    const result = await pool.query(
+      `INSERT INTO activities (type, member_id, content, image_url, target_id, status)
+       VALUES ($1, $2, $3, $4, $5, 'pending')
+       RETURNING *`,
+      [type, member_id, content || {}, image_url, target_id]
+    );
+
+    res.status(201).json(result.rows[0]);
   } catch (err: any) {
     next(err);
   }
@@ -296,13 +361,24 @@ app.patch('/api/activities/:id/approve', authenticate, authorizeAdmin, async (re
 app.post('/api/activities/:id/comments', async (req: Request, res: Response, next) => {
   try {
     const { id } = req.params;
-    const comment = req.body;
+    const { authorId, text } = req.body;
+
+    if (!authorId || !text) {
+      return res.status(400).json({ error: 'Comment must include authorId and text' });
+    }
     
     // Check if activity exists
     const checkResult = await pool.query('SELECT * FROM activities WHERE id = $1', [id]);
     if (checkResult.rows.length === 0) {
       return res.status(404).json({ error: 'Activity not found' });
     }
+
+    const comment = {
+      id: crypto.randomUUID(),
+      authorId,
+      text,
+      timestamp: new Date().toISOString()
+    };
 
     const result = await pool.query(
       'UPDATE activities SET comments = comments || $1::jsonb WHERE id = $2 RETURNING *',

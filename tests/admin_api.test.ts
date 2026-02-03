@@ -22,10 +22,10 @@ describe('Admin API', () => {
 
   describe('GET /api/admin/stats', () => {
     it('should return network statistics for admins', async () => {
-      vi.mocked(pool.query)
-        .mockResolvedValueOnce({ rows: [{ count: '100' }] }) // members
-        .mockResolvedValueOnce({ rows: [{ count: '50' }] })  // activities
-        .mockResolvedValueOnce({ rows: [{ count: '5' }] });  // pending
+      (pool.query as any)
+        .mockResolvedValueOnce({ rows: [{ count: '100' }] })
+        .mockResolvedValueOnce({ rows: [{ count: '50' }] })
+        .mockResolvedValueOnce({ rows: [{ count: '5' }] });
 
       const response = await request(app)
         .get('/api/admin/stats')
@@ -51,7 +51,7 @@ describe('Admin API', () => {
   describe('GET /api/activities', () => {
     it('should support status filtering', async () => {
       const mockActivities = [{ id: '1', status: 'pending' }];
-      vi.mocked(pool.query).mockResolvedValueOnce({ rows: mockActivities });
+      (pool.query as any).mockResolvedValueOnce({ rows: mockActivities });
 
       const response = await request(app)
         .get('/api/activities?status=pending')
@@ -67,7 +67,7 @@ describe('Admin API', () => {
 
   describe('PATCH /api/activities/:id/approve', () => {
     it('should allow an admin to approve an activity', async () => {
-      vi.mocked(pool.query).mockResolvedValueOnce({ rowCount: 1, rows: [{ id: '1', status: 'approved' }] });
+      (pool.query as any).mockResolvedValueOnce({ rowCount: 1, rows: [{ id: '1', status: 'approved' }] });
 
       const response = await request(app)
         .patch('/api/activities/1/approve')

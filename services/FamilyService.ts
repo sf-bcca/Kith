@@ -177,8 +177,11 @@ export class FamilyService {
    * @param member The member data to create.
    * @returns A promise that resolves to the created FamilyMember.
    */
-  static async create(member: Partial<FamilyMember>): Promise<FamilyMember> {
+  static async create(member: Partial<FamilyMember> & { password?: string }): Promise<FamilyMember> {
     const backendData = this.mapFrontendToBackend(member);
+    if (member.password) {
+      backendData.password = member.password;
+    }
     const response = await fetch(`${API_URL}/api/members`, {
       method: 'POST',
       headers: this.getHeaders(),
