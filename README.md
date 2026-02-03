@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="public/logo.png" alt="Kith Logo" width="200">
+  <img src="public/logo_white.png" alt="Kith Logo" width="200">
 </p>
 
 # Kith
