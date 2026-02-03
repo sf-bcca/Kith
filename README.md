@@ -120,17 +120,18 @@ Kith/
 ├── tests/               # Backend & Integration Tests
 ├── conductor/           # Project Tracks & Planning
 └── docker-compose.yml   # Infrastructure Orchestration
+```
 
 ## Specialized Skills
 
 Kith leverages specialized Gemini skills for automated maintenance:
+
 - **Tree Architect:** Genealogy data & visualization logic.
 - **Test Factory:** Mock data & unit test generation.
 - **Doc Maintainer:** Documentation synchronization.
 - **Schema Maintainer:** Database schema consolidation.
 - **API Bridge:** Full-stack data model synchronization.
 - **Conductor:** Development track orchestration.
-```
 
 ## Navigation
 
