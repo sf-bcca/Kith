@@ -1,7 +1,7 @@
 # Implementation Plan: Date of Death Input and Display
 
 ## Phase 1: Database & API (Kith API Bridge)
-- [ ] Task: Create a new SQL migration `server/migrations/008_add_death_place.sql` to add `death_place` to the `family_members` table.
+- [x] Task: Create a new SQL migration `server/migrations/008_add_death_place.sql` to add `death_place` to the `family_members` table. [2f0ca6d]
 - [ ] Task: Update `server/SCHEMA.md` using the `kith-schema-maintainer` skill to reflect the new column.
 - [ ] Task: Update `services/FamilyService.ts` to map the `death_place` database field to the `deathPlace` TypeScript property.
 - [ ] Task: Create a backend test in `tests/members.test.ts` to verify that both `death_date` and `death_place` are correctly persisted and retrieved via the API.
