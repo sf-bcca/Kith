@@ -1,4 +1,5 @@
 import express, { Request, Response, NextFunction } from 'express';
+// DEBUG: Triggering reload 1
 import dotenv from 'dotenv';
 import cors from 'cors';
 import bcrypt from 'bcrypt';
@@ -6,13 +7,13 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { pool } from './db';
 import settingsRoutes from './routes/settings';
-import { authenticate, authorizeOwner, authorizeAdminOrOwner, authorizeAdmin } from './middleware/auth';
+import { authenticate, authorizeOwner, authorizeAdminOrOwner, authorizeAdmin, AuthRequest } from './middleware/auth';
 import { errorHandler } from './middleware/error';
 
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 8080;
+const port = process.env.PORT || 8081;
 
 const getJwtSecret = () => process.env.JWT_SECRET || 'dev-secret';
 
@@ -83,38 +84,66 @@ app.get('/api/members', authenticate, async (req: Request, res: Response, next) 
 });
 
 app.get('/api/members/:id', authenticate, async (req: Request, res: Response, next) => {
+  const { id } = req.params;
+  const userId = (req as any).user.id;
   try {
-    const { id } = req.params;
-    const result = await pool.query(
+    console.log(`DEBUG: GET /api/members/${id} called by user ${userId}`);
+    let result = await pool.query(
       `SELECT ${MEMBER_COLUMNS} FROM family_members WHERE id = $1 AND (visibility = 'public' OR visibility = 'family-only' OR id = $2)`, 
-      [id, (req as any).user.id]
+      [id, userId]
     );
+
     if (result.rows.length === 0) {
+      console.log(`DEBUG: Member ${id} not found for user ${userId}. Retrying in 500ms...`);
+      await new Promise(resolve => setTimeout(resolve, 500));
+      result = await pool.query(
+        `SELECT ${MEMBER_COLUMNS} FROM family_members WHERE id = $1 AND (visibility = 'public' OR visibility = 'family-only' OR id = $2)`, 
+        [id, userId]
+      );
+    }
+
+    if (result.rows.length === 0) {
+      console.log(`DEBUG: Member ${id} not found or unauthorized for user ${userId} after retry`);
       return res.status(404).json({ error: 'Member not found or unauthorized' });
     }
+    console.log(`DEBUG: Member ${id} found for user ${userId}`);
     // Explicitly sanitize as defense in depth
     const { password, ...sanitizedMember } = result.rows[0];
     res.json(sanitizedMember);
   } catch (err: any) {
+    console.error(`DEBUG: Error in GET /api/members/${id} for user ${userId}:`, err);
     next(err);
   }
 });
 
 app.get('/api/members/:id/siblings', authenticate, async (req: Request, res: Response, next) => {
+  const { id } = req.params;
   try {
-    const { id } = req.params;
+    console.log(`DEBUG: GET /api/members/${id}/siblings called`);
     
-    // Get the member's explicit siblings and parents
-    const memberResult = await pool.query(
-      'SELECT siblings, relationships FROM family_members WHERE id = $1',
+    // Simple retry logic for newly created members
+    let memberResult = await pool.query(
+      'SELECT first_name, last_name, siblings, relationships FROM family_members WHERE id = $1',
       [id]
     );
+
+    if (memberResult.rows.length === 0) {
+      console.log(`DEBUG: Member ${id} not found in siblings route. Retrying in 500ms...`);
+      await new Promise(resolve => setTimeout(resolve, 500));
+      memberResult = await pool.query(
+        'SELECT first_name, last_name, siblings, relationships FROM family_members WHERE id = $1',
+        [id]
+      );
+    }
     
     if (memberResult.rows.length === 0) {
+      console.log(`DEBUG: Member ${id} still not found in siblings route after retry.`);
       return res.status(404).json({ error: 'Member not found' });
     }
     
-    const { siblings: explicitSiblings, relationships } = memberResult.rows[0];
+    const { first_name, last_name, siblings: rawSiblings, relationships } = memberResult.rows[0];
+    console.log(`DEBUG: Member ${id} (${first_name} ${last_name}) found in siblings route.`);
+    const explicitSiblings = Array.isArray(rawSiblings) ? rawSiblings : [];
     const parents = relationships?.parents || [];
     
     // Get implied siblings (share at least one parent)
@@ -168,7 +197,7 @@ app.post('/api/members', async (req: Request, res: Response, next) => {
       `INSERT INTO family_members 
       (first_name, last_name, maiden_name, birth_date, birth_place, death_date, death_place, gender, bio, profile_image, relationships, siblings, password,
        email, username, dark_mode, language, visibility, data_sharing, notifications_email, notifications_push, role) 
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21) 
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22) 
       RETURNING ${MEMBER_COLUMNS}`,
       [
         first_name, last_name, maiden_name, birth_date, birth_place, death_date, death_place, gender, bio, profile_image, relationships || {}, siblings || [], hashedPassword,
@@ -221,8 +250,8 @@ app.post('/api/members', async (req: Request, res: Response, next) => {
       }
     }
     // Handle explicit sibling links
-    if (rels.siblings?.length) {
-      for (const siblingId of rels.siblings) {
+    if (siblings?.length) {
+      for (const siblingId of siblings) {
         // Add new member to sibling's siblings list
         await pool.query(
           `UPDATE family_members 
@@ -304,6 +333,55 @@ app.put('/api/members/:id', authenticate, async (req: Request, res: Response, ne
       hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
     }
 
+    // Handle explicit sibling list updates (bidirectional sync)
+    if (Array.isArray(siblings)) {
+      // Get current siblings to determine additions/removals
+      const currentRes = await pool.query('SELECT siblings FROM family_members WHERE id = $1', [id]);
+      const currentSiblings = currentRes.rows[0]?.siblings || [];
+      
+      const newSiblingIds = siblings as string[];
+      const added = newSiblingIds.filter(sid => !currentSiblings.includes(sid));
+      const removed = currentSiblings.filter((sid: string) => !newSiblingIds.includes(sid));
+
+      // Handle Added: Add 'id' to their siblings list
+      for (const addedId of added) {
+        await pool.query(
+          `UPDATE family_members 
+           SET siblings = COALESCE(siblings, '[]')::jsonb || $1::jsonb
+           WHERE id = $2 AND NOT (COALESCE(siblings, '[]')::jsonb @> $1::jsonb)`,
+          [JSON.stringify([id]), addedId]
+        );
+      }
+
+      // Handle Removed: Remove 'id' from their siblings list
+      for (const removedId of removed) {
+        await pool.query(
+          "UPDATE family_members SET siblings = COALESCE(siblings, '[]')::jsonb - $1 WHERE id = $2",
+          [id, removedId]
+        );
+      }
+    }
+
+    // Handle special sibling actions (like removal)
+    let finalSiblings = siblings;
+    if (siblings && typeof siblings === 'object' && !Array.isArray(siblings)) {
+      const { action, siblingId } = siblings as any;
+      if (action === 'remove' && siblingId) {
+        // Remove siblingId from this member's list
+        await pool.query(
+          "UPDATE family_members SET siblings = COALESCE(siblings, '[]')::jsonb - $1 WHERE id = $2",
+          [siblingId, id]
+        );
+        // Remove this member from siblingId's list
+        await pool.query(
+          "UPDATE family_members SET siblings = COALESCE(siblings, '[]')::jsonb - $1 WHERE id = $2",
+          [id, siblingId]
+        );
+        // Set finalSiblings to undefined so COALESCE in the main UPDATE keeps the updated value
+        finalSiblings = undefined;
+      }
+    }
+
     // Only admins can change roles
     const targetRole = (req as any).user.role === 'admin' ? role : undefined;
 
@@ -334,7 +412,7 @@ app.put('/api/members/:id', authenticate, async (req: Request, res: Response, ne
       WHERE id = $23 
       RETURNING ${MEMBER_COLUMNS}`,
       [
-        first_name, last_name, maiden_name, birth_date, birth_place, death_date, death_place, gender, bio, profile_image, relationships, siblings, hashedPassword,
+        first_name, last_name, maiden_name, birth_date, birth_place, death_date, death_place, gender, bio, profile_image, relationships, finalSiblings, hashedPassword,
         email, username, dark_mode, language, visibility, data_sharing, notifications_email, notifications_push,
         targetRole,
         id
@@ -381,6 +459,21 @@ app.post('/api/members/link', authenticate, async (req: Request, res: Response, 
         memberKey = 'spouses';
         relativeKey = 'spouses';
         break;
+      case 'sibling':
+        // Update both members' siblings lists
+        await pool.query(
+          `UPDATE family_members 
+           SET siblings = COALESCE(siblings, '[]')::jsonb || $1::jsonb
+           WHERE id = $2 AND NOT (COALESCE(siblings, '[]')::jsonb @> $1::jsonb)`,
+          [JSON.stringify([relativeId]), memberId]
+        );
+        await pool.query(
+          `UPDATE family_members 
+           SET siblings = COALESCE(siblings, '[]')::jsonb || $1::jsonb
+           WHERE id = $2 AND NOT (COALESCE(siblings, '[]')::jsonb @> $1::jsonb)`,
+          [JSON.stringify([memberId]), relativeId]
+        );
+        return res.json({ message: 'Members linked as siblings successfully' });
       default:
         return res.status(400).json({ error: 'Invalid relationship type' });
     }

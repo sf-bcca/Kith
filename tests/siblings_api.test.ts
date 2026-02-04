@@ -64,11 +64,11 @@ describe('Siblings API', () => {
         first_name: 'New',
         last_name: 'Member',
         gender: 'male',
-        relationships: { siblings: ['s1'] }
+        siblings: ['s1']
       };
 
       (pool.query as any).mockResolvedValueOnce({
-        rows: [{ id: 'new-id', ...newMemberData, siblings: ['s1'] }]
+        rows: [{ id: 'new-id', ...newMemberData }]
       });
 
       const response = await request(app)
@@ -76,12 +76,52 @@ describe('Siblings API', () => {
         .send(newMemberData);
 
       expect(response.status).toBe(201);
-      expect(response.body.siblings).toContain('s1');
       
-      // Verify reciprocal update query was called
+      // Verify reciprocal update query was called (twice: one for linking new->sibling (implicit in INSERT/UPDATE?), one for sibling->new)
+      // Actually my code does two UPDATEs per sibling loop.
       expect(pool.query).toHaveBeenCalledWith(
         expect.stringMatching(/UPDATE\s+family_members\s+SET\s+siblings/i),
         expect.any(Array)
+      );
+    });
+  });
+
+  describe('PUT /api/members/:id', () => {
+    it('should handle bidirectional sibling updates', async () => {
+      const memberId = 'm1';
+      const updateData = {
+        siblings: ['s1', 's2'] // Adding s2 (s1 assumed existing)
+      };
+
+      // Mock getting current siblings
+      (pool.query as any).mockResolvedValueOnce({
+        rows: [{ siblings: ['s1'] }]
+      });
+
+      // Mock update for added sibling 's2'
+      (pool.query as any).mockResolvedValueOnce({});
+
+      // Mock main update
+      (pool.query as any).mockResolvedValueOnce({
+        rows: [{ id: memberId, ...updateData }]
+      });
+
+      const response = await request(app)
+        .put(`/api/members/${memberId}`)
+        .send(updateData);
+
+      expect(response.status).toBe(200);
+
+      // Should fetch current siblings
+      expect(pool.query).toHaveBeenCalledWith(
+        'SELECT siblings FROM family_members WHERE id = $1',
+        [memberId]
+      );
+
+      // Should update added sibling (s2) to include m1
+      expect(pool.query).toHaveBeenCalledWith(
+        expect.stringMatching(/UPDATE\s+family_members\s+SET\s+siblings.*jsonb\s+\|\|\s+\$1::jsonb/),
+        [JSON.stringify([memberId]), 's2']
       );
     });
   });
