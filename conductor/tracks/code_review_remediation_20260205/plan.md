@@ -26,10 +26,10 @@ Extract common logic to ensure consistency across the application.
 ## Phase 3: Frontend Persistence & Relationship Wizard (TDD)
 Update the UI to correctly handle enhanced data structures and placeholder persistence.
 
-- [~] Task: Update Frontend Service Layer
-    - [ ] Write failing tests for `FamilyService` enhanced sibling mapping
-    - [ ] Update `FamilyService.ts` to handle `{id, type}` sibling mapping
-- [ ] Task: Fix Sibling Placeholder Persistence in Modals
+- [x] Task: Update Frontend Service Layer 38dfb11
+    - [x] Write failing tests for `FamilyService` enhanced sibling mapping
+    - [x] Update `FamilyService.ts` to handle `{id, type}` sibling mapping
+- [~] Task: Fix Sibling Placeholder Persistence in Modals
     - [ ] Write failing tests for `AddMemberModal` sibling placeholder creation
     - [ ] Update `handleSiblingUpdate` in `AddMemberModal.tsx` to persist new placeholders
     - [ ] Update `MemberBiography.tsx` to use the shared validation and enhanced persistence
