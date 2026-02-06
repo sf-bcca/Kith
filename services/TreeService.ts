@@ -6,6 +6,7 @@ export interface TreeData {
   parents: FamilyMember[];
   spouses: FamilyMember[];
   children: FamilyMember[];
+  siblings: FamilyMember[];
 }
 
 export interface AncestryData {
@@ -32,17 +33,19 @@ export class TreeService {
     const focus = await FamilyService.getById(focusId);
     if (!focus) return undefined;
 
-    const [parents, spouses, children] = await Promise.all([
+    const [parents, spouses, children, siblings] = await Promise.all([
       FamilyService.getByIds(focus.parents),
       FamilyService.getByIds(focus.spouses),
-      FamilyService.getByIds(focus.children)
+      FamilyService.getByIds(focus.children),
+      FamilyService.getSiblings(focusId)
     ]);
 
     return {
       focus,
       parents,
       spouses,
-      children
+      children,
+      siblings
     };
   }
 
@@ -125,5 +128,63 @@ export class TreeService {
       }
 
       return result;
+  }
+
+  /**
+   * Determines the sibling type between two members.
+   * @param member1 First family member
+   * @param member2 Second family member
+   * @returns 'full' if they share both parents, 'half' if they share one parent, undefined otherwise
+   */
+  static getSiblingType(member1: FamilyMember, member2: FamilyMember): 'full' | 'half' | undefined {
+    const parents1 = member1.parents || [];
+    const parents2 = member2.parents || [];
+
+    if (parents1.length === 0 || parents2.length === 0) {
+      return undefined; // Cannot determine, parents unknown
+    }
+
+    const sharedParents = parents1.filter(pId => parents2.includes(pId));
+    
+    if (sharedParents.length === 2) {
+      return 'full';
+    } else if (sharedParents.length === 1) {
+      return 'half';
+    }
+    
+    return undefined;
+  }
+
+  /**
+   * Groups members by their shared parents for sibling visualization.
+   * @param members Array of family members
+   * @returns Array of arrays, where each inner array contains siblings that share parents
+   */
+  static groupSiblingsByParents(members: FamilyMember[]): FamilyMember[][] {
+    const groups: FamilyMember[][] = [];
+    const processed = new Set<string>();
+
+    for (const member of members) {
+      if (processed.has(member.id)) continue;
+
+      const group: FamilyMember[] = [member];
+      processed.add(member.id);
+
+      for (const other of members) {
+        if (processed.has(other.id)) continue;
+
+        const siblingType = this.getSiblingType(member, other);
+        if (siblingType === 'full' || siblingType === 'half') {
+          group.push(other);
+          processed.add(other.id);
+        }
+      }
+
+      if (group.length > 1) {
+        groups.push(group);
+      }
+    }
+
+    return groups;
   }
 }

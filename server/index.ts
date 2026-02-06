@@ -154,9 +154,9 @@ app.get('/api/members/:id/siblings', authenticate, async (req: Request, res: Res
          WHERE id <> $1 
          AND relationships::jsonb->'parents' IS NOT NULL
          AND (
-           (relationships->'parents')::jsonb && $2::jsonb
+           (relationships->'parents')::jsonb ?| $2::text[]
          )`,
-        [id, JSON.stringify(parents)]
+        [id, parents]
       );
       impliedSiblings = impliedResult.rows.map(row => row.id);
     }
@@ -368,8 +368,8 @@ app.put('/api/members/:id', authenticate, async (req: Request, res: Response, ne
       const { action, siblingId } = siblings as any;
       if (action === 'remove' && siblingId) {
         // Remove siblingId from this member's list
-        await pool.query(
-          "UPDATE family_members SET siblings = COALESCE(siblings, '[]')::jsonb - $1 WHERE id = $2",
+        const res = await pool.query(
+          "UPDATE family_members SET siblings = COALESCE(siblings, '[]')::jsonb - $1 WHERE id = $2 RETURNING siblings",
           [siblingId, id]
         );
         // Remove this member from siblingId's list
@@ -377,8 +377,8 @@ app.put('/api/members/:id', authenticate, async (req: Request, res: Response, ne
           "UPDATE family_members SET siblings = COALESCE(siblings, '[]')::jsonb - $1 WHERE id = $2",
           [id, siblingId]
         );
-        // Set finalSiblings to undefined so COALESCE in the main UPDATE keeps the updated value
-        finalSiblings = undefined;
+        // Set finalSiblings to the newly returned list from the DB so the main update uses it
+        finalSiblings = res.rows[0].siblings;
       }
     }
 

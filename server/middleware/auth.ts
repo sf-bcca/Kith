@@ -1,6 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
+export interface AuthRequest extends Request {
+  user?: {
+    id: string;
+    role: string;
+  };
+}
+
 /**
  * Middleware to verify JWT and protect routes.
  */

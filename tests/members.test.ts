@@ -63,7 +63,7 @@ describe('Members API', () => {
     });
 
     it('should return 404 if member not found', async () => {
-      (pool.query as any).mockResolvedValueOnce({ rows: [] });
+      (pool.query as any).mockResolvedValue({ rows: [] });
       const notFoundToken = jwt.sign({ sub: '999' }, JWT_SECRET);
 
       const response = await request(app)

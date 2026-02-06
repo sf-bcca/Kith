@@ -5,6 +5,7 @@ import AddMediaModal from './AddMediaModal';
 import { ActivityService } from '../services/ActivityService';
 import { FamilyService } from '../services/FamilyService';
 import { Activity } from '../types/activity';
+import { formatDate } from '../src/utils/dateUtils';
 
 interface Props {
   onNavigate: (screen: string, memberId?: string) => void;
@@ -192,7 +193,7 @@ const ActivityFeed: React.FC<Props> = ({ onNavigate, currentUserId }) => {
                 <div className="size-16 rounded-full bg-slate-200 bg-cover bg-center border-2 border-white shadow-sm" style={{ backgroundImage: `url('${details.imageUrl}')` }}></div>
                 <div>
                   <p className="font-bold text-slate-900">{details.name}</p>
-                  <p className="text-xs text-slate-500">Born: {details.birthDate}</p>
+                  <p className="text-xs text-slate-500">Born: {formatDate(details.birthDate)}</p>
                   <p className="text-xs text-slate-500 italic mt-1">{details.relationship}</p>
                 </div>
               </div>
@@ -372,7 +373,7 @@ const ActivityFeed: React.FC<Props> = ({ onNavigate, currentUserId }) => {
           
           <div className="mt-8 text-white text-center max-w-lg" onClick={e => e.stopPropagation()}>
             <h3 className="text-xl font-bold">{selectedMedia.actorName}</h3>
-            <p className="text-sm text-gray-400 mb-4">{new Date(selectedMedia.timestamp).toLocaleDateString()}</p>
+            <p className="text-sm text-gray-400 mb-4">{formatDate(selectedMedia.timestamp)}</p>
             {selectedMedia.description && (
               <p className="text-lg italic text-gray-200">"{selectedMedia.description}"</p>
             )}

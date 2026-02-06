@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { TreeService, AncestryData } from '../services/TreeService';
 import { FamilyMember } from '../types/family';
+import { formatDate } from '../src/utils/dateUtils';
 
 interface Props {
   onNavigate: (screen: string) => void;
@@ -244,7 +245,7 @@ const FanChart: React.FC<Props> = ({ onNavigate, selectedId, onSelect, loggedInI
             </div>
             <div className="flex-1">
                <h4 className="text-xl font-bold leading-none">{focusPerson.firstName} {focusPerson.lastName}</h4>
-               <p className="text-[#4c669a] text-sm mt-1">{focusPerson.birthDate || '?'} — {focusPerson.deathDate || 'Present'}</p>
+               <p className="text-[#4c669a] text-sm mt-1">{formatDate(focusPerson.birthDate)} — {focusPerson.deathDate ? formatDate(focusPerson.deathDate) : 'Present'}</p>
                <div className="flex gap-2 mt-2">
                   <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold uppercase rounded">Person</span>
                   <span className="px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold uppercase rounded">Verified</span>

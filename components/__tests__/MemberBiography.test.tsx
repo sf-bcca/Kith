@@ -8,6 +8,7 @@ vi.mock('../../services/FamilyService', () => ({
     getById: vi.fn(),
     update: vi.fn(),
     delete: vi.fn(),
+    getSiblings: vi.fn(),
   },
 }));
 
@@ -38,6 +39,7 @@ describe('MemberBiography', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(FamilyService.getSiblings).mockResolvedValue([]);
   });
 
   afterEach(() => {

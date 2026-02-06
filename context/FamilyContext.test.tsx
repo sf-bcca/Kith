@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
-import { FamilyProvider, useFamily } from '../FamilyContext';
-import { FamilyService } from '../../services/FamilyService';
+import { FamilyProvider, useFamily } from './FamilyContext';
+import { FamilyService } from '../services/FamilyService';
 import React from 'react';
 
-vi.mock('../../services/FamilyService');
+vi.mock('../services/FamilyService');
 
 describe('FamilyContext Sibling State Management', () => {
   const mockSibling = {

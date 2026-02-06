@@ -50,7 +50,8 @@ describe('FamilyTreeView', () => {
     
     await waitFor(() => {
       const mordredName = screen.getByText(/Mordred Pendragon/);
-      const mordredNode = mordredName.closest('.group');
+      // The clickable area is the avatar div which has 'cursor-pointer'
+      const mordredNode = mordredName.closest('.group')?.querySelector('.cursor-pointer');
       fireEvent.click(mordredNode!);
       expect(onSelect).toHaveBeenCalledWith('5');
     }, { timeout: 2000 });

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { TreeService } from '../TreeService';
+import { TreeService } from './TreeService';
 import { FamilyMember } from '../../types/family';
 
 describe('TreeService Sibling Layout', () => {

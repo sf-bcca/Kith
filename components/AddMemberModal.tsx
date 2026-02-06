@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { FamilyService } from '../services/FamilyService';
 import { FamilyMember, Gender } from '../types/family';
+import RelationshipWizard, { SiblingEntry } from './RelationshipWizard';
 
 interface Props {
   isOpen: boolean;
@@ -26,6 +27,10 @@ export default function AddMemberModal({ isOpen, onClose, onSuccess, initialData
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Sibling wizard state
+  const [siblings, setSiblings] = useState<string[]>([]);
+  const [showSiblingWizard, setShowSiblingWizard] = useState(false);
+
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<FamilyMember[]>([]);
@@ -45,12 +50,19 @@ export default function AddMemberModal({ isOpen, onClose, onSuccess, initialData
         setDeathPlace('');
         setEmail('');
         setPhotoUrl('');
+        setSiblings([]);
       } else {
         setSearchQuery('');
         setSearchResults([]);
       }
     }
   }, [isOpen, initialData, activeTab]);
+
+  // Handle sibling updates from wizard
+  const handleSiblingUpdate = (siblingIds: string[], entries: SiblingEntry[]) => {
+    setSiblings(siblingIds);
+    setShowSiblingWizard(false);
+  };
 
   // Search effect
   React.useEffect(() => {
@@ -84,6 +96,25 @@ export default function AddMemberModal({ isOpen, onClose, onSuccess, initialData
     setLoading(true);
     setError(null);
 
+    // Validation
+    if (isDeceased && deathDate) {
+      const birth = birthDate ? new Date(birthDate) : null;
+      const death = new Date(deathDate);
+      const today = new Date();
+
+      if (death > today) {
+        setError("Date of Death cannot be in the future.");
+        setLoading(false);
+        return;
+      }
+
+      if (birth && death < birth) {
+        setError("Date of Death must be after Date of Birth.");
+        setLoading(false);
+        return;
+      }
+    }
+
     try {
       const newMember = await FamilyService.create({
         firstName,
@@ -98,6 +129,7 @@ export default function AddMemberModal({ isOpen, onClose, onSuccess, initialData
         parents: relationshipType === 'child' && relativeId ? [relativeId] : [],
         spouses: relationshipType === 'spouse' && relativeId ? [relativeId] : [],
         children: relationshipType === 'parent' && relativeId ? [relativeId] : [],
+        siblings,
       });
 
       onSuccess(newMember);
@@ -169,9 +201,10 @@ export default function AddMemberModal({ isOpen, onClose, onSuccess, initialData
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5 ml-1">First Name</label>
+                  <label htmlFor="firstName" className="block text-sm font-semibold text-slate-700 mb-1.5 ml-1">First Name</label>
                   <input
                     type="text"
+                    id="firstName"
                     required
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
@@ -180,9 +213,10 @@ export default function AddMemberModal({ isOpen, onClose, onSuccess, initialData
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5 ml-1">Last Name</label>
+                  <label htmlFor="lastName" className="block text-sm font-semibold text-slate-700 mb-1.5 ml-1">Last Name</label>
                   <input
                     type="text"
+                    id="lastName"
                     required
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
@@ -194,8 +228,9 @@ export default function AddMemberModal({ isOpen, onClose, onSuccess, initialData
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5 ml-1">Gender</label>
+                  <label htmlFor="gender" className="block text-sm font-semibold text-slate-700 mb-1.5 ml-1">Gender</label>
                   <select
+                    id="gender"
                     value={gender}
                     onChange={(e) => setGender(e.target.value as Gender)}
                     className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none bg-white appearance-none"
@@ -206,9 +241,10 @@ export default function AddMemberModal({ isOpen, onClose, onSuccess, initialData
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5 ml-1">Birth Date</label>
+                  <label htmlFor="birthDate" className="block text-sm font-semibold text-slate-700 mb-1.5 ml-1">Birth Date</label>
                   <input
                     type="date"
+                    id="birthDate"
                     required
                     value={birthDate}
                     onChange={(e) => setBirthDate(e.target.value)}
@@ -218,9 +254,10 @@ export default function AddMemberModal({ isOpen, onClose, onSuccess, initialData
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5 ml-1">Birth Place</label>
+                <label htmlFor="birthPlace" className="block text-sm font-semibold text-slate-700 mb-1.5 ml-1">Birth Place</label>
                 <input
                   type="text"
+                  id="birthPlace"
                   value={birthPlace}
                   onChange={(e) => setBirthPlace(e.target.value)}
                   className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none"
@@ -350,6 +387,19 @@ export default function AddMemberModal({ isOpen, onClose, onSuccess, initialData
                 </div>
               </div>
 
+              <div className="border-t border-slate-100 pt-4 mt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowSiblingWizard(true)}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-700 hover:bg-slate-100 hover:border-primary/30 transition-all"
+                >
+                  <span className="material-symbols-outlined text-primary">family_restroom</span>
+                  {siblings.length > 0
+                    ? `Manage Siblings (${siblings.length} selected)`
+                    : 'Add Siblings'}
+                </button>
+              </div>
+
               {error && (
                 <div className="p-3 rounded-lg bg-red-50 text-red-600 text-sm font-medium border border-red-100">
                   {error}
@@ -432,6 +482,14 @@ export default function AddMemberModal({ isOpen, onClose, onSuccess, initialData
             </div>
           )}
         </div>
+
+        {showSiblingWizard && (
+          <RelationshipWizard
+            existingSiblings={siblings}
+            onUpdate={handleSiblingUpdate}
+            onCancel={() => setShowSiblingWizard(false)}
+          />
+        )}
       </div>
     </div>
   );

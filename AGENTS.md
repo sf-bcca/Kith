@@ -55,6 +55,7 @@ Contains all UI views and widgets.
 - **Widgets & Modals:**
     - `AddMemberModal.tsx`: Interface for adding new family members.
     - `AddMediaModal.tsx`: Modal for uploading family media.
+    - `RelationshipWizard.tsx`: Multi-step flow for defining sibling relationships (full, half, step, adopted).
     - `DirectorySearch.tsx`: Search bar for the directory.
     - `BottomNav.tsx`: Navigation bar for mobile-friendly views.
 - **Admin:**
@@ -72,7 +73,7 @@ Node.js/Express backend with PostgreSQL.
 
 #### `services/`
 Frontend logic for communicating with the backend API.
-- `FamilyService.ts`: Core CRUD for family members.
+- `FamilyService.ts`: Core CRUD for family members, including sibling relationship management.
 - `TreeService.ts`: Logic for tree traversal and structure.
 - `ActivityService.ts`: Manages social activity data.
 - `LocationService.ts`: Handles geospatial data for maps.
@@ -119,3 +120,6 @@ The project includes custom Gemini skills to automate maintenance tasks:
 - **kith-test-factory:** Specialized in generating complex, realistic mock family datasets and unit tests.
 - **kith-conductor-manager:** Orchestrates and maintains project development tracks in the `conductor/` directory.
 - **kith-api-bridge:** Synchronizes data model changes across the full stack (SQL migrations, SCHEMA.md, TypeScript types, and Services).
+- **kith-security-hardener:** Enforces backend security best practices, transactional integrity for complex relationship updates, and centralized data sanitization. Use when modifying API endpoints, authentication logic, or database transactions.
+- **kith-media-specialist:** Expert guidance for implementing robust media handling, including file uploads (multipart/form-data), image optimization, storage strategies, and secure serving. Use when modifying MediaGallery, ActivityFeed, or backend media routes.
+- **kith-ux-polisher:** Enforces the Kith design system (Tailwind+Material), accessibility standards, and responsive behaviors. Use when creating new UI components, styling visualization charts (SVG/Canvas), or auditing UX consistency.

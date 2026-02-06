@@ -1,18 +1,26 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { FamilyService } from '../services/FamilyService';
 import { FamilyMember } from '../types/family';
+import { formatDate } from '../src/utils/dateUtils';
+import RelationshipWizard from './RelationshipWizard';
 
 interface Props {
-  onNavigate: (screen: string) => void;
+  onNavigate: (screen: string, memberId?: string) => void;
   memberId?: string;
   loggedInId?: string | null;
+  onSelect?: (id: string) => void;
+  initialEditMode?: boolean;
+  initialMember?: FamilyMember | null;
 }
 
-const MemberBiography: React.FC<Props> = ({ onNavigate, memberId, loggedInId }) => {
-  const [member, setMember] = useState<FamilyMember | null>(null);
+const MemberBiography: React.FC<Props> = ({ onNavigate, memberId, loggedInId, onSelect, initialEditMode = false, initialMember }) => {
+  const [member, setMember] = useState<FamilyMember | null>(initialMember || null);
   const [loggedInMember, setLoggedInMember] = useState<FamilyMember | null>(null);
+  const [siblings, setSiblings] = useState<FamilyMember[]>([]);
+  const [children, setChildren] = useState<FamilyMember[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(initialEditMode);
+  const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [editData, setEditData] = useState<Partial<FamilyMember>>({});
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -21,39 +29,75 @@ const MemberBiography: React.FC<Props> = ({ onNavigate, memberId, loggedInId }) 
 
   useEffect(() => {
     const fetchData = async () => {
+      // If we have initialMember and it matches the requested ID, use it and skip fetch
+      if (initialMember && initialMember.id === memberId && member?.id === memberId) {
+        setLoading(false);
+        // We still need loggedInMember info if not present
+        if (loggedInId && !loggedInMember) {
+             try {
+                const me = await FamilyService.getById(loggedInId);
+                setLoggedInMember(me || null);
+             } catch(e) { console.warn('Failed to fetch loggedInMember', e); }
+        }
+        // Fetch relations if needed
+        if (initialMember) {
+           try {
+             const [sibs, kids] = await Promise.all([
+               FamilyService.getSiblings(initialMember.id),
+               FamilyService.getByIds(initialMember.children)
+             ]);
+             setSiblings(sibs);
+             setChildren(kids);
+           } catch (e) { console.warn('Failed to fetch relations', e); }
+        }
+        return;
+      }
+      
       setLoading(true);
+      setError(null);
       try {
-        const promises: Promise<any>[] = [];
-        if (memberId) {
-          promises.push(FamilyService.getById(memberId));
-        } else {
-          promises.push(Promise.resolve(null));
-        }
+        const [memberData, loggedInMemberData] = await Promise.all([
+          // Only fetch member if we don't have it or ID mismatch
+          (initialMember && initialMember.id === memberId) ? Promise.resolve(initialMember) : FamilyService.getById(memberId!),
+          loggedInId ? FamilyService.getById(loggedInId) : Promise.resolve(null)
+        ]);
 
-        if (loggedInId) {
-          promises.push(FamilyService.getById(loggedInId));
-        } else {
-          promises.push(Promise.resolve(null));
-        }
+        if (!memberData) throw new Error('Member not found');
 
-        const [memberResult, loggedInResult] = await Promise.all(promises);
+        setMember(memberData);
+        setLoggedInMember(loggedInMemberData || null);
+        setEditData(memberData);
+        setIsDeceased(!!memberData.deathDate);
+
+        // Load relationships
+        const [siblingsData, childrenData] = await Promise.all([
+          FamilyService.getSiblings(memberData.id),
+          FamilyService.getByIds(memberData.children)
+        ]);
         
-        setMember(memberResult || null);
-        setLoggedInMember(loggedInResult || null);
-        
-        if (memberResult) {
-          setEditData(memberResult);
-          setIsDeceased(!!memberResult.deathDate);
-        }
-      } catch (err) {
+        setSiblings(siblingsData);
+        setChildren(childrenData);
+
+      } catch (err: any) {
         console.error('Failed to fetch data:', err);
+        setError(err.message || 'Failed to load member profile');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
+    if (memberId) {
+      console.log(`DEBUG: MemberBiography mounted with memberId: ${memberId}`);
+      fetchData();
+    } else {
+      console.log('DEBUG: MemberBiography mounted without memberId');
+      setLoading(false);
+    }
   }, [memberId, loggedInId]);
+
+  useEffect(() => {
+    setIsEditing(initialEditMode || false);
+  }, [initialEditMode, memberId]); // Reset/update edit mode when member or params change
 
   const handleSave = async () => {
     if (!member?.id) return;
@@ -95,6 +139,20 @@ const MemberBiography: React.FC<Props> = ({ onNavigate, memberId, loggedInId }) 
     }
   };
 
+  const handleWizardUpdate = async (ids: string[]) => {
+    if (!member?.id) return;
+    try {
+      const updated = await FamilyService.update(member.id, { siblings: ids });
+      setMember(updated);
+      const updatedSiblings = await FamilyService.getSiblings(member.id);
+      setSiblings(updatedSiblings);
+      setIsWizardOpen(false);
+    } catch (err) {
+      console.error('Failed to update siblings:', err);
+      alert('Failed to update siblings.');
+    }
+  };
+
   const handleDelete = async () => {
     if (!member?.id) return;
     if (!window.confirm(`Are you sure you want to delete ${member.firstName} ${member.lastName}? This action cannot be undone.`)) {
@@ -129,13 +187,29 @@ const MemberBiography: React.FC<Props> = ({ onNavigate, memberId, loggedInId }) 
     );
   }
 
-  if (!member) {
+  if (error || !member) {
     return (
       <div className="flex-1 flex items-center justify-center bg-background-light min-h-screen">
-        <div className="text-center p-6">
-           <span className="material-symbols-outlined text-4xl text-slate-300 mb-2">person_off</span>
-           <p className="text-slate-500 font-bold">Member not found.</p>
-           <button onClick={() => onNavigate('Tree')} className="mt-4 text-primary font-bold text-sm">Return to Tree</button>
+        <div className="text-center p-6 bg-white rounded-2xl shadow-xl max-w-sm w-full mx-4">
+           <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+             <span className="material-symbols-outlined text-3xl text-slate-400">person_off</span>
+           </div>
+           <h3 className="text-lg font-bold text-slate-900 mb-2">Member not found</h3>
+           <p className="text-slate-500 text-sm mb-4">
+             We couldn't load the profile for ID: <code className="bg-slate-100 px-1 py-0.5 rounded text-xs font-mono">{memberId || 'undefined'}</code>
+           </p>
+           {error && (
+             <div className="bg-red-50 text-red-600 p-3 rounded-xl text-xs text-left mb-6 overflow-auto max-h-32">
+               <strong>Error Details:</strong><br/>
+               {typeof error === 'string' ? error : JSON.stringify(error)}
+             </div>
+           )}
+           <button 
+             onClick={() => onNavigate('Tree')} 
+             className="w-full bg-primary text-white font-bold py-3 rounded-xl hover:scale-[1.02] active:scale-[0.98] transition-all"
+           >
+             Return to Tree
+           </button>
         </div>
       </div>
     );
@@ -188,7 +262,7 @@ const MemberBiography: React.FC<Props> = ({ onNavigate, memberId, loggedInId }) 
         </div>
       </nav>
 
-      <main className="max-w-md mx-auto min-h-screen pb-20">
+      <main className="max-w-md mx-auto min-h-screen pb-32 relative z-10">
         {isEditing ? (
           <div className="p-6 space-y-6">
             <div className="space-y-4">
@@ -270,6 +344,28 @@ const MemberBiography: React.FC<Props> = ({ onNavigate, memberId, loggedInId }) 
                   </div>
                 </div>
               )}
+              <div className="py-2">
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Siblings</label>
+                <div className="space-y-3">
+                  {siblings.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {siblings.map(s => (
+                        <div key={s.id} className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-full border border-slate-200">
+                          <span className="text-xs font-bold text-slate-600">{s.firstName} {s.lastName}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setIsWizardOpen(true)}
+                    className="flex items-center justify-center gap-2 w-full py-3 border-2 border-dashed border-slate-200 rounded-xl text-slate-500 font-bold text-sm hover:border-primary hover:text-primary hover:bg-primary/5 transition-all"
+                  >
+                    <span className="material-symbols-outlined text-[20px]">group_add</span>
+                    Manage Siblings
+                  </button>
+                </div>
+              </div>
               <div>
                 <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Email Address</label>
                 <input
@@ -440,8 +536,8 @@ const MemberBiography: React.FC<Props> = ({ onNavigate, memberId, loggedInId }) 
               
               <div className="grid grid-cols-[40px_1fr] gap-x-3 mt-2">
                 {[
-                  { icon: 'child_care', title: `Born in ${member.birthPlace || 'Unknown'}`, date: member.birthDate || 'Unknown Date', isLast: !member.deathDate },
-                  ...(member.deathDate ? [{ icon: 'church', title: `Deceased in ${member.deathPlace || 'Unknown'}`, date: member.deathDate, isLast: true }] : []),
+                  { icon: 'child_care', title: `Born in ${member.birthPlace || 'Unknown'}`, date: member.birthDate || 'Unknown Date', isLast: !member.deathDate && siblings.length === 0 && children.length === 0 },
+                  ...(member.deathDate ? [{ icon: 'church', title: `Deceased in ${member.deathPlace || 'Unknown'}`, date: member.deathDate, isLast: siblings.length === 0 && children.length === 0 }] : []),
                 ].map((event, i) => (
                   <React.Fragment key={i}>
                     <div className="flex flex-col items-center">
@@ -452,34 +548,98 @@ const MemberBiography: React.FC<Props> = ({ onNavigate, memberId, loggedInId }) 
                     </div>
                     <div className={`pt-1 ${!event.isLast ? 'pb-8' : ''}`}>
                       <p className="text-base font-bold leading-none">{event.title}</p>
-                      <p className="text-gray-500 text-sm mt-1.5 leading-relaxed">{event.date}</p>
+                      <p className="text-gray-500 text-sm mt-1.5 leading-relaxed">{formatDate(event.date)}</p>
                     </div>
                   </React.Fragment>
                 ))}
               </div>
             </section>
 
+            {/* Siblings Section */}
+            {siblings.length > 0 && (
+              <section className="mt-8 px-4">
+                <h2 className="text-xl font-bold tracking-tight mb-4">Siblings</h2>
+                <div className="flex flex-wrap gap-3">
+                  {siblings.map((sibling) => (
+                    <button
+                      key={sibling.id}
+                      onClick={() => {
+                        if (onSelect) onSelect(sibling.id);
+                        onNavigate('Biography', sibling.id);
+                      }}
+                      className="flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-slate-200 hover:border-primary hover:bg-primary/5 transition-all shadow-sm group"
+                    >
+                      <div className="size-6 rounded-full bg-slate-100 overflow-hidden flex-shrink-0">
+                        {sibling.photoUrl ? (
+                          <img src={sibling.photoUrl} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="material-symbols-outlined text-xs text-slate-400 flex items-center justify-center h-full">person</span>
+                        )}
+                      </div>
+                      <span className="text-sm font-bold text-slate-700 group-hover:text-primary">
+                        {sibling.firstName} {sibling.lastName}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Children Section */}
+            {children.length > 0 && (
+              <section className="mt-8 px-4 relative z-30">
+                <h2 className="text-xl font-bold tracking-tight mb-4">Children</h2>
+                <div className="flex flex-wrap gap-3">
+                  {children.map((child) => (
+                    <button
+                      key={child.id}
+                      type="button"
+                      onClick={() => {
+                        console.log('DEBUG: Navigating to child biography:', child.id);
+                        if (onSelect) onSelect(child.id);
+                        onNavigate('Biography', child.id);
+                      }}
+                      className="flex items-center gap-2 px-4 py-2 rounded-full bg-white border-2 border-slate-200 hover:border-primary hover:bg-primary/5 transition-all shadow-sm group active:scale-95 cursor-pointer"
+                    >
+                      <div className="size-6 rounded-full bg-slate-100 overflow-hidden flex-shrink-0">
+                        {child.photoUrl ? (
+                          <img src={child.photoUrl} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="material-symbols-outlined text-xs text-slate-400 flex items-center justify-center h-full">person</span>
+                        )}
+                      </div>
+                      <span className="text-sm font-bold text-slate-700 group-hover:text-primary">
+                        {child.firstName} {child.lastName}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            )}
+
             {/* Biography Summary */}
-            <section className="mt-12 px-4 pb-20">
+            <section className="mt-12 px-4 pb-12">
               <h2 className="text-xl font-bold tracking-tight mb-3">Biography</h2>
-              <p className="text-gray-600 text-sm leading-relaxed italic">
+              <p className="text-gray-600 text-sm leading-relaxed italic mb-8">
                   {member.biography || "No biography available for this family member yet."}
               </p>
+
+              {/* Memory Action (Moved from fixed bar) */}
+              <button className="w-full bg-primary text-white font-bold py-4 rounded-2xl shadow-lg shadow-primary/30 flex items-center justify-center gap-2 hover:bg-blue-600 active:scale-95 transition-all">
+                <span className="material-symbols-outlined text-[20px]">add_circle</span>
+                Add Memory
+              </button>
             </section>
           </>
         )}
       </main>
 
-      {/* Bottom Action Bar */}
-      {!isEditing && (
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background-light via-background-light to-transparent pointer-events-none">
-          <div className="max-w-md mx-auto flex gap-3 pointer-events-auto">
-            <button className="flex-1 bg-primary text-white font-bold py-3.5 rounded-xl shadow-lg shadow-primary/30 flex items-center justify-center gap-2 hover:bg-blue-600 active:scale-95 transition-all">
-              <span className="material-symbols-outlined text-[20px]">add_circle</span>
-              Add Memory
-            </button>
-          </div>
-        </div>
+      {isWizardOpen && (
+        <RelationshipWizard
+          existingSiblings={siblings.map(s => s.id)}
+          onUpdate={handleWizardUpdate}
+          onCancel={() => setIsWizardOpen(false)}
+        />
       )}
     </div>
   );

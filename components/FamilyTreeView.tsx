@@ -6,43 +6,70 @@ import AddMemberModal from './AddMemberModal';
 import { validateImageUrl } from '../src/utils/security';
 
 interface Props {
-  onNavigate: (screen: string, memberId?: string) => void;
+  onNavigate: (screen: string, memberId?: string, params?: any) => void;
   selectedId: string;
   onSelect: (id: string) => void;
+  onLogout?: () => void;
 }
 
 const MemberNode: React.FC<{
   member: FamilyMember;
   label?: string;
   isFocus?: boolean;
+  isSibling?: boolean;
+  siblingType?: 'full' | 'half' | 'step' | 'adopted';
   onClick: () => void;
-  onViewBio: (id: string) => void;
-}> = ({ member, label, isFocus, onClick, onViewBio }) => (
-  <div 
-    className="flex flex-col items-center gap-2 group cursor-pointer"
-    onClick={onClick}
-  >
-    <div className={`
-      ${isFocus ? 'w-24 h-24 border-4 border-primary shadow-xl' : 'w-20 h-20 border-2 border-slate-100 shadow-lg'}
-      rounded-full bg-white p-1 relative group-hover:scale-105 transition-transform
-    `}>
+  onViewBio: (id: string, params?: any) => void;
+}> = ({ member, label, isFocus, isSibling, siblingType, onClick, onViewBio }) => (
+  <div className="flex flex-col items-center gap-2 group">
+    <div 
+      className={`
+        ${isFocus ? 'w-24 h-24 border-4 border-primary shadow-xl' : isSibling ? 'w-16 h-16 border-2 border-primary/30 shadow-md' : 'w-20 h-20 border-2 border-slate-100 shadow-lg'}
+        rounded-full bg-white p-1 relative group-hover:scale-105 transition-transform cursor-pointer
+      `}
+      onClick={onClick}
+    >
       <div 
         className="w-full h-full rounded-full bg-cover bg-center" 
         style={{ backgroundImage: `url(${validateImageUrl(member.photoUrl)})` }}
       ></div>
+      
+      {/* Edit Button Overlay */}
+      <div 
+        className="absolute -top-1 -right-1 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+        onClick={(e) => {
+          e.stopPropagation();
+          onViewBio(member.id, { edit: true });
+        }}
+      >
+        <button className="bg-white text-slate-700 hover:text-primary rounded-full p-1 border border-slate-200 shadow-sm flex items-center justify-center">
+          <span className="material-symbols-outlined text-[16px] font-bold">edit</span>
+        </button>
+      </div>
+
       {isFocus && (
         <div className="absolute -bottom-1 -right-1 bg-primary text-white rounded-full p-1 border-2 border-white flex items-center justify-center">
           <span className="material-symbols-outlined text-xs">star</span>
+        </div>
+      )}
+      {isSibling && siblingType && (
+        <div className={`absolute -bottom-1 -right-1 rounded-full p-0.5 border-2 border-white flex items-center justify-center ${
+          siblingType === 'full' ? 'bg-green-500' : 
+          siblingType === 'half' ? 'bg-yellow-500' : 
+          siblingType === 'step' ? 'bg-orange-500' : 'bg-purple-500'
+        }`}>
+          <span className="material-symbols-outlined text-[8px] text-white">
+            {siblingType === 'full' ? 'family_restroom' : 
+             siblingType === 'half' ? 'half' : 
+             siblingType === 'step' ? 'swap_horiz' : 'child_care'}
+          </span>
         </div>
       )}
     </div>
     <div className="text-center">
       <button 
         className={`${isFocus ? 'text-sm' : 'text-xs'} font-bold hover:text-primary transition-colors bg-transparent border-none cursor-pointer p-0`}
-        onClick={(e) => {
-          e.stopPropagation();
-          onViewBio(member.id);
-        }}
+        onClick={() => onViewBio(member.id)}
       >
         {member.firstName} {member.lastName}
       </button>
@@ -58,30 +85,46 @@ const MemberNode: React.FC<{
   </div>
 );
 
-const FamilyTreeView: React.FC<Props> = ({ onNavigate, selectedId, onSelect }) => {
+const FamilyTreeView: React.FC<Props> = ({ onNavigate, selectedId, onSelect, onLogout }) => {
   const [treeData, setTreeData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [addRelationshipType, setAddRelationshipType] = useState<'child' | 'parent' | 'spouse' | undefined>(undefined);
 
-  const fetchTree = async () => {
-    if (!selectedId) {
+  const fetchTreeAndSetLoading = async (id: string, retryCount = 0) => {
+    console.log(`DEBUG: fetchTreeAndSetLoading called with id: ${id}, retry: ${retryCount}`);
+    if (!id) {
+      console.log('DEBUG: id is empty, skipping fetch');
       setLoading(false);
       return;
     }
-    setLoading(true);
+
     try {
-      const data = await TreeService.getTreeFor(selectedId);
+      const data = await TreeService.getTreeFor(id);
+      console.log(`DEBUG: TreeService.getTreeFor result for ${id}:`, data ? 'Found' : 'Not Found');
+      
+      if (!data && retryCount < 3) {
+        console.log(`DEBUG: Tree not found for ${id}, retrying in 500ms...`);
+        setTimeout(() => fetchTreeAndSetLoading(id, retryCount + 1), 500);
+        return;
+      }
+      
       setTreeData(data || null);
-    } catch (err) {
-      console.error('Failed to fetch tree data:', err);
-    } finally {
       setLoading(false);
+    } catch (err) {
+      console.error('DEBUG: Failed to fetch tree data:', err);
+      if (retryCount < 3) {
+        console.log(`DEBUG: Error fetching tree, retrying in 500ms...`);
+        setTimeout(() => fetchTreeAndSetLoading(id, retryCount + 1), 500);
+      } else {
+        setLoading(false);
+      }
     }
   };
 
   useEffect(() => {
-    fetchTree();
+    setLoading(true);
+    fetchTreeAndSetLoading(selectedId);
   }, [selectedId]);
 
   if (loading) {
@@ -95,6 +138,7 @@ const FamilyTreeView: React.FC<Props> = ({ onNavigate, selectedId, onSelect }) =
     );
   }
 
+  console.log(`DEBUG: Rendering FamilyTreeView. selectedId: ${selectedId}, treeData: ${treeData ? 'Present' : 'Null'}`);
   if (!treeData || !selectedId) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center bg-background-light min-h-screen p-6 text-center">
@@ -116,14 +160,22 @@ const FamilyTreeView: React.FC<Props> = ({ onNavigate, selectedId, onSelect }) =
     );
   }
 
-  const { focus, parents, spouses, children } = treeData;
+  const { focus, parents, spouses, children, siblings } = treeData;
 
-  const handleViewBio = (id: string) => {
-    onNavigate('Biography', id);
+  const handleViewBio = (id: string, params?: any) => {
+    // Find member in the tree data to pass along
+    const member = 
+      (treeData.focus.id === id ? treeData.focus : null) ||
+      treeData.parents.find((m: FamilyMember) => m.id === id) ||
+      treeData.spouses.find((m: FamilyMember) => m.id === id) ||
+      treeData.children.find((m: FamilyMember) => m.id === id) ||
+      treeData.siblings.find((m: FamilyMember) => m.id === id);
+
+    onNavigate('Biography', id, { ...params, memberData: member });
   };
 
   const handleAddSuccess = (newMember: FamilyMember) => {
-    fetchTree(); // Refresh the current view
+    fetchTreeAndSetLoading(selectedId); // Refresh the current view
     if (!addRelationshipType) {
       onSelect(newMember.id); // If adding a standalone member, focus them
     }
@@ -133,8 +185,19 @@ const FamilyTreeView: React.FC<Props> = ({ onNavigate, selectedId, onSelect }) =
     <div className="bg-background-light font-display text-slate-900 min-h-screen flex flex-col overflow-hidden relative">
       {/* Top App Bar */}
       <div className="flex items-center bg-background-light p-4 pb-2 justify-between z-20 shadow-sm border-b border-slate-100">
-        <div className="text-[#0d121b] flex size-12 shrink-0 items-center justify-start cursor-pointer hover:bg-gray-100 rounded-full pl-2 transition-colors">
-          <span className="material-symbols-outlined">search</span>
+        <div className="flex items-center gap-2">
+            <div className="text-[#0d121b] flex size-12 shrink-0 items-center justify-start cursor-pointer hover:bg-gray-100 rounded-full pl-2 transition-colors">
+            <span className="material-symbols-outlined">search</span>
+            </div>
+            {onLogout && (
+            <button 
+                onClick={onLogout}
+                className="flex items-center justify-center size-10 rounded-full hover:bg-gray-100 transition-colors text-slate-500"
+                title="Sign Out"
+            >
+                <span className="material-symbols-outlined">logout</span>
+            </button>
+            )}
         </div>
         <div className="flex items-center gap-2 flex-1 justify-center">
           <img src="/logo.png" alt="Kith" className="w-8 h-8 object-contain" />
@@ -169,6 +232,11 @@ const FamilyTreeView: React.FC<Props> = ({ onNavigate, selectedId, onSelect }) =
               )}
             </>
           )}
+
+          {/* Sibling connecting lines */}
+          {siblings.length > 0 && (
+            <path d="M 50% 220 L 50% 280" fill="none" stroke="#cbd5e1" strokeWidth="2" />
+          )}
         </svg>
 
         <div className="relative flex flex-col items-center gap-16 w-full max-w-4xl pt-10">
@@ -201,7 +269,23 @@ const FamilyTreeView: React.FC<Props> = ({ onNavigate, selectedId, onSelect }) =
             )}
           </div>
 
-          {/* Gen 2: Focus & Spouses */}
+          {/* Gen 2: Siblings */}
+          {siblings.length > 0 && (
+            <div className="flex gap-6 relative z-10">
+              {siblings.map(sibling => (
+                <MemberNode 
+                  key={sibling.id} 
+                  member={sibling}
+                  isSibling
+                  siblingType={TreeService.getSiblingType(focus, sibling)}
+                  onClick={() => onSelect(sibling.id)} 
+                  onViewBio={handleViewBio}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Gen 3: Focus & Spouses */}
           <div className="flex gap-8 md:gap-32 relative z-10">
             <MemberNode 
               member={focus} 

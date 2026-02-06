@@ -16,11 +16,11 @@
 - [ ] Task: Conductor - User Manual Verification 'Data Entry' (Protocol in workflow.md)
 
 ## Phase 3: Frontend Visualization & Verification
-- [ ] Task: Verify that `FamilyTreeView.tsx` correctly displays lifespans (e.g., "1920 - 2005") for deceased members.
-- [ ] Task: Verify that `FamilyDirectory.tsx` correctly displays lifespans in the member list.
-- [ ] Task: Verify that `HorizontalTree.tsx` correctly displays lifespans in its node components.
-- [ ] Task: Verify that the `MemberBiography.tsx` timeline correctly displays the "Deceased" event with the date and place.
-- [ ] Task: Conductor - User Manual Verification 'Visual Display' (Protocol in workflow.md)
+- [x] Task: Verify that `FamilyTreeView.tsx` correctly displays lifespans (e.g., "1920 - 2005") for deceased members.
+- [x] Task: Verify that `FamilyDirectory.tsx` correctly displays lifespans in the member list.
+- [x] Task: Verify that `HorizontalTree.tsx` correctly displays lifespans in its node components.
+- [x] Task: Verify that the `MemberBiography.tsx` timeline correctly displays the "Deceased" event with the date and place.
+- [x] Task: Conductor - User Manual Verification 'Visual Display' (Protocol in workflow.md)
 
 ## Phase 4: Documentation Cleanup
-- [ ] Task: Use `kith-doc-maintainer` to update `AGENTS.md` and `README.md` if any significant architectural changes were made.
+- [x] Task: Use `kith-doc-maintainer` to update `AGENTS.md` and `README.md` if any significant architectural changes were made.

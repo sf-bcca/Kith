@@ -83,10 +83,13 @@ export default function App() {
     }
   }, [currentScreen, globalDarkMode]);
 
-  const handleNavigate = (screen: string, memberId?: string) => {
+  const [navigationParams, setNavigationParams] = useState<any>({});
+
+  const handleNavigate = (screen: string, memberId?: string, params: any = {}) => {
     if (memberId) {
       setSelectedMemberId(memberId);
     }
+    setNavigationParams(params);
     const target = Object.values(Screen).find(s => s === screen) as Screen;
     if (target) {
       setCurrentScreen(target);
@@ -96,6 +99,7 @@ export default function App() {
   };
 
   const handleWelcomeComplete = (rootMemberId: string) => {
+    console.log(`DEBUG: handleWelcomeComplete called with rootMemberId: ${rootMemberId}`);
     setLoggedInMemberId(rootMemberId);
     localStorage.setItem('kith_member_id', rootMemberId);
     setSelectedMemberId(rootMemberId);
@@ -140,8 +144,8 @@ export default function App() {
 
     switch (currentScreen) {
       case Screen.WELCOME: return <WelcomeView onComplete={handleWelcomeComplete} />;
-      case Screen.TREE: return <FamilyTreeView onNavigate={handleNavigate} selectedId={selectedMemberId} onSelect={setSelectedMemberId} />;
-      case Screen.BIO: return <MemberBiography onNavigate={handleNavigate} memberId={selectedMemberId} loggedInId={loggedInMemberId} />;
+      case Screen.TREE: return <FamilyTreeView onNavigate={handleNavigate} selectedId={selectedMemberId} onSelect={setSelectedMemberId} onLogout={handleLogout} />;
+      case Screen.BIO: return <MemberBiography onNavigate={handleNavigate} memberId={selectedMemberId} loggedInId={loggedInMemberId} onSelect={setSelectedMemberId} initialEditMode={navigationParams?.edit} initialMember={navigationParams?.memberData} />;
       case Screen.MEMORIES: return <ActivityFeed onNavigate={handleNavigate} currentUserId={loggedInMemberId} />;
       case Screen.DISCOVER: return <DiscoverView onNavigate={handleNavigate} />;
       case Screen.SETTINGS: return (

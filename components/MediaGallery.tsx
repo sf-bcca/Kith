@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatDate } from '../src/utils/dateUtils';
 
 interface MediaItem {
   url: string;
@@ -40,7 +41,7 @@ const MediaGallery: React.FC<Props> = ({ items, onSelect }) => {
           
           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2 text-white">
             <p className="text-[10px] font-bold truncate">{item.actorName}</p>
-            <p className="text-[8px] opacity-80">{new Date(item.timestamp).toLocaleDateString()}</p>
+            <p className="text-[8px] opacity-80">{formatDate(item.timestamp)}</p>
           </div>
           
           <div className="absolute top-2 right-2 size-5 bg-white/20 backdrop-blur-md rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">

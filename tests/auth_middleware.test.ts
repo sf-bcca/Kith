@@ -40,7 +40,7 @@ describe('Security: Authentication & IDOR Protection', () => {
       const otherUserId = 'user-2';
       const token = jwt.sign({ sub: 'user-1' }, JWT_SECRET);
 
-      (pool.query as any).mockResolvedValueOnce({ rows: [] });
+      (pool.query as any).mockResolvedValue({ rows: [] });
 
       const response = await request(app)
         .get(`/api/members/${otherUserId}`)

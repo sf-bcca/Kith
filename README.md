@@ -95,6 +95,7 @@ Kith/
 ├── components/          # React Components (Views, Widgets, Modals)
 │   ├── FamilyTreeView.tsx
 │   ├── FamilyManagement.tsx
+│   ├── RelationshipWizard.tsx
 │   ├── SettingsView.tsx
 │   ├── DNAMap.tsx
 │   ├── MediaGallery.tsx
@@ -132,6 +133,9 @@ Kith leverages specialized Gemini skills for automated maintenance:
 - **Schema Maintainer:** Database schema consolidation.
 - **API Bridge:** Full-stack data model synchronization.
 - **Conductor:** Development track orchestration.
+- **Security Hardener:** Backend security & transactional integrity.
+- **Media Specialist:** Robust media handling & optimization.
+- **UX Polisher:** Design consistency & accessibility.
 
 ## Navigation
 

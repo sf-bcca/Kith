@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { TreeService, AncestryData } from '../services/TreeService';
 import { FamilyMember } from '../types/family';
+import { formatDate } from '../src/utils/dateUtils';
 
 interface Props {
   onNavigate: (screen: string) => void;
@@ -104,7 +105,7 @@ const PedigreeChart: React.FC<Props> = ({ onNavigate, selectedId, onSelect, logg
             <div className="flex flex-col overflow-hidden">
                 <span className="text-sm font-semibold truncate">{person.firstName} {person.lastName}</span>
                 <span className="text-[10px] text-slate-500">
-                    {person.birthDate || '?'} - {person.deathDate || 'Present'}
+                    {formatDate(person.birthDate)} - {person.deathDate ? formatDate(person.deathDate) : 'Present'}
                 </span>
             </div>
         </div>
@@ -153,7 +154,7 @@ const PedigreeChart: React.FC<Props> = ({ onNavigate, selectedId, onSelect, logg
                 </div>
                 <div className="flex flex-col">
                   <span className="text-sm font-bold">{focusPerson.firstName} {focusPerson.lastName}</span>
-                  <span className="text-xs text-slate-500">{focusPerson.birthDate} - {focusPerson.deathDate || 'Present'}</span>
+                  <span className="text-xs text-slate-500">{formatDate(focusPerson.birthDate)} - {focusPerson.deathDate ? formatDate(focusPerson.deathDate) : 'Present'}</span>
                 </div>
               </div>
             </div>
@@ -198,7 +199,7 @@ const PedigreeChart: React.FC<Props> = ({ onNavigate, selectedId, onSelect, logg
                         </div>
                         <div className="flex flex-col overflow-hidden">
                            <span className="text-xs font-semibold truncate">{paternalGF ? `${paternalGF.firstName} ${paternalGF.lastName}` : 'Unknown'}</span>
-                           <span className="text-[9px] text-slate-500">{paternalGF ? `${paternalGF.birthDate || '?'} - ${paternalGF.deathDate || ''}` : ''}</span>
+                           <span className="text-[9px] text-slate-500">{paternalGF ? `${formatDate(paternalGF.birthDate)} - ${paternalGF.deathDate ? formatDate(paternalGF.deathDate) : ''}` : ''}</span>
                         </div>
                       </div>
                     </div>
@@ -211,7 +212,7 @@ const PedigreeChart: React.FC<Props> = ({ onNavigate, selectedId, onSelect, logg
                         </div>
                         <div className="flex flex-col overflow-hidden">
                            <span className="text-xs font-semibold truncate">{paternalGM ? `${paternalGM.firstName} ${paternalGM.lastName}` : 'Unknown'}</span>
-                           <span className="text-[9px] text-slate-500">{paternalGM ? `${paternalGM.birthDate || '?'} - ${paternalGM.deathDate || ''}` : ''}</span>
+                           <span className="text-[9px] text-slate-500">{paternalGM ? `${formatDate(paternalGM.birthDate)} - ${paternalGM.deathDate ? formatDate(paternalGM.deathDate) : ''}` : ''}</span>
                         </div>
                       </div>
                     </div>
@@ -231,7 +232,7 @@ const PedigreeChart: React.FC<Props> = ({ onNavigate, selectedId, onSelect, logg
                          </div>
                          <div className="flex flex-col overflow-hidden">
                             <span className="text-xs font-semibold truncate">{maternalGF ? `${maternalGF.firstName} ${maternalGF.lastName}` : 'Unknown'}</span>
-                            <span className="text-[9px] text-slate-500">{maternalGF ? `${maternalGF.birthDate || '?'} - ${maternalGF.deathDate || ''}` : ''}</span>
+                            <span className="text-[9px] text-slate-500">{maternalGF ? `${formatDate(maternalGF.birthDate)} - ${maternalGF.deathDate ? formatDate(maternalGF.deathDate) : ''}` : ''}</span>
                          </div>
                        </div>
                      </div>
@@ -244,7 +245,7 @@ const PedigreeChart: React.FC<Props> = ({ onNavigate, selectedId, onSelect, logg
                          </div>
                          <div className="flex flex-col overflow-hidden">
                             <span className="text-xs font-semibold truncate">{maternalGM ? `${maternalGM.firstName} ${maternalGM.lastName}` : 'Unknown'}</span>
-                            <span className="text-[9px] text-slate-500">{maternalGM ? `${maternalGM.birthDate || '?'} - ${maternalGM.deathDate || ''}` : ''}</span>
+                            <span className="text-[9px] text-slate-500">{maternalGM ? `${formatDate(maternalGM.birthDate)} - ${maternalGM.deathDate ? formatDate(maternalGM.deathDate) : ''}` : ''}</span>
                          </div>
                        </div>
                      </div>

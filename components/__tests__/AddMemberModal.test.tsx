@@ -68,4 +68,53 @@ describe('AddMemberModal', () => {
     fireEvent.click(deceasedCheckbox);
     expect(screen.queryByLabelText(/Date of Death/i)).not.toBeInTheDocument();
   });
+
+  it('shows error if death date is in the future', async () => {
+    render(
+      <AddMemberModal
+        isOpen={true}
+        onClose={mockOnClose}
+        onSuccess={mockOnSuccess}
+      />
+    );
+
+    fireEvent.change(screen.getByLabelText(/First Name/i), { target: { value: 'John' } });
+    fireEvent.change(screen.getByLabelText(/Last Name/i), { target: { value: 'Doe' } });
+    fireEvent.change(screen.getByLabelText(/Birth Date/i), { target: { value: '1980-01-01' } });
+    
+    fireEvent.click(screen.getByLabelText(/Deceased/i));
+    
+    const futureDate = new Date();
+    futureDate.setFullYear(futureDate.getFullYear() + 1);
+    const futureDateStr = futureDate.toISOString().split('T')[0];
+    
+    fireEvent.change(screen.getByLabelText(/Date of Death/i), { target: { value: futureDateStr } });
+    
+    fireEvent.click(screen.getByRole('button', { name: /Add Member/i }));
+
+    expect(await screen.findByText(/Date of Death cannot be in the future/i)).toBeInTheDocument();
+    expect(FamilyService.create).not.toHaveBeenCalled();
+  });
+
+  it('shows error if death date is before birth date', async () => {
+    render(
+      <AddMemberModal
+        isOpen={true}
+        onClose={mockOnClose}
+        onSuccess={mockOnSuccess}
+      />
+    );
+
+    fireEvent.change(screen.getByLabelText(/First Name/i), { target: { value: 'John' } });
+    fireEvent.change(screen.getByLabelText(/Last Name/i), { target: { value: 'Doe' } });
+    fireEvent.change(screen.getByLabelText(/Birth Date/i), { target: { value: '1980-01-01' } });
+    
+    fireEvent.click(screen.getByLabelText(/Deceased/i));
+    fireEvent.change(screen.getByLabelText(/Date of Death/i), { target: { value: '1970-01-01' } });
+    
+    fireEvent.click(screen.getByRole('button', { name: /Add Member/i }));
+
+    expect(await screen.findByText(/Date of Death must be after Date of Birth/i)).toBeInTheDocument();
+    expect(FamilyService.create).not.toHaveBeenCalled();
+  });
 });

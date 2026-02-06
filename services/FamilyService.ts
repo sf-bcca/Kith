@@ -1,9 +1,11 @@
 import { FamilyMember, FilterCriteria, LoginCredentials } from '../types/family';
 
-const API_URL = import.meta.env.VITE_API_URL || '';
+const API_URL = (typeof import.meta.env !== 'undefined' && import.meta.env.VITE_API_URL) || 
+                (typeof process !== 'undefined' && process.env.VITE_API_URL) || 
+                '';
 
 export class FamilyService {
-  private static token: string | null = localStorage.getItem('kith_token');
+  private static token: string | null = typeof localStorage !== 'undefined' ? localStorage.getItem('kith_token') : null;
 
   private static getHeaders(extraHeaders: Record<string, string> = {}): Record<string, string> {
     const headers: Record<string, string> = {
@@ -18,10 +20,12 @@ export class FamilyService {
 
   static setToken(token: string | null) {
     this.token = token;
-    if (token) {
-      localStorage.setItem('kith_token', token);
-    } else {
-      localStorage.removeItem('kith_token');
+    if (typeof localStorage !== 'undefined') {
+      if (token) {
+        localStorage.setItem('kith_token', token);
+      } else {
+        localStorage.removeItem('kith_token');
+      }
     }
   }
 
@@ -87,17 +91,30 @@ export class FamilyService {
    * @returns A promise that resolves to the FamilyMember object if found, otherwise undefined.
    */
   static async getById(id: string): Promise<FamilyMember | undefined> {
-    const response = await fetch(`${API_URL}/api/members/${id}`, {
-      headers: this.getHeaders(),
-    });
-    if (response.status === 404) {
-      return undefined;
+    try {
+      const response = await fetch(`${API_URL}/api/members/${id}`, {
+        headers: this.getHeaders(),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        return this.mapBackendToFrontend(data);
+      }
+    } catch (err) {
+      console.warn(`Primary getById failed for ${id}, trying fallback...`, err);
     }
-    if (!response.ok) {
-      throw new Error('Failed to fetch family member');
+
+    // Fallback: Try finding via getByIds (list endpoint) which might have different visibility/filtering rules
+    try {
+      console.log(`DEBUG: Attempting fallback getByIds for ${id}`);
+      const members = await this.getByIds([id]);
+      if (members && members.length > 0) {
+        return members[0];
+      }
+    } catch (fallbackErr) {
+      console.error(`Fallback getByIds failed for ${id}`, fallbackErr);
     }
-    const data = await response.json();
-    return this.mapBackendToFrontend(data);
+
+    return undefined;
   }
 
   /**
@@ -398,15 +415,15 @@ export class FamilyService {
       data_sharing: member.dataSharing,
       notifications_email: member.notificationsEmail,
       notifications_push: member.notificationsPush,
+      siblings: member.siblings,
     };
 
     // Only include relationships if at least one is explicitly provided
-    if (member.parents !== undefined || member.spouses !== undefined || member.children !== undefined || member.siblings !== undefined) {
+    if (member.parents !== undefined || member.spouses !== undefined || member.children !== undefined) {
       result.relationships = {
         parents: member.parents,
         spouses: member.spouses,
         children: member.children,
-        siblings: member.siblings,
       };
     }
 

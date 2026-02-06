@@ -5,7 +5,7 @@ import { FamilyService } from '../services/FamilyService';
 import { FamilyMember } from '../types/family';
 
 interface Props {
-  onNavigate: (screen: string) => void;
+  onNavigate: (screen: string, memberId?: string) => void;
 }
 
 const FamilyDirectory: React.FC<Props> = ({ onNavigate }) => {
@@ -72,6 +72,7 @@ const FamilyDirectory: React.FC<Props> = ({ onNavigate }) => {
               {group.map(member => (
                 <div 
                   key={member.id} 
+                  onClick={() => onNavigate('Biography', member.id)}
                   className="flex items-center gap-4 px-4 min-h-[72px] py-2 justify-between hover:bg-slate-50 transition-colors cursor-pointer group"
                 >
                   <div className="flex items-center gap-4">
