@@ -23,7 +23,7 @@ Extract common logic to ensure consistency across the application.
     - [x] Implement `validateLifespan` in `src/utils/dateUtils.ts`
 - [x] Task: Conductor - User Manual Verification 'Shared Logic & Validation' (Protocol in workflow.md) 6ecfaeb
 
-## Phase 3: Frontend Persistence & Relationship Wizard (TDD)
+## Phase 3: Frontend Persistence & Relationship Wizard (TDD) [checkpoint: c04d20e]
 Update the UI to correctly handle enhanced data structures and placeholder persistence.
 
 - [x] Task: Update Frontend Service Layer 38dfb11
@@ -35,12 +35,12 @@ Update the UI to correctly handle enhanced data structures and placeholder persi
     - [x] Update `MemberBiography.tsx` to use the shared validation and enhanced persistence
 - [x] Task: Remove Frontend Timing Workarounds 8b05ddc
     - [x] Remove `setTimeout` retry logic from `FamilyTreeView.tsx`
-- [~] Task: Conductor - User Manual Verification 'Frontend Persistence & Relationship Wizard' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Frontend Persistence & Relationship Wizard' (Protocol in workflow.md) c04d20e
 
 ## Phase 4: Visualization & UX (TDD)
 Correct the visual representation of complex families.
 
-- [ ] Task: Fix Sibling Connecting Lines
+- [~] Task: Fix Sibling Connecting Lines
     - [ ] Write failing tests for sibling bracket positioning in `FamilyTreeView.test.tsx`
     - [ ] Update SVG logic in `FamilyTreeView.tsx` to render horizontal brackets for multiple siblings
 - [ ] Task: Display Custom Sibling Types
