@@ -31,7 +31,7 @@ Stores detailed profiles and system account information for all family members.
 | data_sharing | BOOLEAN | | TRUE | Consent for data analytics |
 | notifications_email | BOOLEAN | | TRUE | Email notification toggle |
 | notifications_push | BOOLEAN | | TRUE | Push notification toggle |
-| siblings | JSONB | | '[]' | Array of explicit sibling relationship links (UUIDs) |
+| siblings | JSONB | | '[]' | Array of sibling objects: { id: UUID, type: SiblingType } |
 | created_at | TIMESTAMPTZ | | CURRENT_TIMESTAMP | Record creation time |
 | updated_at | TIMESTAMPTZ | | CURRENT_TIMESTAMP | Last record update time |
 
