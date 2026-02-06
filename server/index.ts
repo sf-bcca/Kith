@@ -87,31 +87,20 @@ app.get('/api/members/:id', authenticate, async (req: Request, res: Response, ne
   const { id } = req.params;
   const userId = (req as any).user.id;
   try {
-    console.log(`DEBUG: GET /api/members/${id} called by user ${userId}`);
     let result = await pool.query(
       `SELECT ${MEMBER_COLUMNS} FROM family_members WHERE id = $1 AND (visibility = 'public' OR visibility = 'family-only' OR id = $2)`, 
       [id, userId]
     );
 
+    // Removed setTimeout logic as per track requirement
+    
     if (result.rows.length === 0) {
-      console.log(`DEBUG: Member ${id} not found for user ${userId}. Retrying in 500ms...`);
-      await new Promise(resolve => setTimeout(resolve, 500));
-      result = await pool.query(
-        `SELECT ${MEMBER_COLUMNS} FROM family_members WHERE id = $1 AND (visibility = 'public' OR visibility = 'family-only' OR id = $2)`, 
-        [id, userId]
-      );
-    }
-
-    if (result.rows.length === 0) {
-      console.log(`DEBUG: Member ${id} not found or unauthorized for user ${userId} after retry`);
       return res.status(404).json({ error: 'Member not found or unauthorized' });
     }
-    console.log(`DEBUG: Member ${id} found for user ${userId}`);
     // Explicitly sanitize as defense in depth
     const { password, ...sanitizedMember } = result.rows[0];
     res.json(sanitizedMember);
   } catch (err: any) {
-    console.error(`DEBUG: Error in GET /api/members/${id} for user ${userId}:`, err);
     next(err);
   }
 });
@@ -119,35 +108,27 @@ app.get('/api/members/:id', authenticate, async (req: Request, res: Response, ne
 app.get('/api/members/:id/siblings', authenticate, async (req: Request, res: Response, next) => {
   const { id } = req.params;
   try {
-    console.log(`DEBUG: GET /api/members/${id}/siblings called`);
-    
-    // Simple retry logic for newly created members
-    let memberResult = await pool.query(
+    // Removed setTimeout logic
+    const memberResult = await pool.query(
       'SELECT first_name, last_name, siblings, relationships FROM family_members WHERE id = $1',
       [id]
     );
 
     if (memberResult.rows.length === 0) {
-      console.log(`DEBUG: Member ${id} not found in siblings route. Retrying in 500ms...`);
-      await new Promise(resolve => setTimeout(resolve, 500));
-      memberResult = await pool.query(
-        'SELECT first_name, last_name, siblings, relationships FROM family_members WHERE id = $1',
-        [id]
-      );
-    }
-    
-    if (memberResult.rows.length === 0) {
-      console.log(`DEBUG: Member ${id} still not found in siblings route after retry.`);
       return res.status(404).json({ error: 'Member not found' });
     }
     
-    const { first_name, last_name, siblings: rawSiblings, relationships } = memberResult.rows[0];
-    console.log(`DEBUG: Member ${id} (${first_name} ${last_name}) found in siblings route.`);
-    const explicitSiblings = Array.isArray(rawSiblings) ? rawSiblings : [];
+    const { siblings: rawSiblings, relationships } = memberResult.rows[0];
+    
+    // Normalize siblings to objects
+    const explicitSiblings = Array.isArray(rawSiblings) 
+      ? rawSiblings.map((s: any) => typeof s === 'string' ? { id: s, type: 'Full' } : s)
+      : [];
+      
     const parents = relationships?.parents || [];
     
     // Get implied siblings (share at least one parent)
-    let impliedSiblings: string[] = [];
+    let impliedIds: string[] = [];
     if (parents.length > 0) {
       const impliedResult = await pool.query(
         `SELECT DISTINCT id FROM family_members 
@@ -158,31 +139,62 @@ app.get('/api/members/:id/siblings', authenticate, async (req: Request, res: Res
          )`,
         [id, parents]
       );
-      impliedSiblings = impliedResult.rows.map(row => row.id);
+      impliedIds = impliedResult.rows.map(row => row.id);
     }
     
-    // Combine and deduplicate siblings
-    const allSiblingIds = new Set([...(explicitSiblings || []), ...impliedSiblings]);
+    // Merge explicit and implied. Explicit takes precedence for metadata (type).
+    const siblingMap = new Map<string, any>();
     
-    // Get full sibling records
-    if (allSiblingIds.size === 0) {
+    // Add implied first as generic 'Full' (or we could derive type based on shared parents, but keep simple for now)
+    // Actually, implied siblings are "Full" by default unless specified otherwise in explicit list?
+    // For now, implied just ensures they are in the list.
+    impliedIds.forEach(sid => siblingMap.set(sid, { id: sid, type: 'Full' }));
+    
+    // Overwrite with explicit settings
+    explicitSiblings.forEach((s: any) => siblingMap.set(s.id, s));
+    
+    if (siblingMap.size === 0) {
       return res.json([]);
     }
     
     const siblingsResult = await pool.query(
       `SELECT ${MEMBER_COLUMNS} FROM family_members WHERE id = ANY($1)`,
-      [Array.from(allSiblingIds)]
+      [Array.from(siblingMap.keys())]
     );
     
-    const sanitizedSiblings = siblingsResult.rows.map(({ password, ...rest }: any) => rest);
+    const sanitizedSiblings = siblingsResult.rows.map(({ password, ...rest }: any) => {
+        // Attach the type info to the returned object?
+        // The API contract usually returns FamilyMember objects. 
+        // But the consumer might want to know the relationship type.
+        // For now, return standard member objects. The frontend might need to fetch the relationship details separately or we augment here.
+        // The test expects [{id: 's1', type: 'Full'}] ?? No, test expects standard members?
+        // Wait, the test: expect(response.body.map((s: any) => s.id)).toContain('s1');
+        // It doesn't check the structure deeply for type property on the root.
+        // However, the task says: "Modify siblings column ... to store ... { id, type }".
+        // This endpoint returns *members* (the sibling profiles), NOT the relationship objects.
+        // But maybe it should return the relationship metadata?
+        // Current implementation returns full member profiles.
+        // I will return the member profiles as before.
+        return rest;
+    });
     res.json(sanitizedSiblings);
   } catch (err: any) {
     next(err);
   }
 });
 
+// Helper for Sibling Handling
+type SiblingLink = { id: string; type: string };
+function normalizeSiblings(siblings: any[] | null): SiblingLink[] {
+  if (!Array.isArray(siblings)) return [];
+  return siblings.map(s => typeof s === 'string' ? { id: s, type: 'Full' } : { id: s.id, type: s.type || 'Full' });
+}
+
 app.post('/api/members', async (req: Request, res: Response, next) => {
+  const client = await pool.connect();
   try {
+    await client.query('BEGIN');
+
     const { 
       first_name, last_name, maiden_name, birth_date, birth_place, death_date, death_place, gender, bio, profile_image, relationships, siblings, password,
       email, username, dark_mode, language, visibility, data_sharing, notifications_email, notifications_push, role
@@ -193,7 +205,10 @@ app.post('/api/members', async (req: Request, res: Response, next) => {
       hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
     }
 
-    const result = await pool.query(
+    // Normalize siblings
+    const normalizedSiblings = normalizeSiblings(siblings);
+
+    const result = await client.query(
       `INSERT INTO family_members 
       (first_name, last_name, maiden_name, birth_date, birth_place, death_date, death_place, gender, bio, profile_image, relationships, siblings, password,
        email, username, dark_mode, language, visibility, data_sharing, notifications_email, notifications_push, role) 
@@ -202,7 +217,7 @@ app.post('/api/members', async (req: Request, res: Response, next) => {
       [
         first_name, last_name, maiden_name, birth_date, birth_place, death_date, death_place, gender, bio, profile_image, 
         relationships ? JSON.stringify(relationships) : JSON.stringify({}), 
-        siblings ? JSON.stringify(siblings) : JSON.stringify([]), 
+        JSON.stringify(normalizedSiblings), 
         hashedPassword,
         email || null, username || null, dark_mode, language, visibility || 'family-only', data_sharing, notifications_email, notifications_push, role || 'member'
       ]
@@ -210,9 +225,11 @@ app.post('/api/members', async (req: Request, res: Response, next) => {
 
     const newMember = result.rows[0];
     const rels = relationships || {};
+
+    // Reciprocal Parent/Child/Spouse updates
     if (rels.parents?.length) {
       for (const parentId of rels.parents) {
-        await pool.query(
+        await client.query(
           `UPDATE family_members 
            SET relationships = jsonb_set(
              COALESCE(relationships, '{}')::jsonb,
@@ -226,7 +243,7 @@ app.post('/api/members', async (req: Request, res: Response, next) => {
     }
     if (rels.children?.length) {
       for (const childId of rels.children) {
-        await pool.query(
+        await client.query(
           `UPDATE family_members 
            SET relationships = jsonb_set(
              COALESCE(relationships, '{}')::jsonb,
@@ -240,7 +257,7 @@ app.post('/api/members', async (req: Request, res: Response, next) => {
     }
     if (rels.spouses?.length) {
       for (const spouseId of rels.spouses) {
-        await pool.query(
+        await client.query(
           `UPDATE family_members 
            SET relationships = jsonb_set(
              COALESCE(relationships, '{}')::jsonb,
@@ -252,41 +269,46 @@ app.post('/api/members', async (req: Request, res: Response, next) => {
         );
       }
     }
-    // Handle explicit sibling links
-    if (siblings?.length) {
-      for (const siblingId of siblings) {
-        // Add new member to sibling's siblings list
-        await pool.query(
-          `UPDATE family_members 
-           SET siblings = COALESCE(siblings, '[]')::jsonb || $1::jsonb
-           WHERE id = $2 AND NOT (COALESCE(siblings, '[]')::jsonb @> $1::jsonb)`,
-          [JSON.stringify([newMember.id]), siblingId]
-        );
-        // Add sibling to new member's siblings list
-        await pool.query(
-          `UPDATE family_members 
-           SET siblings = COALESCE(siblings, '[]')::jsonb || $1::jsonb
-           WHERE id = $2`,
-          [JSON.stringify([siblingId]), newMember.id]
-        );
+
+    // Reciprocal Sibling updates
+    for (const sib of normalizedSiblings) {
+      // Add new member to sibling's list (using the same type? Or reciprocal? Assuming symmetric for now)
+      // Check if already linked to avoid duplicates
+      // Note: We store {id, type}. To append safely, we must read-modify-write or use smart JSONB logic.
+      // Postgres JSONB helpers are limited for searching inside array of objects.
+      // Safest: Append if not exists.
+      
+      // We will perform a check-and-update or just blind append (duplicates handled by UI?)
+      // Better: Read sibling, add if missing, write back.
+      // Within transaction, this is safe.
+      
+      const sibRes = await client.query('SELECT siblings FROM family_members WHERE id = $1 FOR UPDATE', [sib.id]);
+      if (sibRes.rows.length > 0) {
+        let sibsList = normalizeSiblings(sibRes.rows[0].siblings);
+        if (!sibsList.find(s => s.id === newMember.id)) {
+          sibsList.push({ id: newMember.id, type: sib.type }); // Symmetric type
+          await client.query('UPDATE family_members SET siblings = $1 WHERE id = $2', [JSON.stringify(sibsList), sib.id]);
+        }
       }
     }
 
+    await client.query('COMMIT');
     const { password: _, ...sanitizedMember } = newMember;
     res.status(201).json(sanitizedMember);
   } catch (err: any) {
+    await client.query('ROLLBACK');
     if (err.code === '23505') {
       return res.status(409).json({ error: 'A member with these details already exists.' });
     }
     next(err);
+  } finally {
+    client.release();
   }
 });
 
 app.post('/api/auth/login', async (req: Request, res: Response, next) => {
   try {
     const { first_name, last_name, birth_date, password } = req.body;
-    
-    // Find member by name and birth date
     const result = await pool.query(
       'SELECT * FROM family_members WHERE first_name = $1 AND last_name = $2 AND birth_date = $3',
       [first_name, last_name, birth_date]
@@ -295,10 +317,7 @@ app.post('/api/auth/login', async (req: Request, res: Response, next) => {
     if (result.rows.length === 0) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
-
     const member = result.rows[0];
-
-    // Check password using bcrypt
     if (member.password) {
       const isMatch = await bcrypt.compare(password, member.password);
       if (!isMatch) {
@@ -307,15 +326,11 @@ app.post('/api/auth/login', async (req: Request, res: Response, next) => {
     } else if (password) {
       return res.status(401).json({ error: 'Invalid password' });
     }
-
-    // Generate JWT with role
     const token = jwt.sign(
       { sub: member.id, role: member.role }, 
       getJwtSecret(), 
       { expiresIn: '24h' }
     );
-
-    // Exclude password from response
     const { password: _, ...memberWithoutPassword } = member;
     res.json({ member: memberWithoutPassword, token });
   } catch (err: any) {
@@ -324,196 +339,215 @@ app.post('/api/auth/login', async (req: Request, res: Response, next) => {
 });
 
 app.put('/api/members/:id', authenticate, async (req: Request, res: Response, next) => {
+  const client = await pool.connect();
   try {
+    await client.query('BEGIN');
     const { id } = req.params;
-    const { 
-      first_name, last_name, maiden_name, birth_date, birth_place, death_date, death_place, gender, bio, profile_image, relationships, siblings, password,
-      email, username, dark_mode, language, visibility, data_sharing, notifications_email, notifications_push, role
-    } = req.body;
     
-    let hashedPassword = password;
-    if (password && !password.startsWith('$2b$')) { // Basic check to avoid re-hashing
-      hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+    // Lock and fetch current
+    const currentRes = await client.query('SELECT * FROM family_members WHERE id = $1 FOR UPDATE', [id]);
+    if (currentRes.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Member not found' });
+    }
+    const currentMember = currentRes.rows[0];
+
+    // Merge request body with current member to handle partial updates and allow NULLs
+    const merged = { ...currentMember, ...req.body };
+    // Careful: req.body might not have all fields.
+    // If a field is explicitly null in req.body, it should be null in merged.
+    // If undefined, it should be ignored (keep current).
+    // The spread {...current, ...body} does this correctly for null/value. 
+    // But if body has undefined, it might override with undefined? 
+    // JSON.stringify/parse usually removes undefined. Express req.body typically doesn't have undefined keys.
+    // However, we should be explicit for safety.
+    
+    const fields = [
+      'first_name', 'last_name', 'maiden_name', 'birth_date', 'birth_place', 
+      'death_date', 'death_place', 'gender', 'bio', 'profile_image', 
+      'email', 'username', 'dark_mode', 'language', 'visibility', 
+      'data_sharing', 'notifications_email', 'notifications_push', 'role'
+    ];
+    
+    const updateValues: any = {};
+    fields.forEach(f => {
+      if (req.body[f] !== undefined) {
+        updateValues[f] = req.body[f];
+      } else {
+        updateValues[f] = currentMember[f];
+      }
+    });
+
+    // Handle Password
+    if (req.body.password && !req.body.password.startsWith('$2b$')) {
+      updateValues.password = await bcrypt.hash(req.body.password, SALT_ROUNDS);
+    } else {
+      updateValues.password = currentMember.password;
     }
 
-    // Handle explicit sibling list updates (bidirectional sync)
-    if (Array.isArray(siblings)) {
-      // Get current siblings to determine additions/removals
-      const currentRes = await pool.query('SELECT siblings FROM family_members WHERE id = $1', [id]);
-      const rawSiblings = currentRes.rows[0]?.siblings;
-      const currentSiblings = Array.isArray(rawSiblings) ? rawSiblings : [];
-      
-      const newSiblingIds = siblings as string[];
-      const added = newSiblingIds.filter(sid => !currentSiblings.includes(sid));
-      const removed = currentSiblings.filter((sid: string) => !newSiblingIds.includes(sid));
-
-      // Handle Added: Add 'id' to their siblings list
-      for (const addedId of added) {
-        await pool.query(
-          `UPDATE family_members 
-           SET siblings = COALESCE(siblings, '[]')::jsonb || $1::jsonb
-           WHERE id = $2 AND NOT (COALESCE(siblings, '[]')::jsonb @> $1::jsonb)`,
-          [JSON.stringify([id]), addedId]
-        );
-      }
-
-      // Handle Removed: Remove 'id' from their siblings list
-      for (const removedId of removed) {
-        await pool.query(
-          "UPDATE family_members SET siblings = COALESCE(siblings, '[]')::jsonb - $1 WHERE id = $2",
-          [id, removedId]
-        );
+    // Handle Siblings Logic
+    let newSiblingsList: SiblingLink[] = normalizeSiblings(currentMember.siblings);
+    
+    if (req.body.siblings !== undefined) {
+      if (Array.isArray(req.body.siblings)) {
+        const incomingSiblings = normalizeSiblings(req.body.siblings);
+        const currentSiblings = normalizeSiblings(currentMember.siblings);
+        
+        // Determine Added and Removed
+        const currentIds = new Set(currentSiblings.map(s => s.id));
+        const incomingIds = new Set(incomingSiblings.map(s => s.id));
+        
+        const added = incomingSiblings.filter(s => !currentIds.has(s.id));
+        const removed = currentSiblings.filter(s => !incomingIds.has(s.id));
+        
+        // Reciprocal Updates
+        // Added: Add 'id' to their lists
+        for (const s of added) {
+          const sRes = await client.query('SELECT siblings FROM family_members WHERE id = $1 FOR UPDATE', [s.id]);
+          if (sRes.rows.length > 0) {
+            let sList = normalizeSiblings(sRes.rows[0].siblings);
+            if (!sList.find(x => x.id === id)) {
+              sList.push({ id, type: s.type });
+              await client.query('UPDATE family_members SET siblings = $1 WHERE id = $2', [JSON.stringify(sList), s.id]);
+            }
+          }
+        }
+        
+        // Removed: Remove 'id' from their lists
+        for (const s of removed) {
+          const sRes = await client.query('SELECT siblings FROM family_members WHERE id = $1 FOR UPDATE', [s.id]);
+          if (sRes.rows.length > 0) {
+            let sList = normalizeSiblings(sRes.rows[0].siblings);
+            const newList = sList.filter(x => x.id !== id);
+            if (sList.length !== newList.length) {
+              await client.query('UPDATE family_members SET siblings = $1 WHERE id = $2', [JSON.stringify(newList), s.id]);
+            }
+          }
+        }
+        
+        newSiblingsList = incomingSiblings;
+      } else if (typeof req.body.siblings === 'object') {
+        // Special action handling (legacy/helper)
+        const { action, siblingId } = req.body.siblings;
+        if (action === 'remove' && siblingId) {
+          newSiblingsList = newSiblingsList.filter(s => s.id !== siblingId);
+          // Reciprocal remove
+           const sRes = await client.query('SELECT siblings FROM family_members WHERE id = $1 FOR UPDATE', [siblingId]);
+           if (sRes.rows.length > 0) {
+             let sList = normalizeSiblings(sRes.rows[0].siblings);
+             const newList = sList.filter(x => x.id !== id);
+             await client.query('UPDATE family_members SET siblings = $1 WHERE id = $2', [JSON.stringify(newList), siblingId]);
+           }
+        }
       }
     }
 
-    // Handle special sibling actions (like removal)
-    let finalSiblings = siblings;
-    if (siblings && typeof siblings === 'object' && !Array.isArray(siblings)) {
-      const { action, siblingId } = siblings as any;
-      if (action === 'remove' && siblingId) {
-        // Remove siblingId from this member's list
-        const res = await pool.query(
-          "UPDATE family_members SET siblings = COALESCE(siblings, '[]')::jsonb - $1 WHERE id = $2 RETURNING siblings",
-          [siblingId, id]
-        );
-        // Remove this member from siblingId's list
-        await pool.query(
-          "UPDATE family_members SET siblings = COALESCE(siblings, '[]')::jsonb - $1 WHERE id = $2",
-          [id, siblingId]
-        );
-        // Set finalSiblings to the newly returned list from the DB so the main update uses it
-        finalSiblings = res.rows[0].siblings;
-      }
+    // Role Security
+    if (updateValues.role && (req as any).user.role !== 'admin') {
+      updateValues.role = currentMember.role; // Ignore role change if not admin
     }
 
-    // Only admins can change roles
-    const targetRole = (req as any).user.role === 'admin' ? role : undefined;
-
-    // Ensure JSONB fields are stringified if they are objects/arrays
-    const dbRelationships = relationships ? JSON.stringify(relationships) : null;
-    const dbSiblings = finalSiblings ? JSON.stringify(finalSiblings) : null;
-
-    const result = await pool.query(
+    // Execute Main Update
+    const result = await client.query(
       `UPDATE family_members SET 
-      first_name = COALESCE($1, first_name), 
-      last_name = COALESCE($2, last_name), 
-      maiden_name = COALESCE($3, maiden_name), 
-      birth_date = COALESCE($4, birth_date), 
-      birth_place = COALESCE($5, birth_place),
-      death_date = COALESCE($6, death_date), 
-      death_place = COALESCE($7, death_place),
-      gender = COALESCE($8, gender), 
-      bio = COALESCE($9, bio), 
-      profile_image = COALESCE($10, profile_image), 
-      relationships = COALESCE($11::jsonb, relationships),
-      siblings = COALESCE($12::jsonb, siblings),
-      password = CASE WHEN $13::VARCHAR IS NOT NULL AND $13::VARCHAR <> '' THEN $13::VARCHAR ELSE password END,
-      email = COALESCE($14, email),
-      username = COALESCE($15, username),
-      dark_mode = COALESCE($16, dark_mode),
-      language = COALESCE($17, language),
-      visibility = COALESCE($18, visibility),
-      data_sharing = COALESCE($19, data_sharing),
-      notifications_email = COALESCE($20, notifications_email),
-      notifications_push = COALESCE($21, notifications_push),
-      role = COALESCE($22, role)
+      first_name = $1, last_name = $2, maiden_name = $3, birth_date = $4, birth_place = $5,
+      death_date = $6, death_place = $7, gender = $8, bio = $9, profile_image = $10, 
+      relationships = $11::jsonb, siblings = $12::jsonb, password = $13,
+      email = $14, username = $15, dark_mode = $16, language = $17, visibility = $18,
+      data_sharing = $19, notifications_email = $20, notifications_push = $21, role = $22
       WHERE id = $23 
       RETURNING ${MEMBER_COLUMNS}`,
       [
-        first_name, last_name, maiden_name, birth_date, birth_place, death_date, death_place, gender, bio, profile_image, 
-        dbRelationships, dbSiblings, hashedPassword,
-        email, username, dark_mode, language, visibility, data_sharing, notifications_email, notifications_push,
-        targetRole,
+        updateValues.first_name, updateValues.last_name, updateValues.maiden_name, updateValues.birth_date, updateValues.birth_place,
+        updateValues.death_date, updateValues.death_place, updateValues.gender, updateValues.bio, updateValues.profile_image,
+        req.body.relationships ? JSON.stringify(req.body.relationships) : JSON.stringify(currentMember.relationships || {}),
+        JSON.stringify(newSiblingsList),
+        updateValues.password,
+        updateValues.email, updateValues.username, updateValues.dark_mode, updateValues.language, updateValues.visibility,
+        updateValues.data_sharing, updateValues.notifications_email, updateValues.notifications_push, updateValues.role,
         id
       ]
     );
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Member not found' });
-    }
-    // Explicitly sanitize
+    await client.query('COMMIT');
     const { password: _, ...sanitizedMember } = result.rows[0];
     res.json(sanitizedMember);
+
   } catch (err: any) {
+    await client.query('ROLLBACK');
     next(err);
+  } finally {
+    client.release();
   }
 });
 
 app.post('/api/members/link', authenticate, async (req: Request, res: Response, next) => {
+  const client = await pool.connect();
   try {
+    await client.query('BEGIN');
     const { memberId, relativeId, relationshipType } = req.body;
 
     if (!memberId || !relativeId || !relationshipType) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
-
     if (memberId === relativeId) {
       return res.status(400).json({ error: 'Cannot link a member to themselves' });
     }
 
-    // Determine reciprocal relationship
-    let memberKey: string; // Key to update in memberId's relationships
-    let relativeKey: string; // Key to update in relativeId's relationships
+    // Helper to update jsonb array field
+    const addRelation = async (targetId: string, field: string, valueId: string) => {
+       await client.query(
+        `UPDATE family_members 
+         SET relationships = jsonb_set(
+           COALESCE(relationships, '{}')::jsonb,
+           '{${field}}',
+           COALESCE(relationships->'${field}', '[]')::jsonb || $1::jsonb
+         )
+         WHERE id = $2 AND NOT (COALESCE(relationships->'${field}', '[]')::jsonb @> $1::jsonb)`,
+        [JSON.stringify([valueId]), targetId]
+      );
+    };
 
     switch (relationshipType) {
       case 'parent': // relativeId is parent of memberId
-        memberKey = 'parents';
-        relativeKey = 'children';
+        await addRelation(memberId, 'parents', relativeId);
+        await addRelation(relativeId, 'children', memberId);
         break;
       case 'child': // relativeId is child of memberId
-        memberKey = 'children';
-        relativeKey = 'parents';
+        await addRelation(memberId, 'children', relativeId);
+        await addRelation(relativeId, 'parents', memberId);
         break;
       case 'spouse': // relativeId is spouse of memberId
-        memberKey = 'spouses';
-        relativeKey = 'spouses';
+        await addRelation(memberId, 'spouses', relativeId);
+        await addRelation(relativeId, 'spouses', memberId);
         break;
       case 'sibling':
-        // Update both members' siblings lists
-        await pool.query(
-          `UPDATE family_members 
-           SET siblings = COALESCE(siblings, '[]')::jsonb || $1::jsonb
-           WHERE id = $2 AND NOT (COALESCE(siblings, '[]')::jsonb @> $1::jsonb)`,
-          [JSON.stringify([relativeId]), memberId]
-        );
-        await pool.query(
-          `UPDATE family_members 
-           SET siblings = COALESCE(siblings, '[]')::jsonb || $1::jsonb
-           WHERE id = $2 AND NOT (COALESCE(siblings, '[]')::jsonb @> $1::jsonb)`,
-          [JSON.stringify([memberId]), relativeId]
-        );
-        return res.json({ message: 'Members linked as siblings successfully' });
+        // Update both members' siblings lists (transactional read-modify-write for objects)
+        const updateSib = async (target: string, value: string) => {
+           const res = await client.query('SELECT siblings FROM family_members WHERE id = $1 FOR UPDATE', [target]);
+           if (res.rows.length > 0) {
+             const list = normalizeSiblings(res.rows[0].siblings);
+             if (!list.find(s => s.id === value)) {
+               list.push({ id: value, type: 'Full' });
+               await client.query('UPDATE family_members SET siblings = $1 WHERE id = $2', [JSON.stringify(list), target]);
+             }
+           }
+        };
+        await updateSib(memberId, relativeId);
+        await updateSib(relativeId, memberId);
+        break;
       default:
+        await client.query('ROLLBACK');
         return res.status(400).json({ error: 'Invalid relationship type' });
     }
 
-    // Update memberId's relationships
-    await pool.query(
-      `UPDATE family_members 
-       SET relationships = jsonb_set(
-         COALESCE(relationships, '{}')::jsonb,
-         '{${memberKey}}',
-         COALESCE(relationships->'${memberKey}', '[]')::jsonb || $1::jsonb
-       )
-       WHERE id = $2 AND NOT (COALESCE(relationships->'${memberKey}', '[]')::jsonb @> $1::jsonb)`,
-      [JSON.stringify([relativeId]), memberId]
-    );
-
-    // Update relativeId's relationships
-    await pool.query(
-      `UPDATE family_members 
-       SET relationships = jsonb_set(
-         COALESCE(relationships, '{}')::jsonb,
-         '{${relativeKey}}',
-         COALESCE(relationships->'${relativeKey}', '[]')::jsonb || $1::jsonb
-       )
-       WHERE id = $2 AND NOT (COALESCE(relationships->'${relativeKey}', '[]')::jsonb @> $1::jsonb)`,
-      [JSON.stringify([memberId]), relativeId]
-    );
-
+    await client.query('COMMIT');
     res.json({ message: 'Members linked successfully' });
   } catch (err: any) {
+    await client.query('ROLLBACK');
     next(err);
+  } finally {
+    client.release();
   }
 });
 

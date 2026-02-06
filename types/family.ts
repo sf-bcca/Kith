@@ -25,7 +25,14 @@ export interface FamilyMember {
   parents: string[];
   spouses: string[];
   children: string[];
-  siblings: string[]; // Array of FamilyMember IDs for explicit sibling links
+  siblings: SiblingRelationship[]; // Array of explicit sibling links
+}
+
+export type SiblingType = 'Full' | 'Half' | 'Step' | 'Adopted';
+
+export interface SiblingRelationship {
+  id: string;
+  type: SiblingType;
 }
 
 export interface LoginCredentials {

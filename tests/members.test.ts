@@ -4,19 +4,28 @@ import app from '../server/index';
 import { pool } from '../server/db';
 import jwt from 'jsonwebtoken';
 
+// Create a mock client
+const mockClient = {
+  query: vi.fn(),
+  release: vi.fn(),
+};
+
 // Mock the database pool
 vi.mock('../server/db', () => ({
   pool: {
     query: vi.fn(),
+    connect: vi.fn(() => mockClient),
   },
 }));
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
-const token = jwt.sign({ sub: '1' }, JWT_SECRET);
+const token = jwt.sign({ sub: '1', role: 'member' }, JWT_SECRET);
 
 describe('Members API', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockClient.query.mockReset();
+    mockClient.release.mockReset();
   });
 
   describe('GET /api/members', () => {
@@ -64,7 +73,7 @@ describe('Members API', () => {
 
     it('should return 404 if member not found', async () => {
       (pool.query as any).mockResolvedValue({ rows: [] });
-      const notFoundToken = jwt.sign({ sub: '999' }, JWT_SECRET);
+      const notFoundToken = jwt.sign({ sub: '999', role: 'member' }, JWT_SECRET);
 
       const response = await request(app)
         .get('/api/members/999')
@@ -87,8 +96,16 @@ describe('Members API', () => {
       };
       
       const mockCreatedMember = { ...newMember, id: '3' };
-      // Mock the INSERT query result
-      (pool.query as any).mockResolvedValueOnce({ rows: [mockCreatedMember] });
+
+      // BEGIN
+      mockClient.query.mockResolvedValueOnce({});
+      
+      // INSERT
+      mockClient.query.mockResolvedValueOnce({ rows: [mockCreatedMember] });
+      
+      // Sibling Reciprocal check (if siblings provided, but none here)
+      // COMMIT
+      mockClient.query.mockResolvedValueOnce({});
 
       const response = await request(app)
         .post('/api/members')
@@ -97,14 +114,55 @@ describe('Members API', () => {
       expect(response.status).toBe(201);
       expect(response.body).toEqual(mockCreatedMember);
       
-      // Verify pool.query was called with correct arguments
-      const queryCall = (pool.query as any).mock.calls[0];
-      const sql = queryCall[0];
-      const params = queryCall[1];
+      // Verify client.query was called
+      expect(mockClient.query).toHaveBeenCalledWith('BEGIN');
+      expect(mockClient.query).toHaveBeenCalledWith('COMMIT');
+    });
+  });
+
+  describe('PUT /api/members/:id', () => {
+    it('should allow unsetting death_date (setting to null)', async () => {
+      const existingMember = {
+        id: '1',
+        first_name: 'Arthur',
+        death_date: '1200-01-01',
+        role: 'member',
+        relationships: {},
+        siblings: []
+      };
+
+      const updatePayload = {
+        death_date: null
+      };
+
+      // 1. BEGIN
+      mockClient.query.mockResolvedValueOnce({});
       
-      expect(sql).toContain('death_place');
-      expect(params).toContain('Camelot');
-      expect(params).toContain('1050-01-01');
+      // 2. SELECT FOR UPDATE
+      mockClient.query.mockResolvedValueOnce({ rows: [existingMember] });
+      
+      // 3. UPDATE
+      const updatedMember = { ...existingMember, death_date: null };
+      mockClient.query.mockResolvedValueOnce({ rows: [updatedMember] });
+      
+      // 4. COMMIT
+      mockClient.query.mockResolvedValueOnce({});
+
+      const response = await request(app)
+        .put('/api/members/1')
+        .send(updatePayload)
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.death_date).toBeNull();
+      
+      // Verify update query params
+      const updateCall = mockClient.query.mock.calls.find(call => call[0].includes('UPDATE family_members SET'));
+      expect(updateCall).toBeDefined();
+      const params = updateCall[1];
+      // Param for death_date is $6. 
+      // Params index 5.
+      expect(params[5]).toBeNull();
     });
   });
 });

@@ -3,10 +3,17 @@ import request from 'supertest';
 import app from '../server/index';
 import { pool } from '../server/db';
 
+// Create a mock client
+const mockClient = {
+  query: vi.fn(),
+  release: vi.fn(),
+};
+
 // Mock the database pool
 vi.mock('../server/db', () => ({
   pool: {
     query: vi.fn(),
+    connect: vi.fn(() => mockClient),
   },
 }));
 
@@ -15,6 +22,10 @@ describe('Siblings API', () => {
   
   beforeEach(() => {
     vi.clearAllMocks();
+    // Reset mock client implementations
+    mockClient.query.mockReset();
+    mockClient.release.mockReset();
+    
     // Mock authentication middleware user
     vi.mock('../server/middleware/auth', () => ({
       authenticate: (req: any, res: any, next: any) => {
@@ -32,9 +43,9 @@ describe('Siblings API', () => {
       const memberId = 'm1';
       const parents = ['p1', 'p2'];
       
-      // 1. Initial query for member's parents and explicit siblings
+      // GET uses pool.query directly
       (pool.query as any).mockResolvedValueOnce({
-        rows: [{ id: memberId, siblings: ['s1'], relationships: { parents } }]
+        rows: [{ id: memberId, siblings: [{ id: 's1', type: 'Full' }], relationships: { parents } }]
       });
       
       // 2. Query for implied siblings (members with same parents)
@@ -64,12 +75,29 @@ describe('Siblings API', () => {
         first_name: 'New',
         last_name: 'Member',
         gender: 'male',
-        siblings: ['s1']
+        siblings: [{ id: 's1', type: 'Full' }]
       };
 
-      (pool.query as any).mockResolvedValueOnce({
+      // Transaction steps:
+      // 1. BEGIN
+      mockClient.query.mockResolvedValueOnce({});
+      
+      // 2. INSERT member
+      mockClient.query.mockResolvedValueOnce({
         rows: [{ id: 'new-id', ...newMemberData }]
       });
+
+      // 3. Reciprocal updates for siblings loop
+      // "SELECT siblings ... FOR UPDATE" for s1
+      mockClient.query.mockResolvedValueOnce({
+        rows: [{ siblings: [] }] // s1 has no siblings yet
+      });
+      
+      // 4. UPDATE s1
+      mockClient.query.mockResolvedValueOnce({});
+
+      // 5. COMMIT
+      mockClient.query.mockResolvedValueOnce({});
 
       const response = await request(app)
         .post('/api/members')
@@ -77,11 +105,14 @@ describe('Siblings API', () => {
 
       expect(response.status).toBe(201);
       
-      // Verify reciprocal update query was called (twice: one for linking new->sibling (implicit in INSERT/UPDATE?), one for sibling->new)
-      // Actually my code does two UPDATEs per sibling loop.
-      expect(pool.query).toHaveBeenCalledWith(
-        expect.stringMatching(/UPDATE\s+family_members\s+SET\s+siblings/i),
-        expect.any(Array)
+      // Verify transaction commit
+      expect(mockClient.query).toHaveBeenCalledWith('COMMIT');
+      expect(mockClient.release).toHaveBeenCalled();
+      
+      // Verify sibling reciprocal update
+      expect(mockClient.query).toHaveBeenCalledWith(
+        'UPDATE family_members SET siblings = $1 WHERE id = $2',
+        [JSON.stringify([{ id: 'new-id', type: 'Full' }]), 's1']
       );
     });
   });
@@ -90,21 +121,43 @@ describe('Siblings API', () => {
     it('should handle bidirectional sibling updates', async () => {
       const memberId = 'm1';
       const updateData = {
-        siblings: ['s1', 's2'] // Adding s2 (s1 assumed existing)
+        siblings: [{ id: 's1', type: 'Full' }, { id: 's2', type: 'Half' }] 
+        // s1 exists, s2 is new
       };
 
-      // Mock getting current siblings
-      (pool.query as any).mockResolvedValueOnce({
-        rows: [{ siblings: ['s1'] }]
+      // 1. BEGIN
+      mockClient.query.mockResolvedValueOnce({});
+
+      // 2. SELECT ... FOR UPDATE (Fetch Current Member)
+      mockClient.query.mockResolvedValueOnce({
+        rows: [{ 
+          id: memberId,
+          siblings: [{ id: 's1', type: 'Full' }],
+          password: 'hash'
+        }]
       });
 
-      // Mock update for added sibling 's2'
-      (pool.query as any).mockResolvedValueOnce({});
+      // Logic: 
+      // Current: s1
+      // Incoming: s1, s2
+      // Added: s2
+      // Removed: none
 
-      // Mock main update
-      (pool.query as any).mockResolvedValueOnce({
+      // 3. Reciprocal Added: s2 -> SELECT FOR UPDATE
+      mockClient.query.mockResolvedValueOnce({
+        rows: [{ siblings: [] }] // s2 has no siblings
+      });
+
+      // 4. UPDATE s2 to add m1
+      mockClient.query.mockResolvedValueOnce({});
+
+      // 5. UPDATE m1 (Main Update)
+      mockClient.query.mockResolvedValueOnce({
         rows: [{ id: memberId, ...updateData }]
       });
+
+      // 6. COMMIT
+      mockClient.query.mockResolvedValueOnce({});
 
       const response = await request(app)
         .put(`/api/members/${memberId}`)
@@ -112,16 +165,12 @@ describe('Siblings API', () => {
 
       expect(response.status).toBe(200);
 
-      // Should fetch current siblings
-      expect(pool.query).toHaveBeenCalledWith(
-        'SELECT siblings FROM family_members WHERE id = $1',
-        [memberId]
-      );
+      expect(mockClient.query).toHaveBeenCalledWith('COMMIT');
 
       // Should update added sibling (s2) to include m1
-      expect(pool.query).toHaveBeenCalledWith(
-        expect.stringMatching(/UPDATE\s+family_members\s+SET\s+siblings.*jsonb\s+\|\|\s+\$1::jsonb/),
-        [JSON.stringify([memberId]), 's2']
+      expect(mockClient.query).toHaveBeenCalledWith(
+        'UPDATE family_members SET siblings = $1 WHERE id = $2',
+        [JSON.stringify([{ id: memberId, type: 'Half' }]), 's2']
       );
     });
   });
