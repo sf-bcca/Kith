@@ -91,8 +91,8 @@ const FamilyTreeView: React.FC<Props> = ({ onNavigate, selectedId, onSelect, onL
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [addRelationshipType, setAddRelationshipType] = useState<'child' | 'parent' | 'spouse' | undefined>(undefined);
 
-  const fetchTreeAndSetLoading = async (id: string, retryCount = 0) => {
-    console.log(`DEBUG: fetchTreeAndSetLoading called with id: ${id}, retry: ${retryCount}`);
+  const fetchTreeAndSetLoading = async (id: string) => {
+    console.log(`DEBUG: fetchTreeAndSetLoading called with id: ${id}`);
     if (!id) {
       console.log('DEBUG: id is empty, skipping fetch');
       setLoading(false);
@@ -102,23 +102,12 @@ const FamilyTreeView: React.FC<Props> = ({ onNavigate, selectedId, onSelect, onL
     try {
       const data = await TreeService.getTreeFor(id);
       console.log(`DEBUG: TreeService.getTreeFor result for ${id}:`, data ? 'Found' : 'Not Found');
-      
-      if (!data && retryCount < 3) {
-        console.log(`DEBUG: Tree not found for ${id}, retrying in 500ms...`);
-        setTimeout(() => fetchTreeAndSetLoading(id, retryCount + 1), 500);
-        return;
-      }
-      
       setTreeData(data || null);
-      setLoading(false);
     } catch (err) {
       console.error('DEBUG: Failed to fetch tree data:', err);
-      if (retryCount < 3) {
-        console.log(`DEBUG: Error fetching tree, retrying in 500ms...`);
-        setTimeout(() => fetchTreeAndSetLoading(id, retryCount + 1), 500);
-      } else {
-        setLoading(false);
-      }
+      setTreeData(null);
+    } finally {
+      setLoading(false);
     }
   };
 
