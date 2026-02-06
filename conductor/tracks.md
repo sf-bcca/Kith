@@ -20,11 +20,9 @@ This file tracks all major tracks for the project. Each track has its own detail
   *Link: [./conductor/archive/discovery_heritage_hub_20260203/](./conductor/archive/discovery_heritage_hub_20260203/)*
 - [x] **Track: Birthplace Input Field**
   *Link: [./conductor/archive/birthplace_input_20260203/](./conductor/archive/birthplace_input_20260203/)*
-
----
-
 - [x] **Track: Sibling Relationships**
-*Link: [./tracks/sibling_relationships_20260203/](./tracks/sibling_relationships_20260203/)*
+  *Link: [./conductor/archive/sibling_relationships_20260203/](./conductor/archive/sibling_relationships_20260203/)*
+
 ---
 
 - [x] **Track: Date of Death Input and Display**
