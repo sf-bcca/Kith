@@ -23,7 +23,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [~] **Track: Sibling Relationships**
+- [x] **Track: Sibling Relationships**
 *Link: [./tracks/sibling_relationships_20260203/](./tracks/sibling_relationships_20260203/)*
 ---
 
