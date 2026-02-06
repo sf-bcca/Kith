@@ -197,10 +197,13 @@ app.post('/api/members', async (req: Request, res: Response, next) => {
       `INSERT INTO family_members 
       (first_name, last_name, maiden_name, birth_date, birth_place, death_date, death_place, gender, bio, profile_image, relationships, siblings, password,
        email, username, dark_mode, language, visibility, data_sharing, notifications_email, notifications_push, role) 
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22) 
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb, $12::jsonb, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22) 
       RETURNING ${MEMBER_COLUMNS}`,
       [
-        first_name, last_name, maiden_name, birth_date, birth_place, death_date, death_place, gender, bio, profile_image, relationships || {}, siblings || [], hashedPassword,
+        first_name, last_name, maiden_name, birth_date, birth_place, death_date, death_place, gender, bio, profile_image, 
+        relationships ? JSON.stringify(relationships) : JSON.stringify({}), 
+        siblings ? JSON.stringify(siblings) : JSON.stringify([]), 
+        hashedPassword,
         email || null, username || null, dark_mode, language, visibility || 'family-only', data_sharing, notifications_email, notifications_push, role || 'member'
       ]
     );
@@ -337,7 +340,8 @@ app.put('/api/members/:id', authenticate, async (req: Request, res: Response, ne
     if (Array.isArray(siblings)) {
       // Get current siblings to determine additions/removals
       const currentRes = await pool.query('SELECT siblings FROM family_members WHERE id = $1', [id]);
-      const currentSiblings = currentRes.rows[0]?.siblings || [];
+      const rawSiblings = currentRes.rows[0]?.siblings;
+      const currentSiblings = Array.isArray(rawSiblings) ? rawSiblings : [];
       
       const newSiblingIds = siblings as string[];
       const added = newSiblingIds.filter(sid => !currentSiblings.includes(sid));
@@ -385,6 +389,10 @@ app.put('/api/members/:id', authenticate, async (req: Request, res: Response, ne
     // Only admins can change roles
     const targetRole = (req as any).user.role === 'admin' ? role : undefined;
 
+    // Ensure JSONB fields are stringified if they are objects/arrays
+    const dbRelationships = relationships ? JSON.stringify(relationships) : null;
+    const dbSiblings = finalSiblings ? JSON.stringify(finalSiblings) : null;
+
     const result = await pool.query(
       `UPDATE family_members SET 
       first_name = COALESCE($1, first_name), 
@@ -397,8 +405,8 @@ app.put('/api/members/:id', authenticate, async (req: Request, res: Response, ne
       gender = COALESCE($8, gender), 
       bio = COALESCE($9, bio), 
       profile_image = COALESCE($10, profile_image), 
-      relationships = COALESCE($11, relationships),
-      siblings = COALESCE($12, siblings),
+      relationships = COALESCE($11::jsonb, relationships),
+      siblings = COALESCE($12::jsonb, siblings),
       password = CASE WHEN $13::VARCHAR IS NOT NULL AND $13::VARCHAR <> '' THEN $13::VARCHAR ELSE password END,
       email = COALESCE($14, email),
       username = COALESCE($15, username),
@@ -412,7 +420,8 @@ app.put('/api/members/:id', authenticate, async (req: Request, res: Response, ne
       WHERE id = $23 
       RETURNING ${MEMBER_COLUMNS}`,
       [
-        first_name, last_name, maiden_name, birth_date, birth_place, death_date, death_place, gender, bio, profile_image, relationships, finalSiblings, hashedPassword,
+        first_name, last_name, maiden_name, birth_date, birth_place, death_date, death_place, gender, bio, profile_image, 
+        dbRelationships, dbSiblings, hashedPassword,
         email, username, dark_mode, language, visibility, data_sharing, notifications_email, notifications_push,
         targetRole,
         id

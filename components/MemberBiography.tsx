@@ -147,9 +147,10 @@ const MemberBiography: React.FC<Props> = ({ onNavigate, memberId, loggedInId, on
       const updatedSiblings = await FamilyService.getSiblings(member.id);
       setSiblings(updatedSiblings);
       setIsWizardOpen(false);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to update siblings:', err);
-      alert('Failed to update siblings.');
+      const msg = err.message || err.error || 'Failed to update siblings.';
+      alert(msg);
     }
   };
 
@@ -168,9 +169,10 @@ const MemberBiography: React.FC<Props> = ({ onNavigate, memberId, loggedInId, on
       } else {
         onNavigate('Tree');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to delete member:', err);
-      alert('Failed to delete member.');
+      const msg = err.message || err.error || 'Failed to delete member.';
+      alert(msg);
     } finally {
       setDeleting(false);
     }

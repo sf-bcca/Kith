@@ -6,6 +6,7 @@ import { FamilyService } from '../../services/FamilyService';
 vi.mock('../../services/FamilyService', () => ({
   FamilyService: {
     getById: vi.fn(),
+    getByIds: vi.fn(),
     update: vi.fn(),
     delete: vi.fn(),
     getSiblings: vi.fn(),
@@ -17,29 +18,45 @@ describe('MemberBiography', () => {
     id: '1',
     firstName: 'John',
     lastName: 'Doe',
+    gender: 'male' as any,
     birthDate: '1980-01-01',
     biography: 'A test bio',
     photoUrl: '',
-    role: 'member',
+    role: 'member' as any,
+    parents: [],
+    spouses: [],
+    children: [],
+    siblings: [],
   };
 
   const mockAdmin = {
     id: 'admin-id',
     firstName: 'Admin',
     lastName: 'User',
-    role: 'admin',
+    gender: 'male' as any,
+    role: 'admin' as any,
+    parents: [],
+    spouses: [],
+    children: [],
+    siblings: [],
   };
 
   const mockUser = {
     id: 'user-id',
     firstName: 'Regular',
     lastName: 'User',
-    role: 'member',
+    gender: 'male' as any,
+    role: 'member' as any,
+    parents: [],
+    spouses: [],
+    children: [],
+    siblings: [],
   };
 
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(FamilyService.getSiblings).mockResolvedValue([]);
+    vi.mocked(FamilyService.getByIds).mockResolvedValue([]);
   });
 
   afterEach(() => {

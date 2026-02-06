@@ -46,6 +46,8 @@ export default function RelationshipWizard({ existingSiblings, onUpdate, onCance
       const siblings = await FamilyService.getByIds(existingSiblings);
       const entries: SiblingEntry[] = siblings.map((s) => ({
         id: s.id,
+        firstName: s.firstName,
+        lastName: s.lastName,
         siblingType: 'full',
         isNew: false,
       }));
@@ -82,6 +84,8 @@ export default function RelationshipWizard({ existingSiblings, onUpdate, onCance
   const addExistingSibling = (member: FamilyMember) => {
     const newEntry: SiblingEntry = {
       id: member.id,
+      firstName: member.firstName,
+      lastName: member.lastName,
       siblingType: selectedType,
       isNew: false,
     };
