@@ -50,7 +50,7 @@ Implement the UI for managing siblings during member creation and editing.
     - [x] Wrote integration tests for the wizard's UI states and input handling
 - [x] Task: Conductor - User Manual Verification 'Phase 4: Relationship Wizard (UI)' (Protocol in workflow.md) [62796f3]
 
-## Phase 5: Tree Visualization Updates
+## Phase 5: Tree Visualization Updates [checkpoint: 8ef2b40]
 Update the tree rendering logic to display siblings side-by-side.
 
 - [x] Task: Update `TreeService.ts` for Sibling Layout
@@ -64,4 +64,4 @@ Update the tree rendering logic to display siblings side-by-side.
     - [x] Added visual indicators for sibling types (colored badges)
     - [x] Implemented sibling rendering in tree between parents and focus
     - [x] Added connecting lines for sibling relationships
-- [ ] Task: Conductor - User Manual Verification 'Phase 5: Tree Visualization Updates' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 5: Tree Visualization Updates' (Protocol in workflow.md) [8ef2b40]
