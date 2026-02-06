@@ -3,7 +3,7 @@
 ## Phase 1: Data Model & Backend Infrastructure
 Ensure the foundation for complex relationships and transactional integrity is in place.
 
-- [~] Task: Database Migration for Enhanced Sibling JSON
+- [x] Task: Database Migration for Enhanced Sibling JSON 3230fbf
     - [ ] Write migration to update `siblings` column to store `{id, type}` objects
     - [ ] Update `server/SCHEMA.md` using `kith-schema-maintainer`
 - [ ] Task: Update Backend Types and Reciprocal Logic
