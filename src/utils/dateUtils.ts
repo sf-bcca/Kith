@@ -43,3 +43,40 @@ export const formatYear = (dateString: string | undefined): string => {
     return '';
   }
 };
+
+/**
+ * Validates a person's lifespan.
+ */
+export const validateLifespan = (
+  birthDate: string | undefined | null,
+  deathDate: string | undefined | null
+): { isValid: boolean; error?: string } => {
+  if (!birthDate && !deathDate) return { isValid: true };
+
+  const now = new Date();
+  
+  if (birthDate) {
+    const bDate = new Date(birthDate);
+    if (!isNaN(bDate.getTime()) && bDate > now) {
+      return { isValid: false, error: 'Birth date cannot be in the future' };
+    }
+  }
+
+  if (deathDate) {
+    const dDate = new Date(deathDate);
+    if (!isNaN(dDate.getTime()) && dDate > now) {
+      return { isValid: false, error: 'Death date cannot be in the future' };
+    }
+  }
+
+  if (birthDate && deathDate) {
+    const bDate = new Date(birthDate);
+    const dDate = new Date(deathDate);
+    
+    if (!isNaN(bDate.getTime()) && !isNaN(dDate.getTime()) && dDate < bDate) {
+      return { isValid: false, error: 'Death date cannot be before birth date' };
+    }
+  }
+
+  return { isValid: true };
+};
