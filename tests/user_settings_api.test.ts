@@ -4,10 +4,16 @@ import bcrypt from 'bcrypt';
 import app from '../server/index';
 import { pool } from '../server/db';
 
+const mockClient = {
+  query: vi.fn(),
+  release: vi.fn(),
+};
+
 // Mock the database pool
 vi.mock('../server/db', () => ({
   pool: {
     query: vi.fn(),
+    connect: vi.fn(() => mockClient),
   },
 }));
 
@@ -34,7 +40,12 @@ describe('User Settings API', () => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const mockCreated = { id: 'test-id', ...newMember, password: hashedPassword, role: 'member' };
-    vi.mocked(pool.query).mockResolvedValueOnce({ rows: [mockCreated] });
+    
+    // Transaction for POST /api/members
+    mockClient.query.mockResolvedValueOnce({}); // BEGIN
+    mockClient.query.mockResolvedValueOnce({ rows: [mockCreated] }); // INSERT
+    mockClient.query.mockResolvedValueOnce({ rows: [] }); // Siblings loop check
+    mockClient.query.mockResolvedValueOnce({}); // COMMIT
 
     const res = await request
       .post('/api/members')
@@ -43,7 +54,7 @@ describe('User Settings API', () => {
     expect(res.status).toBe(201);
     testMemberId = res.body.id;
 
-    // Mock Login
+    // Mock Login (uses pool.query)
     vi.mocked(pool.query).mockResolvedValueOnce({ rows: [mockCreated] });
     
     const loginRes = await request

@@ -5,19 +5,27 @@ import jwt from 'jsonwebtoken';
 import app from '../server/index';
 import { pool } from '../server/db';
 
+const mockClient = {
+  query: vi.fn(),
+  release: vi.fn(),
+};
+
 // Mock the database pool
 vi.mock('../server/db', () => ({
   pool: {
     query: vi.fn(),
+    connect: vi.fn(() => mockClient),
   },
 }));
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
-const token = jwt.sign({ sub: '1' }, JWT_SECRET);
+const token = jwt.sign({ sub: '1', role: 'member' }, JWT_SECRET);
 
 describe('Security: Password Privacy & Hashing', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockClient.query.mockReset();
+    mockClient.release.mockReset();
   });
 
   describe('Password Exposure Prevention', () => {
@@ -49,7 +57,12 @@ describe('Security: Password Privacy & Hashing', () => {
 
     it('POST /api/members should return member without password field', async () => {
       const mockMember = { id: '1', first_name: 'Arthur', last_name: 'Pendragon', password: 'hashedpassword' };
-      (pool.query as any).mockResolvedValueOnce({ rows: [mockMember] });
+      
+      // Transaction
+      mockClient.query.mockResolvedValueOnce({}); // BEGIN
+      mockClient.query.mockResolvedValueOnce({ rows: [mockMember] }); // INSERT
+      mockClient.query.mockResolvedValueOnce({ rows: [] }); // Siblings loop check (none)
+      mockClient.query.mockResolvedValueOnce({}); // COMMIT
 
       const response = await request(app).post('/api/members').send({
         first_name: 'Arthur',
@@ -63,7 +76,12 @@ describe('Security: Password Privacy & Hashing', () => {
 
     it('PUT /api/members/:id should return member without password field', async () => {
       const mockMember = { id: '1', first_name: 'Arthur', last_name: 'Pendragon', password: 'hashedpassword' };
-      (pool.query as any).mockResolvedValueOnce({ rows: [mockMember] });
+      
+      // Transaction
+      mockClient.query.mockResolvedValueOnce({}); // BEGIN
+      mockClient.query.mockResolvedValueOnce({ rows: [mockMember] }); // SELECT FOR UPDATE
+      mockClient.query.mockResolvedValueOnce({ rows: [mockMember] }); // UPDATE
+      mockClient.query.mockResolvedValueOnce({}); // COMMIT
 
       const response = await request(app)
         .put('/api/members/1')
@@ -82,7 +100,12 @@ describe('Security: Password Privacy & Hashing', () => {
   describe('Password Hashing', () => {
     it('POST /api/members should hash password before saving', async () => {
       const plainPassword = 'plainpassword';
-      (pool.query as any).mockResolvedValueOnce({ rows: [{ id: '1' }] });
+      
+      // Transaction
+      mockClient.query.mockResolvedValueOnce({}); // BEGIN
+      mockClient.query.mockResolvedValueOnce({ rows: [{ id: '1' }] }); // INSERT
+      mockClient.query.mockResolvedValueOnce({ rows: [] }); // Siblings loop check
+      mockClient.query.mockResolvedValueOnce({}); // COMMIT
 
       await request(app).post('/api/members').send({
         first_name: 'Arthur',
@@ -90,8 +113,8 @@ describe('Security: Password Privacy & Hashing', () => {
         password: plainPassword
       });
 
-      // Verify hash comparison
-      const queryArgs = vi.mocked(pool.query).mock.calls[0][1];
+      // Verify hash comparison (INSERT is the 2nd call to client.query)
+      const queryArgs = mockClient.query.mock.calls[1][1];
       const passwordArg = queryArgs[12]; // 13th parameter in the INSERT query
       expect(passwordArg).not.toBe(plainPassword);
       expect(bcrypt.compareSync(plainPassword, passwordArg)).toBe(true);
@@ -102,7 +125,9 @@ describe('Security: Password Privacy & Hashing', () => {
       const hashedCurrentPassword = bcrypt.hashSync(currentPassword, 10);
       const newPassword = 'newpassword';
       
-      // Mock existing user check
+      // Settings endpoint likely uses pool.query directly (not refactored yet)
+      
+      // Mock existing user check (getSettings)
       (pool.query as any).mockResolvedValueOnce({ rows: [{ password: hashedCurrentPassword }] });
       // Mock update
       (pool.query as any).mockResolvedValueOnce({ rows: [] }); // For password update
@@ -118,7 +143,7 @@ describe('Security: Password Privacy & Hashing', () => {
 
       expect(response.status).toBe(200);
 
-      // Find the call that updates the password
+      // Find the call that updates the password on pool.query
       const passwordUpdateCall = (pool.query as any).mock.calls.find((call: any) => 
         call[0].includes('UPDATE family_members SET password = $1')
       );
@@ -130,4 +155,3 @@ describe('Security: Password Privacy & Hashing', () => {
     });
   });
 });
-
