@@ -40,9 +40,9 @@ Update the UI to correctly handle enhanced data structures and placeholder persi
 ## Phase 4: Visualization & UX (TDD)
 Correct the visual representation of complex families.
 
-- [~] Task: Fix Sibling Connecting Lines
-    - [ ] Write failing tests for sibling bracket positioning in `FamilyTreeView.test.tsx`
-    - [ ] Update SVG logic in `FamilyTreeView.tsx` to render horizontal brackets for multiple siblings
-- [ ] Task: Display Custom Sibling Types
-    - [ ] Update `TreeService.getSiblingType` to prioritize persisted types over derived types
-- [ ] Task: Conductor - User Manual Verification 'Visualization & UX' (Protocol in workflow.md)
+- [x] Task: Fix Sibling Connecting Lines a790757
+    - [x] Write failing tests for sibling bracket positioning in `FamilyTreeView.test.tsx`
+    - [x] Update SVG logic in `FamilyTreeView.tsx` to render horizontal brackets for multiple siblings
+- [x] Task: Display Custom Sibling Types a790757
+    - [x] Update `TreeService.getSiblingType` to prioritize persisted types over derived types
+- [~] Task: Conductor - User Manual Verification 'Visualization & UX' (Protocol in workflow.md)
