@@ -144,9 +144,16 @@ export class TreeService {
    * Determines the sibling type between two members.
    * @param member1 First family member
    * @param member2 Second family member
-   * @returns 'full' if they share both parents, 'half' if they share one parent, undefined otherwise
+   * @returns 'full', 'half', 'step', 'adopted' or undefined
    */
-  static getSiblingType(member1: FamilyMember, member2: FamilyMember): 'full' | 'half' | undefined {
+  static getSiblingType(member1: FamilyMember, member2: FamilyMember): 'full' | 'half' | 'step' | 'adopted' | undefined {
+    // 1. Check for explicit persisted link first
+    const explicitLink = member1.siblings?.find(s => s.id === member2.id);
+    if (explicitLink) {
+      return explicitLink.type.toLowerCase() as any;
+    }
+
+    // 2. Fallback to derived logic based on parents
     const parents1 = member1.parents || [];
     const parents2 = member2.parents || [];
 
@@ -158,7 +165,6 @@ export class TreeService {
     
     if (sharedParents.length > 0) {
       // If they share ALL their parents and have the same number of parents, they are full siblings.
-      // This handles both the 1-parent and 2-parent cases correctly.
       if (sharedParents.length === parents1.length && sharedParents.length === parents2.length) {
         return 'full';
       }

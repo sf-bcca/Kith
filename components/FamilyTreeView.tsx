@@ -224,7 +224,15 @@ const FamilyTreeView: React.FC<Props> = ({ onNavigate, selectedId, onSelect, onL
 
           {/* Sibling connecting lines */}
           {siblings.length > 0 && (
-            <path d="M 50% 220 L 50% 280" fill="none" stroke="#cbd5e1" strokeWidth="2" />
+            <>
+              {/* Vertical line from parents area to sibling level */}
+              <path d="M 50% 220 L 50% 280" fill="none" stroke="#cbd5e1" strokeWidth="2" />
+              
+              {/* Horizontal bracket for multiple siblings */}
+              {siblings.length > 1 && (
+                <path d="M 30% 280 L 70% 280" fill="none" stroke="#cbd5e1" strokeWidth="2" />
+              )}
+            </>
           )}
         </svg>
 
