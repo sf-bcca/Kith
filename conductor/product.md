@@ -8,8 +8,8 @@ Provide a platform for visualizing and managing extensive family trees and pedig
 - **Connected families:** Families seeking a private, highly secure space to stay updated and share memories.
 
 ## Core Goals
-- Deliver a comprehensive suite of interactive family visualizations (Family Tree, Pedigree, Fan Charts).
-- Foster family engagement through social activity feeds and shared member biographies.
+- Deliver a comprehensive suite of interactive family visualizations (Family Tree, Pedigree, Fan Charts, and Sibling Layouts).
+- Foster family engagement through social activity feeds and shared member biographies with support for complex family structures.
 - Enable seamless collaboration for multiple family members to build a collective history.
 - Provide robust, secure account management with industry-standard authentication and granular privacy controls.
 
