@@ -10,7 +10,7 @@ Ensure the foundation for complex relationships and transactional integrity is i
     - [ ] Update `FamilyMember` type in `server/` to match enhanced JSON
     - [ ] Refactor reciprocal link logic in `POST /api/members` and `PUT /api/members/:id` to be transactional
     - [ ] Implement conditional updates in `PUT` to allow unsetting death details (Fix `COALESCE` bug)
-- [ ] Task: Unify Endpoint Logic and Remove Backend Retries
+- [x] Task: Unify Endpoint Logic and Remove Backend Retries 2e5058b
     - [ ] Remove `setTimeout` retry logic from `GET /api/members/:id`
     - [ ] Align visibility/auth logic between single and list member endpoints
 - [ ] Task: Conductor - User Manual Verification 'Data Model & Backend Infrastructure' (Protocol in workflow.md)
