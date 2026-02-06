@@ -208,7 +208,7 @@ describe('MemberBiography', () => {
     fireEvent.change(screen.getByLabelText(/Date of Death/i), { target: { value: futureDateStr } });
     fireEvent.click(screen.getByText('Save'));
 
-    expect(await screen.findByText(/Date of Death cannot be in the future/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Death date cannot be in the future/i)).toBeInTheDocument();
     expect(FamilyService.update).not.toHaveBeenCalled();
   });
 
@@ -230,7 +230,7 @@ describe('MemberBiography', () => {
     fireEvent.change(screen.getByLabelText(/Date of Death/i), { target: { value: '1970-01-01' } });
     fireEvent.click(screen.getByText('Save'));
 
-    expect(await screen.findByText(/Date of Death must be after Date of Birth/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Death date cannot be before birth date/i)).toBeInTheDocument();
     expect(FamilyService.update).not.toHaveBeenCalled();
   });
 });

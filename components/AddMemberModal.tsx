@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { FamilyService } from '../services/FamilyService';
 import { FamilyMember, Gender } from '../types/family';
 import RelationshipWizard, { SiblingEntry } from './RelationshipWizard';
+import { validateLifespan } from '../src/utils/dateUtils';
 
 interface Props {
   isOpen: boolean;
@@ -96,23 +97,12 @@ export default function AddMemberModal({ isOpen, onClose, onSuccess, initialData
     setLoading(true);
     setError(null);
 
-    // Validation
-    if (isDeceased && deathDate) {
-      const birth = birthDate ? new Date(birthDate) : null;
-      const death = new Date(deathDate);
-      const today = new Date();
-
-      if (death > today) {
-        setError("Date of Death cannot be in the future.");
-        setLoading(false);
-        return;
-      }
-
-      if (birth && death < birth) {
-        setError("Date of Death must be after Date of Birth.");
-        setLoading(false);
-        return;
-      }
+    // Validation using shared utility
+    const lifespanValidation = validateLifespan(birthDate, isDeceased ? deathDate : null);
+    if (!lifespanValidation.isValid) {
+      setError(lifespanValidation.error || "Invalid date range.");
+      setLoading(false);
+      return;
     }
 
     try {
@@ -131,8 +121,6 @@ export default function AddMemberModal({ isOpen, onClose, onSuccess, initialData
         }
       }
 
-      const siblingIds = siblingEntries.filter(e => e.id).map(e => e.id!);
-
       const newMember = await FamilyService.create({
         firstName,
         lastName,
@@ -146,7 +134,7 @@ export default function AddMemberModal({ isOpen, onClose, onSuccess, initialData
         parents: Array.from(siblingParentIds),
         spouses: relationshipType === 'spouse' && relativeId ? [relativeId] : [],
         children: relationshipType === 'parent' && relativeId ? [relativeId] : [],
-        siblings: siblingIds,
+        siblings: siblingEntries as any, // Persistence of enhanced objects
       });
 
       onSuccess(newMember);

@@ -92,7 +92,7 @@ describe('AddMemberModal', () => {
     
     fireEvent.click(screen.getByRole('button', { name: /Add Member/i }));
 
-    expect(await screen.findByText(/Date of Death cannot be in the future/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Death date cannot be in the future/i)).toBeInTheDocument();
     expect(FamilyService.create).not.toHaveBeenCalled();
   });
 
@@ -114,7 +114,7 @@ describe('AddMemberModal', () => {
     
     fireEvent.click(screen.getByRole('button', { name: /Add Member/i }));
 
-    expect(await screen.findByText(/Date of Death must be after Date of Birth/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Death date cannot be before birth date/i)).toBeInTheDocument();
     expect(FamilyService.create).not.toHaveBeenCalled();
   });
 });

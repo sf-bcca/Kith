@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { FamilyService } from '../services/FamilyService';
 import { FamilyMember } from '../types/family';
-import { formatDate } from '../src/utils/dateUtils';
+import { formatDate, validateLifespan } from '../src/utils/dateUtils';
 import RelationshipWizard, { SiblingEntry } from './RelationshipWizard';
 
 interface Props {
@@ -103,29 +103,19 @@ const MemberBiography: React.FC<Props> = ({ onNavigate, memberId, loggedInId, on
     if (!member?.id) return;
     setError(null);
 
-    // Validation
-    if (isDeceased && editData.deathDate) {
-      const birth = editData.birthDate ? new Date(editData.birthDate) : null;
-      const death = new Date(editData.deathDate);
-      const today = new Date();
-
-      if (death > today) {
-        setError("Date of Death cannot be in the future.");
-        return;
-      }
-
-      if (birth && death < birth) {
-        setError("Date of Death must be after Date of Birth.");
-        return;
-      }
+    // Validation using shared utility
+    const lifespanValidation = validateLifespan(editData.birthDate, isDeceased ? editData.deathDate : null);
+    if (!lifespanValidation.isValid) {
+      setError(lifespanValidation.error || "Invalid date range.");
+      return;
     }
 
     setSaving(true);
     try {
       const finalData = { ...editData };
       if (!isDeceased) {
-        finalData.deathDate = undefined;
-        finalData.deathPlace = undefined;
+        finalData.deathDate = null; // Use null to explicitly unset in backend
+        finalData.deathPlace = null;
       }
       const updated = await FamilyService.update(member.id, finalData);
       setMember(updated);
@@ -142,8 +132,8 @@ const MemberBiography: React.FC<Props> = ({ onNavigate, memberId, loggedInId, on
   const handleWizardUpdate = async (ids: string[], entries: SiblingEntry[]) => {
     if (!member?.id) return;
     try {
-      // 1. Update the siblings list for this member
-      const updated = await FamilyService.update(member.id, { siblings: ids });
+      // 1. Update the siblings list for this member using enhanced objects
+      const updated = await FamilyService.update(member.id, { siblings: entries as any });
       setMember(updated);
 
       // 2. Handle parent syncing for "Full Siblings"
@@ -244,7 +234,9 @@ const MemberBiography: React.FC<Props> = ({ onNavigate, memberId, loggedInId, on
   const canDelete = isOwner || isAdmin;
   const canEdit = !!loggedInId; // Collaborative editing: any logged in user can edit
 
-  const years = `${member.birthDate ? new Date(member.birthDate).getFullYear() : ''}–${member.deathDate ? new Date(member.deathDate).getFullYear() : 'Present'}`;
+  const birthYear = member.birthDate ? new Date(member.birthDate).getFullYear() : '';
+  const deathYear = member.deathDate ? new Date(member.deathDate).getFullYear() : (isDeceased ? 'Unknown' : 'Present');
+  const years = birthYear || member.deathDate ? `${birthYear}–${deathYear}` : '';
 
   return (
     <div className="bg-background-light font-display text-[#0d121b] antialiased overflow-x-hidden min-h-screen">
