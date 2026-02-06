@@ -6,7 +6,7 @@ Ensure the foundation for complex relationships and transactional integrity is i
 - [x] Task: Database Migration for Enhanced Sibling JSON 3230fbf
     - [ ] Write migration to update `siblings` column to store `{id, type}` objects
     - [ ] Update `server/SCHEMA.md` using `kith-schema-maintainer`
-- [~] Task: Update Backend Types and Reciprocal Logic
+- [x] Task: Update Backend Types and Reciprocal Logic 6736878
     - [ ] Update `FamilyMember` type in `server/` to match enhanced JSON
     - [ ] Refactor reciprocal link logic in `POST /api/members` and `PUT /api/members/:id` to be transactional
     - [ ] Implement conditional updates in `PUT` to allow unsetting death details (Fix `COALESCE` bug)
