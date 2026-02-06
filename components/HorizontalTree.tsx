@@ -274,7 +274,39 @@ const AncestorsView: React.FC<{
         ))}
       </div>
 
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 relative">
+        {/* Sibling Bracket SVG */}
+        {siblings.length > 0 && (
+          <svg className="absolute -left-16 top-0 w-16 overflow-visible pointer-events-none" style={{ height: `${(siblings.length + 1) * 90}px` }}>
+            {/* Vertical Line */}
+            <line 
+              x1="0" y1="37" 
+              x2="0" y2={37 + (siblings.length * 90)} 
+              stroke="#cbd5e1" 
+              strokeWidth="2" 
+            />
+            {/* Horizontal to Focus */}
+            <line x1="0" y1="37" x2="64" y2="37" stroke="#cbd5e1" strokeWidth="2" />
+            {/* Horizontal to Siblings */}
+            {siblings.map((_, i) => (
+              <line 
+                key={i} 
+                x1="0" 
+                y1={37 + ((i + 1) * 90)} 
+                x2="64" 
+                y2={37 + ((i + 1) * 90)} 
+                stroke="#cbd5e1" 
+                strokeWidth="2" 
+              />
+            ))}
+            {/* Connector to Left (Parents) */}
+            <line x1="-32" y1="37" x2="0" y2="37" stroke="#cbd5e1" strokeWidth="2" />
+          </svg>
+        )}
+        {!siblings.length && (
+           <div className="absolute w-16 h-[2px] bg-slate-300 -left-16 top-[37px] -z-10"></div>
+        )}
+
         <div className="relative">
           <Node 
             member={focusPerson} 
@@ -282,18 +314,16 @@ const AncestorsView: React.FC<{
             onClick={() => {}}
             onProfile={() => onNavigate('Biography', focusPerson.id)}
           />
-          <div className="absolute w-16 h-[1px] bg-primary/30 -left-16 top-1/2 -z-10"></div>
         </div>
 
         {siblings.map((sibling) => (
-          <div key={sibling.id} className="relative opacity-80">
+          <div key={sibling.id} className="relative opacity-90">
             <Node 
               member={sibling} 
               role="Sibling" 
               onClick={() => onSelect(sibling.id)}
               onProfile={() => onNavigate('Biography', sibling.id)}
             />
-            <div className="absolute w-16 h-[1px] bg-gray-200 -left-16 top-1/2 -z-10"></div>
           </div>
         ))}
       </div>
@@ -310,7 +340,34 @@ const DescendantsView: React.FC<{
 
   return (
     <div className="flex items-center gap-16 min-h-[600px] justify-center">
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 relative">
+         {/* Sibling Bracket SVG for Descendants View */}
+         {siblings.length > 0 && (
+          <svg className="absolute -left-8 top-0 w-8 overflow-visible pointer-events-none" style={{ height: `${(siblings.length + 1) * 90}px` }}>
+            {/* Vertical Line */}
+            <line 
+              x1="0" y1="37" 
+              x2="0" y2={37 + (siblings.length * 90)} 
+              stroke="#cbd5e1" 
+              strokeWidth="2" 
+            />
+            {/* Horizontal to Focus */}
+            <line x1="0" y1="37" x2="32" y2="37" stroke="#cbd5e1" strokeWidth="2" />
+            {/* Horizontal to Siblings */}
+            {siblings.map((_, i) => (
+              <line 
+                key={i} 
+                x1="0" 
+                y1={37 + ((i + 1) * 90)} 
+                x2="32" 
+                y2={37 + ((i + 1) * 90)} 
+                stroke="#cbd5e1" 
+                strokeWidth="2" 
+              />
+            ))}
+          </svg>
+        )}
+
         <div className="relative">
           <Node 
             member={focusPerson} 
@@ -318,11 +375,11 @@ const DescendantsView: React.FC<{
             onClick={() => {}}
             onProfile={() => onNavigate('Biography', focusPerson.id)}
           />
-          {children.length > 0 && <div className="absolute w-16 h-[1px] bg-primary/30 left-64 top-1/2 -z-10"></div>}
+          {children.length > 0 && <div className="absolute w-16 h-[2px] bg-slate-300 left-64 top-[37px] -z-10"></div>}
         </div>
 
         {siblings.map((sibling) => (
-          <div key={sibling.id} className="relative opacity-80">
+          <div key={sibling.id} className="relative opacity-90">
             <Node 
               member={sibling} 
               role="Sibling" 

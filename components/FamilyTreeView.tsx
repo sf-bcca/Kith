@@ -205,19 +205,23 @@ const FamilyTreeView: React.FC<Props> = ({ onNavigate, selectedId, onSelect, onL
       {/* Main Canvas */}
       <main className="flex-1 relative overflow-auto bg-[#f8f9fc] flex items-center justify-center p-8 pb-32">
         {/* Connecting Lines SVG */}
-        <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-30" preserveAspectRatio="none">
+        <svg 
+          className="absolute inset-0 w-full h-full pointer-events-none opacity-40" 
+          viewBox="0 0 1000 1000" 
+          preserveAspectRatio="none"
+        >
           {/* Line from Parents to Focus */}
           {parents.length > 0 && (
-            <path d="M 50% 120 L 50% 220" fill="none" stroke="#cbd5e1" strokeWidth="2" />
+            <path d="M 500 120 L 500 220" fill="none" stroke="#94a3b8" strokeWidth="2" />
           )}
           
           {/* Line from Focus to Children */}
           {children.length > 0 && (
             <>
-              <path d="M 50% 380 L 50% 460" fill="none" stroke="#cbd5e1" strokeWidth="2" />
+              <path d="M 500 380 L 500 460" fill="none" stroke="#94a3b8" strokeWidth="2" />
               {/* Horizontal bar for multiple children */}
               {children.length > 1 && (
-                <path d="M 25% 460 L 75% 460" fill="none" stroke="#cbd5e1" strokeWidth="2" />
+                <path d="M 250 460 L 750 460" fill="none" stroke="#94a3b8" strokeWidth="2" />
               )}
             </>
           )}
@@ -226,12 +230,10 @@ const FamilyTreeView: React.FC<Props> = ({ onNavigate, selectedId, onSelect, onL
           {siblings.length > 0 && (
             <>
               {/* Vertical line from parents area to sibling level */}
-              <path d="M 50% 220 L 50% 280" fill="none" stroke="#cbd5e1" strokeWidth="2" />
+              <path d="M 500 220 L 500 280" fill="none" stroke="#94a3b8" strokeWidth="2" />
               
-              {/* Horizontal bracket for multiple siblings */}
-              {siblings.length > 1 && (
-                <path d="M 30% 280 L 70% 280" fill="none" stroke="#cbd5e1" strokeWidth="2" />
-              )}
+              {/* Horizontal bracket for siblings (including focus member implicitly) */}
+              <path d="M 300 280 L 700 280" fill="none" stroke="#94a3b8" strokeWidth="2" />
             </>
           )}
         </svg>
