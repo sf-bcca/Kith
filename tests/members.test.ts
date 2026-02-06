@@ -82,6 +82,20 @@ describe('Members API', () => {
       expect(response.status).toBe(404);
       expect(response.body).toEqual({ error: 'Member not found or unauthorized' });
     });
+
+    it('should query with visibility constraints', async () => {
+      const mockMember = { id: '1', first_name: 'Arthur' };
+      (pool.query as any).mockResolvedValueOnce({ rows: [mockMember] });
+
+      await request(app)
+        .get('/api/members/1')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(pool.query).toHaveBeenCalledWith(
+        expect.stringContaining("visibility = 'public' OR visibility = 'family-only' OR id = $2"),
+        ['1', '1']
+      );
+    });
   });
 
   describe('POST /api/members', () => {
