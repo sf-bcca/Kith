@@ -392,7 +392,9 @@ export class FamilyService {
       parents: item.relationships?.parents || [],
       spouses: item.relationships?.spouses || [],
       children: item.relationships?.children || [],
-      siblings: item.siblings || [],
+      siblings: (item.siblings || []).map((s: any) => 
+        typeof s === 'string' ? { id: s, type: 'Full' } : s
+      ),
     };
   }
 

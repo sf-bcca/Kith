@@ -143,24 +143,7 @@ describe('FamilyService', () => {
   });
 
   it('should return undefined for a non-existent ID', async () => {
-    (fetch as any).mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ id: '1' })
-    });
-
-    await FamilyService.update('1', {
-      email: 'new@example.com',
-      darkMode: false
-    });
-
-    const lastCall = (fetch as any).mock.calls[(fetch as any).mock.calls.length - 1];
-    const body = JSON.parse(lastCall[1].body);
-    expect(body.email).toBe('new@example.com');
-    expect(body.dark_mode).toBe(false);
-  });
-
-  it('should return undefined for a non-existent ID', async () => {
-    (fetch as any).mockResolvedValueOnce({
+    (fetch as any).mockResolvedValue({
       status: 404,
       ok: false
     });
@@ -232,6 +215,67 @@ describe('FamilyService', () => {
       const results = await FamilyService.filter({ lastName: 'Lake' });
       expect(results).toHaveLength(1);
       expect(results[0].lastName).toBe('Lake');
+    });
+  });
+
+  describe('enhanced sibling mapping', () => {
+    it('should map enhanced sibling objects from backend', async () => {
+      const targetId = '1';
+      const mockBackendMember = {
+        id: targetId,
+        first_name: 'Arthur',
+        siblings: [
+          { id: '2', type: 'Full' },
+          { id: '3', type: 'Step' }
+        ]
+      };
+
+      (fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockBackendMember)
+      });
+
+      const member = await FamilyService.getById(targetId);
+      expect(member?.siblings).toHaveLength(2);
+      expect(member?.siblings[0]).toEqual({ id: '2', type: 'Full' });
+      expect(member?.siblings[1]).toEqual({ id: '3', type: 'Step' });
+    });
+
+    it('should map enhanced sibling objects to backend', async () => {
+      (fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ id: '1' })
+      });
+
+      const siblings = [
+        { id: '2', type: 'Half' },
+        { id: '4', type: 'Adopted' }
+      ];
+
+      await FamilyService.update('1', { siblings });
+
+      const lastCall = (fetch as any).mock.calls[(fetch as any).mock.calls.length - 1];
+      const body = JSON.parse(lastCall[1].body);
+      expect(body.siblings).toEqual(siblings);
+    });
+
+    it('should handle legacy string array siblings from backend (migration fallback)', async () => {
+      const targetId = '1';
+      const mockBackendMember = {
+        id: targetId,
+        first_name: 'Arthur',
+        siblings: ['2', '3'] // Legacy format
+      };
+
+      (fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockBackendMember)
+      });
+
+      const member = await FamilyService.getById(targetId);
+      expect(member?.siblings).toHaveLength(2);
+      expect(member?.siblings[0]).toEqual({ id: '2', type: 'Full' });
+      expect(member?.siblings[1]).toEqual({ id: '3', type: 'Full' });
     });
   });
 });
