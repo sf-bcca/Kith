@@ -13,14 +13,14 @@ Ensure the foundation for complex relationships and transactional integrity is i
 - [x] Task: Unify Endpoint Logic and Remove Backend Retries 2e5058b
     - [ ] Remove `setTimeout` retry logic from `GET /api/members/:id`
     - [ ] Align visibility/auth logic between single and list member endpoints
-- [ ] Task: Conductor - User Manual Verification 'Data Model & Backend Infrastructure' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Data Model & Backend Infrastructure' (Protocol in workflow.md) aa8adf7
 
 ## Phase 2: Shared Logic & Validation (TDD)
 Extract common logic to ensure consistency across the application.
 
-- [ ] Task: Implement Shared Lifespan Validation
-    - [ ] Write unit tests for `validateLifespan` utility in `src/utils/dateUtils.test.ts`
-    - [ ] Implement `validateLifespan` in `src/utils/dateUtils.ts`
+- [x] Task: Implement Shared Lifespan Validation 2172227
+    - [x] Write unit tests for `validateLifespan` utility in `src/utils/dateUtils.test.ts`
+    - [x] Implement `validateLifespan` in `src/utils/dateUtils.ts`
 - [ ] Task: Conductor - User Manual Verification 'Shared Logic & Validation' (Protocol in workflow.md)
 
 ## Phase 3: Frontend Persistence & Relationship Wizard (TDD)
