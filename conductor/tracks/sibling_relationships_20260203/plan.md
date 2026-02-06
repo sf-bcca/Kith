@@ -37,7 +37,7 @@ Update the frontend data layer to support the new sibling fields.
     - [x] Wrote integration tests for sibling state management [5452f3d]
 - [x] Task: Conductor - User Manual Verification 'Phase 3: Frontend Service & Context' (Protocol in workflow.md) [5452f3d]
 
-## Phase 4: Relationship Wizard (UI)
+## Phase 4: Relationship Wizard (UI) [checkpoint: 62796f3]
 Implement the UI for managing siblings during member creation and editing.
 
 - [x] Task: Create `RelationshipWizard` component
@@ -48,7 +48,7 @@ Implement the UI for managing siblings during member creation and editing.
     - [x] Added "Add Siblings" button to member creation form
     - [x] Updated form submission to include sibling IDs
     - [x] Wrote integration tests for the wizard's UI states and input handling
-- [ ] Task: Conductor - User Manual Verification 'Phase 4: Relationship Wizard (UI)' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 4: Relationship Wizard (UI)' (Protocol in workflow.md) [62796f3]
 
 ## Phase 5: Tree Visualization Updates
 Update the tree rendering logic to display siblings side-by-side.
