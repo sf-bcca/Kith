@@ -15,18 +15,18 @@ Ensure the foundation for complex relationships and transactional integrity is i
     - [ ] Align visibility/auth logic between single and list member endpoints
 - [x] Task: Conductor - User Manual Verification 'Data Model & Backend Infrastructure' (Protocol in workflow.md) aa8adf7
 
-## Phase 2: Shared Logic & Validation (TDD)
+## Phase 2: Shared Logic & Validation (TDD) [checkpoint: 6ecfaeb]
 Extract common logic to ensure consistency across the application.
 
 - [x] Task: Implement Shared Lifespan Validation 2172227
     - [x] Write unit tests for `validateLifespan` utility in `src/utils/dateUtils.test.ts`
     - [x] Implement `validateLifespan` in `src/utils/dateUtils.ts`
-- [ ] Task: Conductor - User Manual Verification 'Shared Logic & Validation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Shared Logic & Validation' (Protocol in workflow.md) 6ecfaeb
 
 ## Phase 3: Frontend Persistence & Relationship Wizard (TDD)
 Update the UI to correctly handle enhanced data structures and placeholder persistence.
 
-- [ ] Task: Update Frontend Service Layer
+- [~] Task: Update Frontend Service Layer
     - [ ] Write failing tests for `FamilyService` enhanced sibling mapping
     - [ ] Update `FamilyService.ts` to handle `{id, type}` sibling mapping
 - [ ] Task: Fix Sibling Placeholder Persistence in Modals
