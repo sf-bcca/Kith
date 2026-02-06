@@ -29,13 +29,13 @@ Update the UI to correctly handle enhanced data structures and placeholder persi
 - [x] Task: Update Frontend Service Layer 38dfb11
     - [x] Write failing tests for `FamilyService` enhanced sibling mapping
     - [x] Update `FamilyService.ts` to handle `{id, type}` sibling mapping
-- [x] Task: Fix Sibling Placeholder Persistence in Modals db16d2c
+- [x] Task: Fix Sibling Placeholder Persistence in Modals 0cec493
     - [x] Write failing tests for `AddMemberModal` sibling placeholder creation
     - [x] Update `handleSiblingUpdate` in `AddMemberModal.tsx` to persist new placeholders
     - [x] Update `MemberBiography.tsx` to use the shared validation and enhanced persistence
 - [x] Task: Remove Frontend Timing Workarounds 8b05ddc
     - [x] Remove `setTimeout` retry logic from `FamilyTreeView.tsx`
-- [ ] Task: Conductor - User Manual Verification 'Frontend Persistence & Relationship Wizard' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Frontend Persistence & Relationship Wizard' (Protocol in workflow.md)
 
 ## Phase 4: Visualization & UX (TDD)
 Correct the visual representation of complex families.
