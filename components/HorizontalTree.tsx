@@ -202,7 +202,7 @@ const AncestorsView: React.FC<{
   onSelect: (id: string) => void; 
   onNavigate: (screen: string, id: string) => void;
 }> = ({ data, onSelect, onNavigate }) => {
-  const { focusPerson, parents, grandparents, greatGrandparents } = data;
+  const { focusPerson, parents, grandparents, greatGrandparents, siblings } = data;
 
   const father = parents.find(p => p.gender === 'male');
   const mother = parents.find(p => p.gender === 'female');
@@ -274,14 +274,28 @@ const AncestorsView: React.FC<{
         ))}
       </div>
 
-      <div className="relative">
-        <Node 
-          member={focusPerson} 
-          isFocus 
-          onClick={() => {}}
-          onProfile={() => onNavigate('Biography', focusPerson.id)}
-        />
-        <div className="absolute w-16 h-[1px] bg-primary/30 -left-16 top-1/2 -z-10"></div>
+      <div className="flex flex-col gap-4">
+        <div className="relative">
+          <Node 
+            member={focusPerson} 
+            isFocus 
+            onClick={() => {}}
+            onProfile={() => onNavigate('Biography', focusPerson.id)}
+          />
+          <div className="absolute w-16 h-[1px] bg-primary/30 -left-16 top-1/2 -z-10"></div>
+        </div>
+
+        {siblings.map((sibling) => (
+          <div key={sibling.id} className="relative opacity-80">
+            <Node 
+              member={sibling} 
+              role="Sibling" 
+              onClick={() => onSelect(sibling.id)}
+              onProfile={() => onNavigate('Biography', sibling.id)}
+            />
+            <div className="absolute w-16 h-[1px] bg-gray-200 -left-16 top-1/2 -z-10"></div>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -292,18 +306,31 @@ const DescendantsView: React.FC<{
   onSelect: (id: string) => void; 
   onNavigate: (screen: string, id: string) => void;
 }> = ({ data, onSelect, onNavigate }) => {
-  const { focusPerson, children, grandchildren, greatGrandchildren } = data;
+  const { focusPerson, children, grandchildren, greatGrandchildren, siblings } = data;
 
   return (
     <div className="flex items-center gap-16 min-h-[600px] justify-center">
-      <div className="relative">
-        <Node 
-          member={focusPerson} 
-          isFocus 
-          onClick={() => {}}
-          onProfile={() => onNavigate('Biography', focusPerson.id)}
-        />
-        {children.length > 0 && <div className="absolute w-16 h-[1px] bg-primary/30 left-64 top-1/2 -z-10"></div>}
+      <div className="flex flex-col gap-4">
+        <div className="relative">
+          <Node 
+            member={focusPerson} 
+            isFocus 
+            onClick={() => {}}
+            onProfile={() => onNavigate('Biography', focusPerson.id)}
+          />
+          {children.length > 0 && <div className="absolute w-16 h-[1px] bg-primary/30 left-64 top-1/2 -z-10"></div>}
+        </div>
+
+        {siblings.map((sibling) => (
+          <div key={sibling.id} className="relative opacity-80">
+            <Node 
+              member={sibling} 
+              role="Sibling" 
+              onClick={() => onSelect(sibling.id)}
+              onProfile={() => onNavigate('Biography', sibling.id)}
+            />
+          </div>
+        ))}
       </div>
 
       <div className="flex flex-col gap-32">

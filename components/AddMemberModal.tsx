@@ -28,7 +28,7 @@ export default function AddMemberModal({ isOpen, onClose, onSuccess, initialData
   const [error, setError] = useState<string | null>(null);
 
   // Sibling wizard state
-  const [siblings, setSiblings] = useState<string[]>([]);
+  const [siblingEntries, setSiblingEntries] = useState<SiblingEntry[]>([]);
   const [showSiblingWizard, setShowSiblingWizard] = useState(false);
 
   // Search state
@@ -50,7 +50,7 @@ export default function AddMemberModal({ isOpen, onClose, onSuccess, initialData
         setDeathPlace('');
         setEmail('');
         setPhotoUrl('');
-        setSiblings([]);
+        setSiblingEntries([]);
       } else {
         setSearchQuery('');
         setSearchResults([]);
@@ -60,7 +60,7 @@ export default function AddMemberModal({ isOpen, onClose, onSuccess, initialData
 
   // Handle sibling updates from wizard
   const handleSiblingUpdate = (siblingIds: string[], entries: SiblingEntry[]) => {
-    setSiblings(siblingIds);
+    setSiblingEntries(entries);
     setShowSiblingWizard(false);
   };
 
@@ -116,6 +116,23 @@ export default function AddMemberModal({ isOpen, onClose, onSuccess, initialData
     }
 
     try {
+      // Collect parents from "Full Sibling" entries
+      const siblingParentIds = new Set<string>();
+      if (relationshipType === 'child' && relativeId) {
+        siblingParentIds.add(relativeId);
+      }
+
+      for (const entry of siblingEntries) {
+        if (entry.siblingType === 'full' && entry.id) {
+          const siblingData = await FamilyService.getById(entry.id);
+          if (siblingData?.parents) {
+            siblingData.parents.forEach(pId => siblingParentIds.add(pId));
+          }
+        }
+      }
+
+      const siblingIds = siblingEntries.filter(e => e.id).map(e => e.id!);
+
       const newMember = await FamilyService.create({
         firstName,
         lastName,
@@ -126,10 +143,10 @@ export default function AddMemberModal({ isOpen, onClose, onSuccess, initialData
         deathPlace: isDeceased ? deathPlace : undefined,
         email,
         photoUrl,
-        parents: relationshipType === 'child' && relativeId ? [relativeId] : [],
+        parents: Array.from(siblingParentIds),
         spouses: relationshipType === 'spouse' && relativeId ? [relativeId] : [],
         children: relationshipType === 'parent' && relativeId ? [relativeId] : [],
-        siblings,
+        siblings: siblingIds,
       });
 
       onSuccess(newMember);
@@ -394,8 +411,8 @@ export default function AddMemberModal({ isOpen, onClose, onSuccess, initialData
                   className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-700 hover:bg-slate-100 hover:border-primary/30 transition-all"
                 >
                   <span className="material-symbols-outlined text-primary">family_restroom</span>
-                  {siblings.length > 0
-                    ? `Manage Siblings (${siblings.length} selected)`
+                  {siblingEntries.length > 0
+                    ? `Manage Siblings (${siblingEntries.length} selected)`
                     : 'Add Siblings'}
                 </button>
               </div>
@@ -485,7 +502,7 @@ export default function AddMemberModal({ isOpen, onClose, onSuccess, initialData
 
         {showSiblingWizard && (
           <RelationshipWizard
-            existingSiblings={siblings}
+            existingSiblings={siblingEntries.filter(e => e.id).map(e => e.id!) as string[]}
             onUpdate={handleSiblingUpdate}
             onCancel={() => setShowSiblingWizard(false)}
           />

@@ -2,7 +2,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { FamilyService } from '../services/FamilyService';
 import { FamilyMember } from '../types/family';
 import { formatDate } from '../src/utils/dateUtils';
-import RelationshipWizard from './RelationshipWizard';
+import RelationshipWizard, { SiblingEntry } from './RelationshipWizard';
 
 interface Props {
   onNavigate: (screen: string, memberId?: string) => void;
@@ -139,11 +139,33 @@ const MemberBiography: React.FC<Props> = ({ onNavigate, memberId, loggedInId, on
     }
   };
 
-  const handleWizardUpdate = async (ids: string[]) => {
+  const handleWizardUpdate = async (ids: string[], entries: SiblingEntry[]) => {
     if (!member?.id) return;
     try {
+      // 1. Update the siblings list for this member
       const updated = await FamilyService.update(member.id, { siblings: ids });
       setMember(updated);
+
+      // 2. Handle parent syncing for "Full Siblings"
+      // If we are marked as full siblings, we should share the same parents
+      const myParents = member.parents || [];
+      if (myParents.length > 0) {
+        for (const entry of entries) {
+          if (entry.siblingType === 'full' && entry.id) {
+            // Check if this sibling already has these parents to avoid redundant calls
+            const siblingData = await FamilyService.getById(entry.id);
+            const siblingParents = siblingData?.parents || [];
+            
+            for (const parentId of myParents) {
+              if (!siblingParents.includes(parentId)) {
+                console.log(`DEBUG: Syncing parent ${parentId} to full sibling ${entry.id}`);
+                await FamilyService.linkMembers(entry.id, parentId, 'parent');
+              }
+            }
+          }
+        }
+      }
+
       const updatedSiblings = await FamilyService.getSiblings(member.id);
       setSiblings(updatedSiblings);
       setIsWizardOpen(false);

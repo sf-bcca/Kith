@@ -14,6 +14,7 @@ export interface AncestryData {
   parents: FamilyMember[];
   grandparents: FamilyMember[];
   greatGrandparents: FamilyMember[];
+  siblings: FamilyMember[];
 }
 
 export interface DescendantData {
@@ -21,6 +22,7 @@ export interface DescendantData {
   children: FamilyMember[];
   grandchildren: FamilyMember[];
   greatGrandchildren: FamilyMember[];
+  siblings: FamilyMember[];
 }
 
 export class TreeService {
@@ -60,7 +62,10 @@ export class TreeService {
     }
 
     // Gen 1: Parents
-    const parents = await FamilyService.getByIds(focusPerson.parents);
+    const [parents, siblings] = await Promise.all([
+      FamilyService.getByIds(focusPerson.parents),
+      FamilyService.getSiblings(focusPersonId)
+    ]);
     
     // Gen 2: Grandparents
     const gpIds = parents.flatMap(p => p.parents);
@@ -74,7 +79,8 @@ export class TreeService {
       focusPerson,
       parents,
       grandparents,
-      greatGrandparents
+      greatGrandparents,
+      siblings
     };
   }
 
@@ -89,7 +95,10 @@ export class TreeService {
     }
 
     // Gen 1: Children
-    const children = await FamilyService.getByIds(focusPerson.children);
+    const [children, siblings] = await Promise.all([
+      FamilyService.getByIds(focusPerson.children),
+      FamilyService.getSiblings(focusPersonId)
+    ]);
 
     // Gen 2: Grandchildren
     const gcIds = children.flatMap(c => c.children);
@@ -103,7 +112,8 @@ export class TreeService {
       focusPerson,
       children,
       grandchildren,
-      greatGrandchildren
+      greatGrandchildren,
+      siblings
     };
   }
 
@@ -146,9 +156,12 @@ export class TreeService {
 
     const sharedParents = parents1.filter(pId => parents2.includes(pId));
     
-    if (sharedParents.length === 2) {
-      return 'full';
-    } else if (sharedParents.length === 1) {
+    if (sharedParents.length > 0) {
+      // If they share ALL their parents and have the same number of parents, they are full siblings.
+      // This handles both the 1-parent and 2-parent cases correctly.
+      if (sharedParents.length === parents1.length && sharedParents.length === parents2.length) {
+        return 'full';
+      }
       return 'half';
     }
     

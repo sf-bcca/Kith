@@ -6,6 +6,7 @@ import { TreeService } from '../../services/TreeService';
 vi.mock('../../services/TreeService', () => ({
   TreeService: {
     getTreeFor: vi.fn(),
+    getSiblingType: vi.fn().mockReturnValue('full'),
   },
 }));
 
@@ -64,7 +65,26 @@ describe('FamilyTreeView', () => {
     await waitFor(() => {
       const merlinName = screen.getByText(/Merlin Pendragon/);
       fireEvent.click(merlinName);
-      expect(onNavigate).toHaveBeenCalledWith('Biography', '7');
+      expect(onNavigate).toHaveBeenCalledWith('Biography', '7', expect.any(Object));
+    }, { timeout: 2000 });
+  });
+
+  it('renders siblings when present in tree data', async () => {
+    const treeWithSiblings = {
+      ...mockTree,
+      siblings: [
+        { id: '10', firstName: 'Arthur', lastName: 'Pendragon', birthDate: '465-01-01', parents: ['5', '6'] },
+      ],
+    };
+    vi.mocked(TreeService.getTreeFor).mockResolvedValue(treeWithSiblings as any);
+    
+    render(<FamilyTreeView onNavigate={vi.fn()} selectedId="7" onSelect={vi.fn()} />);
+    
+    await waitFor(() => {
+      expect(screen.getByText(/Arthur Pendragon/)).toBeInTheDocument();
+      // Check for sibling visual indicator (badge)
+      const siblingBadge = screen.getByText('family_restroom');
+      expect(siblingBadge).toBeInTheDocument();
     }, { timeout: 2000 });
   });
 });
