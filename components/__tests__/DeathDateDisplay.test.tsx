@@ -12,6 +12,7 @@ import { formatDate } from '../../src/utils/dateUtils';
 vi.mock('../../services/FamilyService', () => ({
   FamilyService: {
     getById: vi.fn(),
+    getByIds: vi.fn(),
     search: vi.fn(),
     getSiblings: vi.fn(),
   },
@@ -31,7 +32,7 @@ describe('Death Date Display Verification', () => {
     id: 'deceased-1',
     firstName: 'John',
     lastName: 'Doe',
-    gender: 'male',
+    gender: 'male' as const,
     birthDate: '1920-06-15',
     birthPlace: 'London',
     deathDate: '2005-06-15',
@@ -47,7 +48,7 @@ describe('Death Date Display Verification', () => {
     id: 'living-1',
     firstName: 'Jane',
     lastName: 'Doe',
-    gender: 'female',
+    gender: 'female' as const,
     birthDate: '1980-06-15',
     birthPlace: 'New York',
     photoUrl: '',
@@ -59,6 +60,7 @@ describe('Death Date Display Verification', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(FamilyService.getByIds).mockResolvedValue([]);
     vi.mocked(FamilyService.getSiblings).mockResolvedValue([]);
     vi.mocked(TreeService.getSiblingType).mockReturnValue('full');
   });
@@ -118,6 +120,7 @@ describe('Death Date Display Verification', () => {
         parents: [],
         grandparents: [],
         greatGrandparents: [],
+        siblings: [],
       });
 
       render(<HorizontalTree onNavigate={vi.fn()} selectedId="deceased-1" onSelect={vi.fn()} />);

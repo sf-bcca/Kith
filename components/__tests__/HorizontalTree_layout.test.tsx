@@ -15,6 +15,7 @@ const mockMember = (id: string, firstName: string, parents: string[] = [], child
   parents,
   children,
   spouses: [],
+  siblings: [],
   biography: '',
   photoUrl: ''
 });
@@ -29,8 +30,9 @@ describe('HorizontalTree Layout', () => {
       focusPerson: focus,
       parents: [father, mother],
       grandparents: [mockMember('4', 'GF'), mockMember('5', 'GM')],
-      greatGrandparents: []
-    } as any);
+      greatGrandparents: [],
+      siblings: []
+    });
 
     render(<HorizontalTree selectedId="1" onSelect={() => {}} onNavigate={() => {}} />);
     
@@ -47,15 +49,17 @@ describe('HorizontalTree Layout', () => {
         focusPerson: focus,
         parents: [],
         grandparents: [],
-        greatGrandparents: []
-      } as any);
+        greatGrandparents: [],
+        siblings: []
+      });
 
     vi.mocked(TreeService.getDescendants).mockResolvedValue({
       focusPerson: focus,
       children: [child],
       grandchildren: [],
-      greatGrandchildren: []
-    } as any);
+      greatGrandchildren: [],
+      siblings: []
+    });
 
     render(<HorizontalTree selectedId="1" onSelect={() => {}} onNavigate={() => {}} />);
     
